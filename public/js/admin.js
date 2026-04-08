@@ -4,6 +4,7 @@ const API = '';
 let datosSalas = [];
 let datosMaquinas = [];
 let datosOperarios = [];
+let datosUsuarios = [];
 
 // ── Inicialización ────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -13,14 +14,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function cargarDatosBase() {
-  const [salas, maquinas, operarios] = await Promise.all([
+  const [salas, maquinas, operarios, usuarios] = await Promise.all([
     apiFetch('/api/salas'),
     apiFetch('/api/maquinas'),
     apiFetch('/api/operarios'),
+    apiFetch('/api/usuarios'),
   ]);
   datosSalas = salas.data || [];
   datosMaquinas = maquinas.data || [];
   datosOperarios = operarios.data || [];
+  datosUsuarios = usuarios.data || [];
 
   // Poblar selects de salas
   ['filtroSalaMaquinas', 'filtroSala', 'filtroSalaQR'].forEach(id => {
@@ -65,6 +68,7 @@ const sectionTitles = {
   maquinas: ['Máquinas', 'Estado y gestión de todas las máquinas'],
   historial: ['Historial', 'Registro de mantenimientos realizados'],
   operarios: ['Operarios', 'Gestión del personal de mantenimiento'],
+  usuarios: ['Usuarios', 'Gestión de usuarios del sistema'],
   qrcodes: ['Códigos QR', 'QR individuales para el operario móvil'],
 };
 
@@ -83,11 +87,15 @@ function navigateTo(section) {
   if (section === 'maquinas') renderMaquinas();
   if (section === 'historial') { cargarHistorial(); poblarFiltroMaquinasHistorial(); }
   if (section === 'operarios') renderOperarios();
+  if (section === 'usuarios') renderUsuarios();
   if (section === 'qrcodes') renderQRs();
 }
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  sidebar.classList.toggle('open');
+  if (backdrop) backdrop.classList.toggle('open');
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
@@ -466,6 +474,82 @@ async function crearOperario() {
     renderOperarios();
   } else {
     msg.innerHTML = `<div class="alert alert-danger">❌ ${res.error}</div>`;
+  }
+}
+
+// ── Usuarios ──────────────────────────────────────────────────────────────────
+const ROL_BADGES = {
+  admin:   { label: '🛡️ Administrador', cls: 'azul' },
+  tecnico: { label: '🔧 Técnico', cls: 'verde' },
+  usuario: { label: '👤 Usuario', cls: '' },
+};
+
+function renderUsuarios() {
+  const tbody = document.getElementById('tablaUsuarios');
+  const empty = document.getElementById('usuariosEmpty');
+  const lista = datosUsuarios.filter(u => u.activo);
+  if (!lista.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = lista.map(u => {
+    const rol = ROL_BADGES[u.rol] || { label: u.rol, cls: '' };
+    return `
+    <tr>
+      <td class="text-muted">#${u.id}</td>
+      <td><span class="fw-600">${u.nombre}</span></td>
+      <td style="font-size:13px;color:var(--text-secondary)">${u.email || '–'}</td>
+      <td><span class="estado-badge ${rol.cls}">${rol.label}</span></td>
+      <td><span class="estado-badge ok">✅ Activo</span></td>
+      <td style="font-size:12px;color:var(--text-muted)">${formatFechaHora(u.creado_en)}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="eliminarUsuarioAdmin(${u.id})" title="Desactivar usuario">🗑️</button></td>
+    </tr>
+  `;
+  }).join('');
+}
+
+function abrirModalUsuario() {
+  document.getElementById('nuevoUsuarioNombre').value = '';
+  document.getElementById('nuevoUsuarioEmail').value = '';
+  document.getElementById('nuevoUsuarioRol').value = 'usuario';
+  document.getElementById('msgUsuario').innerHTML = '';
+  abrirModal('modalUsuario');
+}
+
+async function crearUsuario() {
+  const nombre = document.getElementById('nuevoUsuarioNombre').value.trim();
+  const email = document.getElementById('nuevoUsuarioEmail').value.trim();
+  const rol = document.getElementById('nuevoUsuarioRol').value;
+  const msg = document.getElementById('msgUsuario');
+
+  if (!nombre) {
+    msg.innerHTML = '<div class="alert alert-warning">⚠️ El nombre es obligatorio</div>';
+    return;
+  }
+
+  showLoader(true);
+  const res = await apiFetch('/api/usuarios', { method: 'POST', body: { nombre, email, rol } });
+  showLoader(false);
+
+  if (res.ok) {
+    cerrarModal('modalUsuario');
+    await cargarDatosBase();
+    renderUsuarios();
+  } else {
+    msg.innerHTML = `<div class="alert alert-danger">❌ ${res.error}</div>`;
+  }
+}
+
+async function eliminarUsuarioAdmin(id) {
+  if (!confirm('¿Desactivar este usuario?')) return;
+  showLoader(true);
+  const res = await apiFetch(`/api/usuario/${id}`, { method: 'DELETE' });
+  showLoader(false);
+  if (res.ok) {
+    await cargarDatosBase();
+    renderUsuarios();
   }
 }
 

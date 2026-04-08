@@ -54,6 +54,13 @@ a { color: var(--accent); text-decoration: none; }
   z-index: 100;
   transition: transform var(--transition);
 }
+.sidebar-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 99;
+}
+.sidebar-backdrop.open { display: block; }
 .sidebar-brand {
   padding: 24px 20px 20px;
   border-bottom: 1px solid var(--border);
@@ -185,6 +192,8 @@ a { color: var(--accent); text-decoration: none; }
 .estado-badge.ok { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
 .estado-badge.proximo { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
 .estado-badge.vencido, .estado-badge.pendiente { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+.estado-badge.azul { background: rgba(79,142,247,0.15); color: var(--accent); border: 1px solid rgba(79,142,247,0.3); }
+.estado-badge.verde { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
 .maquina-info { font-size: 12px; color: var(--text-secondary); margin-bottom: 16px; }
 .maquina-info span { display: block; margin-bottom: 2px; }
 .maquina-actions { display: flex; gap: 8px; }
@@ -355,10 +364,79 @@ tr:hover td { background: var(--bg-card-hover); }
 .section-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0); }
-  .main { margin-left: 0; }
+@media (max-width: 900px) {
   .chart-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  /* Sidebar */
+  .sidebar {
+    transform: translateX(-100%);
+    z-index: 300;
+    width: 280px;
+  }
+  .sidebar.open { transform: translateX(0); box-shadow: 8px 0 32px rgba(0,0,0,0.5); }
+
+  /* Backdrop cuando sidebar abierto */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 299;
+  }
+  .sidebar.open ~ .sidebar-backdrop { display: block; }
+
+  /* Main */
+  .main { margin-left: 0; }
+
+  /* Topbar */
+  .topbar { padding: 12px 16px; }
+  .topbar-title { font-size: 16px; }
+  #btnMenuMobile { display: flex !important; }
+  #serverInfo { display: none; }
+
+  /* Contenido */
+  .page-content { padding: 14px 12px; }
+
+  /* KPIs */
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+  .kpi-value { font-size: 28px; }
+  .kpi-label { font-size: 12px; }
+
+  /* Charts */
+  .chart-grid { grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
+
+  /* Tables – scroll horizontal */
+  .table-wrap { border-radius: 10px; }
+  div[style*="overflow-x"] { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  table { min-width: 480px; }
+  th { padding: 10px 12px; font-size: 11px; }
+  td { padding: 10px 12px; font-size: 12px; }
+
+  /* Filtros */
+  .filtros-bar { padding: 12px; gap: 8px; }
+  .filtro-item { min-width: 120px; flex: 1 1 45%; max-width: 100%; }
+
+  /* Sección header */
+  .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .section-title { font-size: 18px; }
+
+  /* Grid 2 */
   .grid-2 { grid-template-columns: 1fr; }
+
+  /* Máquinas */
+  .grid-maquinas-inner { grid-template-columns: 1fr; }
+
+  /* Modal */
+  .overlay { align-items: flex-end; padding-bottom: 0; }
+  .modal {
+    padding: 20px 16px 24px;
+    width: 100%;
+    max-width: 100% !important;
+    border-radius: 16px 16px 0 0;
+    margin: 0;
+  }
+
+  /* Botones en máquinas */
+  .maquina-actions { flex-wrap: wrap; gap: 6px; }
 }

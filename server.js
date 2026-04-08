@@ -124,6 +124,35 @@ app.post('/api/operarios/verificar-pin', (req, res) => {
   }
 });
 
+// ── API: Usuarios ────────────────────────────────────────────────────────────
+app.get('/api/usuarios', (req, res) => {
+  try {
+    res.json({ ok: true, data: db.getUsuarios() });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.post('/api/usuarios', (req, res) => {
+  try {
+    const { nombre, email, rol } = req.body;
+    if (!nombre) return res.status(400).json({ ok: false, error: 'El nombre es obligatorio' });
+    const id = db.crearUsuario(nombre, email, rol);
+    res.json({ ok: true, data: { id } });
+  } catch (e) {
+    res.status(400).json({ ok: false, error: e.message });
+  }
+});
+
+app.delete('/api/usuario/:id', (req, res) => {
+  try {
+    db.eliminarUsuario(req.params.id);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // ── API: Sesiones ───────────────────────────────────────────────────────────
 app.post('/api/sesion/iniciar', (req, res) => {
   try {

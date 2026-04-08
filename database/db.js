@@ -49,6 +49,15 @@ function inicializarEsquema() {
       creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS usuarios (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre TEXT NOT NULL,
+      email TEXT UNIQUE,
+      rol TEXT DEFAULT 'usuario',
+      activo INTEGER DEFAULT 1,
+      creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS plantillas_checklist (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       maquina_id INTEGER NOT NULL,
@@ -156,6 +165,13 @@ function insertarDatosIniciales() {
   insertOperario.run('María López', '5678');
   insertOperario.run('Juan Martínez', '9012');
 
+  // Usuarios de prueba
+  const insertUsuario = db.prepare('INSERT INTO usuarios (nombre, email, rol) VALUES (?, ?, ?)');
+  insertUsuario.run('Administrador', 'admin@estacion.es', 'admin');
+  insertUsuario.run('Carlos García', 'carlos@estacion.es', 'usuario');
+  insertUsuario.run('María López', 'maria@estacion.es', 'usuario');
+  insertUsuario.run('Juan Martínez', 'juan@estacion.es', 'usuario');
+
   console.log('✅ Base de datos inicializada con datos de ejemplo');
 }
 
@@ -258,27 +274,15 @@ function completarSesion(sesionId, observaciones) {
   const sesion = db.prepare('SELECT * FROM sesiones_mantenimiento WHERE id = ?').get(sesionId);
   if (!sesion) throw new Error('Sesión no encontrada');
 
-  // Verificar críticos
-  const checklist = getChecklistDeMaquina(sesion.maquina_id);
-  const criticos = checklist.items.filter(i => i.es_critico);
-  const registros = db.prepare(
-    'SELECT * FROM registros_items WHERE sesion_id = ?'
-  ).all(sesionId);
-
-  const criticosSinCompletar = criticos.filter(c => {
-    const reg = registros.find(r => r.item_id === c.id);
-    return !reg || !reg.completado;
-  });
-
-  if (criticosSinCompletar.length > 0) {
-    throw new Error(`Hay ${criticosSinCompletar.length} punto(s) crítico(s) sin completar`);
+  if (!observaciones || observaciones.trim() === '') {
+    throw new Error('El reporte del problema es obligatorio');
   }
 
   db.prepare(`
     UPDATE sesiones_mantenimiento
     SET estado = 'completada', observaciones = ?, completado_en = CURRENT_TIMESTAMP
     WHERE id = ?
-  `).run(observaciones || null, sesionId);
+  `).run(observaciones.trim(), sesionId);
 
   db.prepare(
     'UPDATE maquinas SET ultimo_mantenimiento = CURRENT_TIMESTAMP WHERE id = ?'
@@ -389,6 +393,37 @@ function crearOperario(nombre, pin) {
   return result.lastInsertRowid;
 }
 
+function getUsuarios() {
+  return getDb().prepare('SELECT id, nombre, email, rol, activo, creado_en FROM usuarios ORDER BY nombre').all();
+}
+
+function crearUsuario(nombre, email, rol) {
+  const db = getDb();
+  // Asegurar que la tabla existe (por si la BD ya estaba creada antes de este campo)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS usuarios (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre TEXT NOT NULL,
+      email TEXT UNIQUE,
+      rol TEXT DEFAULT 'usuario',
+      activo INTEGER DEFAULT 1,
+      creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  if (email) {
+    const existe = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(email);
+    if (existe) throw new Error('Ya existe un usuario con ese email');
+  }
+  const result = db.prepare('INSERT INTO usuarios (nombre, email, rol) VALUES (?, ?, ?)').run(nombre, email || null, rol || 'usuario');
+  return result.lastInsertRowid;
+}
+
+function eliminarUsuario(id) {
+  const db = getDb();
+  db.prepare('UPDATE usuarios SET activo = 0 WHERE id = ?').run(id);
+  return true;
+}
+
 function actualizarMaquina(id, datos) {
   const db = getDb();
   db.prepare(`
@@ -428,5 +463,6 @@ module.exports = {
   getDb, getSalas, getMaquinas, getMaquinaById, getChecklistDeMaquina,
   verificarPin, iniciarSesion, marcarItem, completarSesion,
   getDashboard, getHistorial, getOperarios, crearOperario,
-  actualizarMaquina, getSesionDetalle
+  actualizarMaquina, getSesionDetalle,
+  getUsuarios, crearUsuario, eliminarUsuario
 };

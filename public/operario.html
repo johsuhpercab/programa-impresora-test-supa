@@ -96,37 +96,25 @@
         </div>
       </div>
 
-      <!-- Progreso -->
-      <div class="progress-bar-wrap fade-up">
-        <div class="progress-header">
-          <div class="progress-title">PROGRESO DEL CHECKLIST</div>
-          <div class="progress-count" id="progressCount">0 / 0</div>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" id="progressFill" style="width:0%"></div>
-        </div>
-        <div class="criticos-info pendiente" id="criticosInfo">
-          🔴 0 puntos críticos por completar
-        </div>
-      </div>
-
-      <!-- Items -->
-      <div id="checklistItems"></div>
-
-      <!-- Observaciones -->
-      <div class="obs-section" id="obsSection" style="display:none">
-        <div class="obs-label">📝 OBSERVACIONES (opcional)</div>
-        <textarea class="obs-textarea" id="obsTextarea" placeholder="Anota aquí cualquier incidencia, detalle o comentario sobre el mantenimiento realizado..." rows="3"></textarea>
+      <!-- Campo único de reporte -->
+      <div class="reporte-section fade-up">
+        <div class="reporte-label">📝 REPORTE DEL PROBLEMA ENCONTRADO EN LA IMPRESORA</div>
+        <div class="reporte-subtitle">Describe el estado de la máquina, incidencias observadas o trabajos realizados.</div>
+        <textarea
+          class="reporte-textarea"
+          id="reporteTextarea"
+          placeholder="Ej: Se ha encontrado el cabezal obstruido. Se ha limpiado y calibrado. La impresión vuelve a ser correcta..."
+          rows="7"
+          oninput="onReporteChange()"
+        ></textarea>
+        <div class="reporte-error" id="reporteError" style="display:none">⚠️ El campo es obligatorio. Escribe al menos 1 carácter.</div>
       </div>
     </div>
 
     <div class="bottom-bar">
       <button class="btn-enviar bloqueado" id="btnEnviar" onclick="enviarChecklist()">
-        🔒 Completa los puntos críticos
+        ✏️ Rellena el reporte para continuar
       </button>
-      <div class="btn-warning-text" id="btnWarning">
-        ⚠️ Debes marcar todos los puntos críticos antes de enviar
-      </div>
     </div>
   </div>
 
