@@ -109,26 +109,29 @@ function inicializarEsquema() {
 
 function insertarDatosIniciales() {
   const insertSala = db.prepare('INSERT INTO salas (nombre, descripcion) VALUES (?, ?)');
-  const sala1 = insertSala.run('Espacio Maker', 'Espacio Maker – Impresoras A-01 a A-05');
-  const sala2 = insertSala.run('Espacio Robot', 'Espacio Robot – Impresoras B-01 a B-05');
+  const sala1 = insertSala.run('Espacio Maker', 'Espacio Maker – Impresoras A-01 a A-06');
+  const sala2 = insertSala.run('Espacio Robot', 'Espacio Robot – Impresoras B-01 a B-06');
 
   const maquinas = [
-    // Espacio Maker (A-01 a A-05)
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-01', tipo: 'Impresora FDM', modelo: 'Prusa MK4' },
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-02', tipo: 'Impresora FDM', modelo: 'Prusa MK4' },
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-03', tipo: 'Impresora FDM', modelo: 'Prusa MK4' },
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-04', tipo: 'Impresora FDM', modelo: 'Prusa MK4' },
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-05', tipo: 'Impresora FDM', modelo: 'Prusa MK4' },
-    // Espacio Robot (B-01 a B-05)
-    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-01', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1' },
-    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-02', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1' },
-    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-03', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1' },
-    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-04', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1' },
-    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-05', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1' },
+    // Espacio Maker (A-01 a A-06)
+    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-01', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'activa' },
+    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-02', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'activa' },
+    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-03', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'activa' },
+    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-04', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'activa' },
+    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-05', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'activa' },
+    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-06', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'activa' },
+    
+    // Espacio Robot (B-01 a B-06)
+    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-01', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1', estado: 'activa' },
+    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-02', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1', estado: 'activa' },
+    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-03', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1', estado: 'activa' },
+    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-04', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1', estado: 'activa' },
+    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-05', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1', estado: 'activa' },
+    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-06', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1', estado: 'activa' },
   ];
 
   const insertMaquina = db.prepare(
-    'INSERT INTO maquinas (sala_id, nombre, tipo, modelo) VALUES (?, ?, ?, ?)'
+    'INSERT INTO maquinas (sala_id, nombre, tipo, modelo, estado) VALUES (?, ?, ?, ?, ?)'
   );
 
   const insertPlantilla = db.prepare(
@@ -140,7 +143,7 @@ function insertarDatosIniciales() {
   );
 
   for (const m of maquinas) {
-    const maq = insertMaquina.run(m.sala, m.nombre, m.tipo, m.modelo);
+    const maq = insertMaquina.run(m.sala, m.nombre, m.tipo, m.modelo, m.estado);
     const plt = insertPlantilla.run(maq.lastInsertRowid, 'Mantenimiento Preventivo Estándar');
 
     const items = [

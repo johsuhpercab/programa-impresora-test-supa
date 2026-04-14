@@ -334,6 +334,33 @@ tr:hover td { background: var(--bg-card-hover); }
 .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
 .empty-state p { font-size: 14px; }
 
+/* ── Roles & Permisos ────────────────────────────────────────────────────── */
+.role-badge {
+  font-size: 10px; font-weight: 700; padding: 3px 6px;
+  border-radius: 6px; margin-left: 8px; flex-shrink: 0;
+}
+.role-badge.admin { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+.nav-item.locked { opacity: 0.6; cursor: not-allowed; }
+.nav-item.locked:hover { background: transparent; color: var(--text-secondary); }
+
+.role-selector {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg-card); border: 1px solid var(--border-accent);
+  padding: 6px 12px; border-radius: 20px; font-size: 13px;
+}
+.role-selector select {
+  background: transparent; border: none; color: white;
+  font-weight: 700; outline: none; cursor: pointer;
+}
+.role-selector select option { background: var(--bg-card); color: white; }
+
+.restricted-screen {
+  text-align: center; padding: 60px 20px; color: var(--text-muted);
+}
+.restricted-screen .icon { font-size: 64px; margin-bottom: 20px; opacity: 0.8; }
+.restricted-screen h2 { font-size: 24px; font-weight: 800; color: var(--text-primary); margin-bottom: 12px; }
+.restricted-screen p { font-size: 14px; max-width: 400px; margin: 0 auto 24px; line-height: 1.6; }
+
 /* ── Scrollbar ───────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-primary); }
@@ -406,12 +433,40 @@ tr:hover td { background: var(--bg-card-hover); }
   /* Charts */
   .chart-grid { grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px; }
 
-  /* Tables – scroll horizontal */
-  .table-wrap { border-radius: 10px; }
-  div[style*="overflow-x"] { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
-  table { min-width: 480px; }
-  th { padding: 10px 12px; font-size: 11px; }
-  td { padding: 10px 12px; font-size: 12px; }
+  /* Tables – Mobile Cards */
+  .table-wrap { border-radius: 10px; background: transparent; border: none; }
+  table, thead, tbody, th, td, tr { display: block; }
+  thead { display: none; /* Ocultar cabeceras reales */ }
+  tr {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  tr:last-child { margin-bottom: 0; border-bottom: 1px solid var(--border); }
+  td {
+    border-bottom: 1px dashed var(--border);
+    padding: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    text-align: right;
+  }
+  td:last-child { border-bottom: none; justify-content: flex-end; }
+  
+  /* Insertar seudo-etiquetas con datos thead - Requiere el uso del atributo data-label en el HTML */
+  td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+  }
 
   /* Filtros */
   .filtros-bar { padding: 12px; gap: 8px; }

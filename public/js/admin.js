@@ -6,6 +6,46 @@ let datosMaquinas = [];
 let datosOperarios = [];
 let datosUsuarios = [];
 
+let rolActual = 'admin';
+
+// ── Simulator Roles ────────────────────────────────────────────────────────
+function cambiarRolSimulado(nuevoRol) {
+  rolActual = nuevoRol;
+  
+  // Update icon
+  const iconD = { admin: '🛡️', tecnico: '🔧', usuario: '👤' };
+  const icon = document.getElementById('roleIcon');
+  if (icon) icon.textContent = iconD[nuevoRol] || '👤';
+
+  // UI updates for badges and locks on sidebar
+  const els = ['operarios', 'usuarios', 'qrcodes'];
+  els.forEach(sect => {
+    const navItem = document.getElementById('nav-' + sect);
+    const badge = document.getElementById('badge-' + sect);
+    if (!navItem) return;
+    if (rolActual !== 'admin') {
+      navItem.classList.add('locked');
+      if (badge) badge.style.display = 'inline-block';
+    } else {
+      navItem.classList.remove('locked');
+      if (badge) badge.style.display = 'none';
+    }
+  });
+
+  // Re-render UI views dependent on role
+  renderMaquinas(); 
+  
+  // Force navigation out if currently on restricted section
+  const currentSection = document.querySelector('.section.active');
+  if (currentSection && rolActual !== 'admin') {
+    const activeId = currentSection.id;
+    if (activeId === 'section-operarios' || activeId === 'section-usuarios' || activeId === 'section-qrcodes') {
+      navigateTo('dashboard');
+    }
+  }
+}
+
+
 // ── Inicialización ────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   await cargarDatosBase();
@@ -73,11 +113,26 @@ const sectionTitles = {
 };
 
 function navigateTo(section) {
+  // Verificación de roles
+  const rutasRestringidas = ['operarios', 'usuarios', 'qrcodes'];
+  let idToShow = section;
+  
+  if (rolActual !== 'admin' && rutasRestringidas.includes(section)) {
+    idToShow = 'restringido';
+  }
+
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
-  document.getElementById('section-' + section).classList.add('active');
-  document.getElementById('nav-' + section).classList.add('active');
+  document.getElementById('section-' + idToShow).classList.add('active');
+  if (idToShow !== 'restringido') {
+    const navItem = document.getElementById('nav-' + section);
+    if(navItem) navItem.classList.add('active');
+  } else {
+    document.getElementById('topbarTitle').textContent = 'Acceso Denegado';
+    document.getElementById('topbarSubtitle').textContent = 'Sección restringida por permisos';
+    return;
+  }
 
   const [title, sub] = sectionTitles[section] || [section, ''];
   document.getElementById('topbarTitle').textContent = title;
@@ -149,11 +204,11 @@ function renderUltimosMantenimientos(registros) {
   }
   tbody.innerHTML = registros.map(r => `
     <tr>
-      <td><span class="fw-600">${r.maquina}</span></td>
-      <td><span class="text-muted">${r.sala}</span></td>
-      <td>${r.operario}</td>
-      <td>${formatFechaHora(r.completado_en)}</td>
-      <td><span class="estado-badge ok">✅ Completado</span></td>
+      <td data-label="Máquina"><span class="fw-600">${r.maquina}</span></td>
+      <td data-label="Sala"><span class="text-muted">${r.sala}</span></td>
+      <td data-label="Operario">${r.operario}</td>
+      <td data-label="Fecha y hora">${formatFechaHora(r.completado_en)}</td>
+      <td data-label="Estado"><span class="estado-badge ok">✅ Completado</span></td>
     </tr>
   `).join('');
 }
@@ -204,8 +259,12 @@ function renderMaquinas() {
           <span>🕐 ${ultimo}</span>
         </div>
         <div class="maquina-actions">
-          <button class="btn btn-primary btn-sm" onclick="verQR(${m.id}, '${escapar(m.nombre)}', '${escapar(m.sala_nombre)}')">📱 QR</button>
-          <button class="btn btn-outline btn-sm" onclick="editarMaquina(${m.id})">✏️ Editar</button>
+          ${rolActual === 'admin' ? `
+            <button class="btn btn-primary btn-sm" onclick="verQR(${m.id}, '${escapar(m.nombre)}', '${escapar(m.sala_nombre)}')">📱 QR</button>
+            <button class="btn btn-outline btn-sm" onclick="editarMaquina(${m.id})">✏️ Editar</button>
+          ` : `
+            <button class="btn btn-primary btn-sm" onclick="verQR(${m.id}, '${escapar(m.nombre)}', '${escapar(m.sala_nombre)}')">📱 QR</button>
+          `}
         </div>
       </div>
     `;
@@ -367,15 +426,15 @@ async function cargarHistorial() {
 
   tbody.innerHTML = res.data.map(r => `
     <tr>
-      <td class="text-muted">#${r.id}</td>
-      <td><span class="fw-600">${r.maquina}</span><br><span class="text-muted" style="font-size:11px">${r.tipo_maquina}</span></td>
-      <td>${r.sala}</td>
-      <td>${r.operario}</td>
-      <td style="font-size:12px">${formatFechaHora(r.iniciado_en)}</td>
-      <td style="font-size:12px">${formatFechaHora(r.completado_en)}</td>
-      <td><span class="estado-badge ok">${r.items_completados}/${r.items_total}</span></td>
-      <td style="font-size:12px;color:var(--text-muted)">${r.observaciones || '–'}</td>
-      <td><button class="btn btn-outline btn-sm" onclick="verDetalleSesion(${r.id})">Detalle</button></td>
+      <td data-label="#" class="text-muted">#${r.id}</td>
+      <td data-label="Máquina"><span class="fw-600">${r.maquina}</span><br><span class="text-muted" style="font-size:11px">${r.tipo_maquina}</span></td>
+      <td data-label="Sala">${r.sala}</td>
+      <td data-label="Operario">${r.operario}</td>
+      <td data-label="Inicio" style="font-size:12px">${formatFechaHora(r.iniciado_en)}</td>
+      <td data-label="Fin" style="font-size:12px">${formatFechaHora(r.completado_en)}</td>
+      <td data-label="Puntos"><span class="estado-badge ok">${r.items_completados}/${r.items_total}</span></td>
+      <td data-label="Observ." style="font-size:12px;color:var(--text-muted)">${r.observaciones || '–'}</td>
+      <td data-label="Acciones"><button class="btn btn-outline btn-sm" onclick="verDetalleSesion(${r.id})">Detalle</button></td>
     </tr>
   `).join('');
 }
@@ -432,13 +491,13 @@ function renderOperarios() {
   const tbody = document.getElementById('tablaOperarios');
   tbody.innerHTML = datosOperarios.map(o => `
     <tr>
-      <td class="text-muted">#${o.id}</td>
-      <td><span class="fw-600">${o.nombre}</span></td>
-      <td>
+      <td data-label="ID" class="text-muted">#${o.id}</td>
+      <td data-label="Nombre"><span class="fw-600">${o.nombre}</span></td>
+      <td data-label="PIN">
         <span style="background:var(--bg-secondary);padding:4px 10px;border-radius:6px;font-family:monospace;font-size:13px;letter-spacing:0.1em">****</span>
       </td>
-      <td><span class="estado-badge ok">✅ Activo</span></td>
-      <td style="font-size:12px;color:var(--text-muted)">${formatFechaHora(o.creado_en)}</td>
+      <td data-label="Estado"><span class="estado-badge ok">✅ Activo</span></td>
+      <td data-label="Alta" style="font-size:12px;color:var(--text-muted)">${formatFechaHora(o.creado_en)}</td>
     </tr>
   `).join('');
 }
@@ -498,13 +557,13 @@ function renderUsuarios() {
     const rol = ROL_BADGES[u.rol] || { label: u.rol, cls: '' };
     return `
     <tr>
-      <td class="text-muted">#${u.id}</td>
-      <td><span class="fw-600">${u.nombre}</span></td>
-      <td style="font-size:13px;color:var(--text-secondary)">${u.email || '–'}</td>
-      <td><span class="estado-badge ${rol.cls}">${rol.label}</span></td>
-      <td><span class="estado-badge ok">✅ Activo</span></td>
-      <td style="font-size:12px;color:var(--text-muted)">${formatFechaHora(u.creado_en)}</td>
-      <td><button class="btn btn-outline btn-sm" onclick="eliminarUsuarioAdmin(${u.id})" title="Desactivar usuario">🗑️</button></td>
+      <td data-label="ID" class="text-muted">#${u.id}</td>
+      <td data-label="Nombre"><span class="fw-600">${u.nombre}</span></td>
+      <td data-label="Email" style="font-size:13px;color:var(--text-secondary)">${u.email || '–'}</td>
+      <td data-label="Rol"><span class="estado-badge ${rol.cls}">${rol.label}</span></td>
+      <td data-label="Estado"><span class="estado-badge ok">✅ Activo</span></td>
+      <td data-label="Alta" style="font-size:12px;color:var(--text-muted)">${formatFechaHora(u.creado_en)}</td>
+      <td data-label="Acciones"><button class="btn btn-outline btn-sm" onclick="eliminarUsuarioAdmin(${u.id})" title="Desactivar usuario">🗑️</button></td>
     </tr>
   `;
   }).join('');

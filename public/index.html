@@ -51,14 +51,17 @@
           <div class="nav-item" id="nav-operarios" onclick="navigateTo('operarios')">
             <span class="nav-icon">👷</span>
             <span>Operarios</span>
+            <span class="role-badge admin" style="display:none" id="badge-operarios">🔒 Admin</span>
           </div>
           <div class="nav-item" id="nav-usuarios" onclick="navigateTo('usuarios')">
             <span class="nav-icon">👥</span>
             <span>Usuarios</span>
+            <span class="role-badge admin" style="display:none" id="badge-usuarios">🔒 Admin</span>
           </div>
           <div class="nav-item" id="nav-qrcodes" onclick="navigateTo('qrcodes')">
             <span class="nav-icon">📱</span>
             <span>Códigos QR</span>
+            <span class="role-badge admin" style="display:none" id="badge-qrcodes">🔒 Admin</span>
           </div>
         </div>
       </nav>
@@ -81,12 +84,30 @@
           </div>
         </div>
         <div class="topbar-actions">
-          <div style="font-size:12px;color:var(--text-muted)" id="serverInfo">Cargando...</div>
+          <div class="role-selector" title="Simulador de Roles">
+            <span id="roleIcon">🛡️</span>
+            <select id="simuladorRol" onchange="cambiarRolSimulado(this.value)">
+              <option value="admin">Administrador</option>
+              <option value="tecnico">Técnico</option>
+              <option value="usuario">Usuario (Lectura)</option>
+            </select>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted)" id="serverInfo" class="server-info-hw">Cargando...</div>
           <button class="btn btn-primary btn-sm" onclick="recargarTodo()">↺ Actualizar</button>
         </div>
       </header>
 
       <div class="page-content">
+
+        <!-- ══════════ ACCESO RESTRINGIDO ══════════ -->
+        <div class="section fade-in" id="section-restringido">
+          <div class="restricted-screen">
+            <div class="icon">🔒</div>
+            <h2>Acceso Restringido</h2>
+            <p>No tienes los permisos suficientes para ver esta sección. Acceso limitado solo a Administradores.</p>
+            <button class="btn btn-primary" onclick="navigateTo('dashboard')">← Volver al Panel</button>
+          </div>
+        </div>
 
         <!-- ══════════ DASHBOARD ══════════ -->
         <div class="section active fade-in" id="section-dashboard">
