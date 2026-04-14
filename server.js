@@ -10,6 +10,9 @@ const db = require('./database/db');
 const app = express();
 const PORT = 3000;
 
+// URL del Webhook de Google Apps Script (Dejar vacío si no se usa)
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzdBubE9pXHMoEaWRmgY0v8Xy0UHuoowEz1uq2nMd2difxwgZlCVJLqQswlrcN2_1YD/exec";
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -179,6 +182,33 @@ app.post('/api/sesion/:id/completar', (req, res) => {
   try {
     const { observaciones } = req.body;
     db.completarSesion(req.params.id, observaciones);
+    
+    // Enviar datos en tiempo real a Google Sheets (Si está configurado)
+    if (GOOGLE_SCRIPT_URL) {
+      try {
+        const detalle = db.getSesionDetalle(req.params.id);
+        if (detalle && detalle.sesion) {
+          const payload = {
+            idsesion: detalle.sesion.id,
+            fecha: detalle.sesion.completado_en,
+            maquina: detalle.sesion.maquina,
+            sala: detalle.sesion.sala,
+            operario: detalle.sesion.operario,
+            observaciones: detalle.sesion.observaciones,
+            items: detalle.items.map(i => `${i.descripcion}: ${i.completado ? '✅' : '❌'}`).join(' | ')
+          };
+          
+          fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'application/json' }
+          }).catch(err => console.error('Error enviando a Google Scripts:', err.message));
+        }
+      } catch (err) {
+        console.error('Error al preparar envío a Google Scripts:', err.message);
+      }
+    }
+
     res.json({ ok: true, message: 'Mantenimiento registrado correctamente' });
   } catch (e) {
     res.status(400).json({ ok: false, error: e.message });
