@@ -1,459 +1,237 @@
 'use strict';
 
-const Database = require('better-sqlite3');
-const path = require('path');
-const fs = require('fs');
+const { Pool } = require('pg');
 
-const DB_ORIGIN_PATH = path.join(__dirname, 'gestion.db');
-let DB_PATH = DB_ORIGIN_PATH;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.VERCEL ? { rejectUnauthorized: false } : false
+});
 
-// Detectar si estamos en Vercel
-if (process.env.VERCEL) {
-  DB_PATH = path.join('/tmp', 'gestion.db');
-  // Si la DB original existe pero en /tmp no, la copiamos para tener los datos de nuestro repositorio
-  if (fs.existsSync(DB_ORIGIN_PATH) && !fs.existsSync(DB_PATH)) {
-    fs.copyFileSync(DB_ORIGIN_PATH, DB_PATH);
+async function query(text, params) {
+  const client = await pool.connect();
+  try {
+    const res = await client.query(text, params);
+    return res.rows;
+  } finally {
+    client.release();
   }
 }
 
-let db;
-
-function getDb() {
-  if (!db) {
-    db = new Database(DB_PATH);
-    // En Vercel, WAL mode puede causar problemas, pero en /tmp es completamente escribible.
-    db.pragma('journal_mode = WAL');
-    db.pragma('foreign_keys = ON');
-    inicializarEsquema();
-  }
-  return db;
-}
-
-function inicializarEsquema() {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS salas (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nombre TEXT NOT NULL,
-      descripcion TEXT,
-      creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS maquinas (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      sala_id INTEGER NOT NULL,
-      nombre TEXT NOT NULL,
-      tipo TEXT DEFAULT 'Impresora 3D',
-      modelo TEXT,
-      numero_serie TEXT,
-      estado TEXT DEFAULT 'activa',
-      ultimo_mantenimiento DATETIME,
-      frecuencia_dias INTEGER DEFAULT 7,
-      creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (sala_id) REFERENCES salas(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS operarios (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nombre TEXT NOT NULL,
-      pin TEXT NOT NULL UNIQUE,
-      activo INTEGER DEFAULT 1,
-      creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS usuarios (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nombre TEXT NOT NULL,
-      email TEXT UNIQUE,
-      rol TEXT DEFAULT 'usuario',
-      activo INTEGER DEFAULT 1,
-      creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS sesiones_mantenimiento (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      maquina_id INTEGER NOT NULL,
-      operario_id INTEGER NOT NULL,
-      estado TEXT DEFAULT 'en_progreso',
-      observaciones TEXT,
-      iniciado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
-      completado_en DATETIME,
-      FOREIGN KEY (maquina_id) REFERENCES maquinas(id),
-      FOREIGN KEY (operario_id) REFERENCES operarios(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS incidencias (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      maquina_nombre TEXT NOT NULL,
-      maquina_id INTEGER,
-      tipo TEXT NOT NULL,
-      notas TEXT,
-      fotos TEXT DEFAULT '[]',
-      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (maquina_id) REFERENCES maquinas(id)
-    );
-  `);
-
-  // Insertar datos de ejemplo si la base está vacía
-  const salasCount = db.prepare('SELECT COUNT(*) as c FROM salas').get();
-  if (salasCount.c === 0) {
-    insertarDatosIniciales();
-  }
-}
-
-function insertarDatosIniciales() {
-  const insertSala = db.prepare('INSERT INTO salas (nombre, descripcion) VALUES (?, ?)');
-  const sala1 = insertSala.run('Espacio Maker', 'Espacio Maker – Impresoras A-01 a A-10');
-  const sala2 = insertSala.run('Espacio Robot', 'Espacio Robot – Impresoras B-01 a B-04');
-
-  const maquinas = [
-    // Espacio Maker (A-01 a A-10)
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-01', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'activa' },
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-02', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'activa' },
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-03', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'activa' },
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-04', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'activa' },
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-05', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'activa' },
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-06', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'activa' },
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-07', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'activa' },
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-08', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'activa' },
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-09', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'inactiva' },
-    { sala: sala1.lastInsertRowid, nombre: 'Impresora A-10', tipo: 'Impresora FDM', modelo: 'Prusa MK4', estado: 'inactiva' },
-    
-    // Espacio Robot (B-01 a B-04)
-    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-01', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1', estado: 'activa' },
-    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-02', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1', estado: 'activa' },
-    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-03', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1', estado: 'activa' },
-    { sala: sala2.lastInsertRowid, nombre: 'Impresora B-04', tipo: 'Impresora FDM', modelo: 'Bambu Lab X1', estado: 'inactiva' },
-  ];
-
-  const insertMaquina = db.prepare(
-    'INSERT INTO maquinas (sala_id, nombre, tipo, modelo, estado) VALUES (?, ?, ?, ?, ?)'
-  );
-
-  for (const m of maquinas) {
-    insertMaquina.run(m.sala, m.nombre, m.tipo, m.modelo, m.estado);
-  }
-
-  // Operarios de ejemplo
-  const insertOperario = db.prepare('INSERT INTO operarios (nombre, pin) VALUES (?, ?)');
-  insertOperario.run('Admin', '0000');
-  insertOperario.run('Carlos García', '1234');
-  insertOperario.run('María López', '5678');
-  insertOperario.run('Juan Martínez', '9012');
-
-  // Usuarios de prueba
-  const insertUsuario = db.prepare('INSERT INTO usuarios (nombre, email, rol) VALUES (?, ?, ?)');
-  insertUsuario.run('Administrador', 'admin@estacion.es', 'admin');
-  insertUsuario.run('Carlos García', 'carlos@estacion.es', 'usuario');
-  insertUsuario.run('María López', 'maria@estacion.es', 'usuario');
-  insertUsuario.run('Juan Martínez', 'juan@estacion.es', 'usuario');
-
-  console.log('✅ Base de datos inicializada con datos de ejemplo');
+async function queryOne(text, params) {
+  const rows = await query(text, params);
+  return rows[0] || null;
 }
 
 // ─── Funciones de consulta ────────────────────────────────────────────────────
 
-function getSalas() {
-  return getDb().prepare('SELECT * FROM salas ORDER BY nombre').all();
+async function getSalas() {
+  return query('SELECT * FROM salas ORDER BY nombre');
 }
 
-function getMaquinas(salaId) {
-  const db = getDb();
-  let query = `
+async function getMaquinas(salaId) {
+  const sql = `
     SELECT m.*, s.nombre as sala_nombre,
       CASE
         WHEN m.ultimo_mantenimiento IS NULL THEN 'pendiente'
-        WHEN julianday('now') - julianday(m.ultimo_mantenimiento) > m.frecuencia_dias THEN 'vencido'
-        WHEN julianday('now') - julianday(m.ultimo_mantenimiento) > m.frecuencia_dias * 0.8 THEN 'proximo'
+        WHEN NOW() - m.ultimo_mantenimiento > make_interval(days => m.frecuencia_dias) THEN 'vencido'
+        WHEN NOW() - m.ultimo_mantenimiento > make_interval(days => (m.frecuencia_dias * 0.8)::int) THEN 'proximo'
         ELSE 'ok'
       END as estado_mantenimiento
     FROM maquinas m
     JOIN salas s ON s.id = m.sala_id
+    ${salaId ? 'WHERE m.sala_id = $1 ORDER BY m.nombre' : 'ORDER BY s.nombre, m.nombre'}
   `;
-  if (salaId) {
-    return db.prepare(query + ' WHERE m.sala_id = ? ORDER BY m.nombre').all(salaId);
-  }
-  return db.prepare(query + ' ORDER BY s.nombre, m.nombre').all();
+  return salaId ? query(sql, [salaId]) : query(sql);
 }
 
-function getMaquinaById(id) {
-  return getDb().prepare(`
+async function getMaquinaById(id) {
+  return queryOne(`
     SELECT m.*, s.nombre as sala_nombre,
       CASE
         WHEN m.ultimo_mantenimiento IS NULL THEN 'pendiente'
-        WHEN julianday('now') - julianday(m.ultimo_mantenimiento) > m.frecuencia_dias THEN 'vencido'
-        WHEN julianday('now') - julianday(m.ultimo_mantenimiento) > m.frecuencia_dias * 0.8 THEN 'proximo'
+        WHEN NOW() - m.ultimo_mantenimiento > make_interval(days => m.frecuencia_dias) THEN 'vencido'
+        WHEN NOW() - m.ultimo_mantenimiento > make_interval(days => (m.frecuencia_dias * 0.8)::int) THEN 'proximo'
         ELSE 'ok'
       END as estado_mantenimiento
     FROM maquinas m
     JOIN salas s ON s.id = m.sala_id
-    WHERE m.id = ?
-  `).get(id);
+    WHERE m.id = $1
+  `, [id]);
 }
 
-
-
-function verificarPin(pin) {
-  return getDb().prepare('SELECT * FROM operarios WHERE pin = ? AND activo = 1').get(pin);
+async function verificarPin(pin) {
+  return queryOne('SELECT * FROM operarios WHERE pin = $1 AND activo = 1', [pin]);
 }
 
-function iniciarSesion(maquinaId, operarioId) {
-  const db = getDb();
-  // Cerrar sesiones en progreso viejas de la misma máquina
-  db.prepare(`
+async function iniciarSesion(maquinaId, operarioId) {
+  await query(`
     UPDATE sesiones_mantenimiento SET estado = 'abandonada'
-    WHERE maquina_id = ? AND estado = 'en_progreso'
-  `).run(maquinaId);
+    WHERE maquina_id = $1 AND estado = 'en_progreso'
+  `, [maquinaId]);
 
-  const result = db.prepare(
-    'INSERT INTO sesiones_mantenimiento (maquina_id, operario_id) VALUES (?, ?)'
-  ).run(maquinaId, operarioId);
-
-  return result.lastInsertRowid;
+  const rows = await query(
+    'INSERT INTO sesiones_mantenimiento (maquina_id, operario_id) VALUES ($1, $2) RETURNING id',
+    [maquinaId, operarioId]
+  );
+  return rows[0].id;
 }
 
-
-
-function completarSesion(sesionId, observaciones) {
-  const db = getDb();
-
-  const sesion = db.prepare('SELECT * FROM sesiones_mantenimiento WHERE id = ?').get(sesionId);
+async function completarSesion(sesionId, observaciones) {
+  const sesion = await queryOne('SELECT * FROM sesiones_mantenimiento WHERE id = $1', [sesionId]);
   if (!sesion) throw new Error('Sesión no encontrada');
+  if (!observaciones || observaciones.trim() === '') throw new Error('El reporte del problema es obligatorio');
 
-  if (!observaciones || observaciones.trim() === '') {
-    throw new Error('El reporte del problema es obligatorio');
-  }
-
-  db.prepare(`
+  await query(`
     UPDATE sesiones_mantenimiento
-    SET estado = 'completada', observaciones = ?, completado_en = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `).run(observaciones.trim(), sesionId);
+    SET estado = 'completada', observaciones = $1, completado_en = NOW()
+    WHERE id = $2
+  `, [observaciones, sesionId]);
 
-  db.prepare(
-    'UPDATE maquinas SET ultimo_mantenimiento = CURRENT_TIMESTAMP WHERE id = ?'
-  ).run(sesion.maquina_id);
+  await query(
+    'UPDATE maquinas SET ultimo_mantenimiento = NOW() WHERE id = $1',
+    [sesion.maquina_id]
+  );
 
   return true;
 }
 
-function getDashboard() {
-  const db = getDb();
-  const hoy = db.prepare(`
-    SELECT COUNT(*) as total FROM sesiones_mantenimiento
-    WHERE estado = 'completada' AND date(completado_en) = date('now')
-  `).get();
+async function getDashboard() {
+  const hoy = await queryOne(`SELECT COUNT(*) as total FROM sesiones_mantenimiento WHERE estado = 'completada' AND DATE(completado_en) = CURRENT_DATE`);
+  const semana = await queryOne(`SELECT COUNT(*) as total FROM sesiones_mantenimiento WHERE estado = 'completada' AND completado_en >= NOW() - INTERVAL '7 days'`);
+  const pendientes = await queryOne(`SELECT COUNT(*) as total FROM maquinas WHERE estado = 'activa' AND (ultimo_mantenimiento IS NULL OR NOW() - ultimo_mantenimiento > make_interval(days => frecuencia_dias))`);
+  const proximos = await queryOne(`SELECT COUNT(*) as total FROM maquinas WHERE estado = 'activa' AND ultimo_mantenimiento IS NOT NULL AND NOW() - ultimo_mantenimiento > make_interval(days => (frecuencia_dias * 0.8)::int) AND NOW() - ultimo_mantenimiento <= make_interval(days => frecuencia_dias)`);
+  const porDia = await query(`SELECT DATE(completado_en) as dia, COUNT(*) as total FROM sesiones_mantenimiento WHERE estado = 'completada' AND completado_en >= NOW() - INTERVAL '30 days' GROUP BY dia ORDER BY dia`);
+  const porMaquina = await query(`SELECT m.nombre, m.tipo, s.nombre as sala, COUNT(sm.id) as total_sesiones, MAX(sm.completado_en) as ultimo_mantenimiento FROM maquinas m LEFT JOIN salas s ON s.id = m.sala_id LEFT JOIN sesiones_mantenimiento sm ON sm.maquina_id = m.id AND sm.estado = 'completada' GROUP BY m.id, m.nombre, m.tipo, s.nombre ORDER BY s.nombre, m.nombre`);
 
-  const semana = db.prepare(`
-    SELECT COUNT(*) as total FROM sesiones_mantenimiento
-    WHERE estado = 'completada' AND completado_en >= datetime('now', '-7 days')
-  `).get();
-
-  const pendientes = db.prepare(`
-    SELECT COUNT(*) as total FROM maquinas
-    WHERE estado = 'activa' AND (
-      ultimo_mantenimiento IS NULL OR
-      julianday('now') - julianday(ultimo_mantenimiento) > frecuencia_dias
-    )
-  `).get();
-
-  const proximos = db.prepare(`
-    SELECT COUNT(*) as total FROM maquinas
-    WHERE estado = 'activa' AND ultimo_mantenimiento IS NOT NULL AND
-      julianday('now') - julianday(ultimo_mantenimiento) > frecuencia_dias * 0.8 AND
-      julianday('now') - julianday(ultimo_mantenimiento) <= frecuencia_dias
-  `).get();
-
-  const porDia = db.prepare(`
-    SELECT date(completado_en) as dia, COUNT(*) as total
-    FROM sesiones_mantenimiento
-    WHERE estado = 'completada' AND completado_en >= datetime('now', '-30 days')
-    GROUP BY dia ORDER BY dia
-  `).all();
-
-  const porMaquina = db.prepare(`
-    SELECT m.nombre, m.tipo, s.nombre as sala, COUNT(sm.id) as total_sesiones,
-      MAX(sm.completado_en) as ultimo_mantenimiento
-    FROM maquinas m
-    LEFT JOIN salas s ON s.id = m.sala_id
-    LEFT JOIN sesiones_mantenimiento sm ON sm.maquina_id = m.id AND sm.estado = 'completada'
-    GROUP BY m.id ORDER BY s.nombre, m.nombre
-  `).all();
-
-  return { hoy: hoy.total, semana: semana.total, pendientes: pendientes.total, proximos: proximos.total, porDia, porMaquina };
+  return {
+    hoy: parseInt(hoy.total),
+    semana: parseInt(semana.total),
+    pendientes: parseInt(pendientes.total),
+    proximos: parseInt(proximos.total),
+    porDia,
+    porMaquina
+  };
 }
 
-function getHistorial(filtros = {}) {
-  const db = getDb();
+async function getHistorial(filtros = {}) {
   let conditions = ["sm.estado = 'completada'"];
   const params = [];
+  let i = 1;
 
-  if (filtros.sala_id) {
-    conditions.push('m.sala_id = ?');
-    params.push(filtros.sala_id);
-  }
-  if (filtros.maquina_id) {
-    conditions.push('sm.maquina_id = ?');
-    params.push(filtros.maquina_id);
-  }
-  if (filtros.operario_id) {
-    conditions.push('sm.operario_id = ?');
-    params.push(filtros.operario_id);
-  }
-  if (filtros.desde) {
-    conditions.push("date(sm.completado_en) >= ?");
-    params.push(filtros.desde);
-  }
-  if (filtros.hasta) {
-    conditions.push("date(sm.completado_en) <= ?");
-    params.push(filtros.hasta);
-  }
+  if (filtros.sala_id) { conditions.push(`m.sala_id = $${i++}`); params.push(filtros.sala_id); }
+  if (filtros.maquina_id) { conditions.push(`sm.maquina_id = $${i++}`); params.push(filtros.maquina_id); }
+  if (filtros.operario_id) { conditions.push(`sm.operario_id = $${i++}`); params.push(filtros.operario_id); }
+  if (filtros.desde) { conditions.push(`DATE(sm.completado_en) >= $${i++}`); params.push(filtros.desde); }
+  if (filtros.hasta) { conditions.push(`DATE(sm.completado_en) <= $${i++}`); params.push(filtros.hasta); }
 
-  const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+  const where = 'WHERE ' + conditions.join(' AND ');
 
-  return db.prepare(`
+  return query(`
     SELECT sm.id, sm.iniciado_en, sm.completado_en, sm.observaciones,
-      m.nombre as maquina, m.tipo as tipo_maquina, s.nombre as sala,
-      o.nombre as operario
+      m.nombre as maquina, m.tipo as tipo_maquina, s.nombre as sala, o.nombre as operario
     FROM sesiones_mantenimiento sm
     JOIN maquinas m ON m.id = sm.maquina_id
     JOIN salas s ON s.id = m.sala_id
     JOIN operarios o ON o.id = sm.operario_id
     ${where}
-    ORDER BY sm.completado_en DESC
-    LIMIT 200
-  `).all(...params);
+    ORDER BY sm.completado_en DESC LIMIT 200
+  `, params);
 }
 
-function getOperarios() {
-  return getDb().prepare('SELECT id, nombre, activo, creado_en FROM operarios WHERE activo = 1 ORDER BY nombre').all();
+async function getOperarios() {
+  return query('SELECT id, nombre, activo, creado_en FROM operarios WHERE activo = 1 ORDER BY nombre');
 }
 
-function crearOperario(nombre, pin) {
-  const db = getDb();
-  const existe = db.prepare('SELECT id FROM operarios WHERE pin = ?').get(pin);
+async function crearOperario(nombre, pin) {
+  const existe = await queryOne('SELECT id FROM operarios WHERE pin = $1', [pin]);
   if (existe) throw new Error('Ya existe un operario con ese PIN');
-  const result = db.prepare('INSERT INTO operarios (nombre, pin) VALUES (?, ?)').run(nombre, pin);
-  return result.lastInsertRowid;
+  const rows = await query('INSERT INTO operarios (nombre, pin) VALUES ($1, $2) RETURNING id', [nombre, pin]);
+  return rows[0].id;
 }
 
-function getUsuarios() {
-  return getDb().prepare('SELECT id, nombre, email, rol, activo, creado_en FROM usuarios ORDER BY nombre').all();
+async function getUsuarios() {
+  return query('SELECT id, nombre, email, rol, activo, creado_en FROM usuarios ORDER BY nombre');
 }
 
-function crearUsuario(nombre, email, rol) {
-  const db = getDb();
-  // Asegurar que la tabla existe (por si la BD ya estaba creada antes de este campo)
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS usuarios (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nombre TEXT NOT NULL,
-      email TEXT UNIQUE,
-      rol TEXT DEFAULT 'usuario',
-      activo INTEGER DEFAULT 1,
-      creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
+async function crearUsuario(nombre, email, rol) {
   if (email) {
-    const existe = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(email);
+    const existe = await queryOne('SELECT id FROM usuarios WHERE email = $1', [email]);
     if (existe) throw new Error('Ya existe un usuario con ese email');
   }
-  const result = db.prepare('INSERT INTO usuarios (nombre, email, rol) VALUES (?, ?, ?)').run(nombre, email || null, rol || 'usuario');
-  return result.lastInsertRowid;
+  const rows = await query('INSERT INTO usuarios (nombre, email, rol) VALUES ($1, $2, $3) RETURNING id', [nombre, email || null, rol || 'usuario']);
+  return rows[0].id;
 }
 
-function eliminarUsuario(id) {
-  const db = getDb();
-  db.prepare('UPDATE usuarios SET activo = 0 WHERE id = ?').run(id);
+async function eliminarUsuario(id) {
+  await query('UPDATE usuarios SET activo = 0 WHERE id = $1', [id]);
   return true;
 }
 
-function actualizarMaquina(id, datos) {
-  const db = getDb();
-  db.prepare(`
-    UPDATE maquinas SET nombre = ?, tipo = ?, modelo = ?, frecuencia_dias = ?, estado = ?
-    WHERE id = ?
-  `).run(datos.nombre, datos.tipo, datos.modelo, datos.frecuencia_dias, datos.estado, id);
+async function actualizarMaquina(id, datos) {
+  await query(`
+    UPDATE maquinas SET nombre = $1, tipo = $2, modelo = $3, frecuencia_dias = $4, estado = $5
+    WHERE id = $6
+  `, [datos.nombre, datos.tipo, datos.modelo, datos.frecuencia_dias, datos.estado, id]);
   return true;
 }
 
-function getSesionDetalle(sesionId) {
-  const db = getDb();
-  const sesion = db.prepare(`
+async function getSesionDetalle(sesionId) {
+  const sesion = await queryOne(`
     SELECT sm.*, m.nombre as maquina, o.nombre as operario, s.nombre as sala
     FROM sesiones_mantenimiento sm
     JOIN maquinas m ON m.id = sm.maquina_id
     JOIN salas s ON s.id = m.sala_id
     JOIN operarios o ON o.id = sm.operario_id
-    WHERE sm.id = ?
-  `).get(sesionId);
-
+    WHERE sm.id = $1
+  `, [sesionId]);
   if (!sesion) return null;
-
   return { sesion, items: [] };
 }
 
-function crearMaquina(datos) {
-  const db = getDb();
-  const result = db.prepare(
-    'INSERT INTO maquinas (sala_id, nombre, tipo, modelo, estado, frecuencia_dias) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(datos.sala_id, datos.nombre, datos.tipo || 'Impresora 3D', datos.modelo || '', datos.estado || 'activa', datos.frecuencia_dias || 7);
-  return result.lastInsertRowid;
+async function crearMaquina(datos) {
+  const rows = await query(
+    'INSERT INTO maquinas (sala_id, nombre, tipo, modelo, estado, frecuencia_dias) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+    [datos.sala_id, datos.nombre, datos.tipo || 'Impresora 3D', datos.modelo || '', datos.estado || 'activa', datos.frecuencia_dias || 7]
+  );
+  return rows[0].id;
 }
 
-function eliminarMaquina(id) {
-  const db = getDb();
-  db.prepare('DELETE FROM sesiones_mantenimiento WHERE maquina_id = ?').run(id);
-  db.prepare('DELETE FROM maquinas WHERE id = ?').run(id);
+async function eliminarMaquina(id) {
+  await query('DELETE FROM sesiones_mantenimiento WHERE maquina_id = $1', [id]);
+  await query('DELETE FROM maquinas WHERE id = $1', [id]);
   return true;
 }
 
-// ─── Incidencias (nueva interfaz operario) ───────────────────────────────────
-
-function crearIncidencia(maquinaNombre, tipo, notas, fotos) {
-  const db = getDb();
-  // Buscar maquina_id por nombre para mantener la relación
-  const maquina = db.prepare('SELECT id FROM maquinas WHERE nombre = ? LIMIT 1').get(maquinaNombre);
+async function crearIncidencia(maquinaNombre, tipo, notas, fotos) {
+  const maquina = await queryOne('SELECT id FROM maquinas WHERE nombre = $1 LIMIT 1', [maquinaNombre]);
   const fotosJson = JSON.stringify(fotos || []);
-  const result = db.prepare(
-    'INSERT INTO incidencias (maquina_nombre, maquina_id, tipo, notas, fotos) VALUES (?, ?, ?, ?, ?)'
-  ).run(maquinaNombre, maquina ? maquina.id : null, tipo, notas || '', fotosJson);
-  return result.lastInsertRowid;
+  const rows = await query(
+    'INSERT INTO incidencias (maquina_nombre, maquina_id, tipo, notas, fotos) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+    [maquinaNombre, maquina ? maquina.id : null, tipo, notas || '', fotosJson]
+  );
+  return rows[0].id;
 }
 
-function getIncidencias(filtros = {}) {
-  const db = getDb();
+async function getIncidencias(filtros = {}) {
   let conditions = [];
   const params = [];
+  let i = 1;
 
-  if (filtros.maquina_nombre) {
-    conditions.push('maquina_nombre LIKE ?');
-    params.push('%' + filtros.maquina_nombre + '%');
-  }
-  if (filtros.tipo) {
-    conditions.push('tipo = ?');
-    params.push(filtros.tipo);
-  }
-  if (filtros.desde) {
-    conditions.push('date(timestamp) >= ?');
-    params.push(filtros.desde);
-  }
-  if (filtros.hasta) {
-    conditions.push('date(timestamp) <= ?');
-    params.push(filtros.hasta);
-  }
+  if (filtros.maquina_nombre) { conditions.push(`maquina_nombre ILIKE $${i++}`); params.push('%' + filtros.maquina_nombre + '%'); }
+  if (filtros.tipo) { conditions.push(`tipo = $${i++}`); params.push(filtros.tipo); }
+  if (filtros.desde) { conditions.push(`DATE(timestamp) >= $${i++}`); params.push(filtros.desde); }
+  if (filtros.hasta) { conditions.push(`DATE(timestamp) <= $${i++}`); params.push(filtros.hasta); }
 
   const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
-  return db.prepare(`
+  return query(`
     SELECT id, maquina_nombre, maquina_id, tipo, notas, fotos, timestamp
-    FROM incidencias
-    ${where}
-    ORDER BY timestamp DESC
-    LIMIT 200
-  `).all(...params);
+    FROM incidencias ${where}
+    ORDER BY timestamp DESC LIMIT 200
+  `, params);
 }
 
 module.exports = {
-  getDb, getSalas, getMaquinas, getMaquinaById,
+  getSalas, getMaquinas, getMaquinaById,
   verificarPin, iniciarSesion, completarSesion,
   getDashboard, getHistorial, getOperarios, crearOperario,
   actualizarMaquina, crearMaquina, eliminarMaquina, getSesionDetalle,
