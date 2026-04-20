@@ -121,6 +121,7 @@ function doPost(e) {
     if (action === 'getHistorial')   return getHistorial();
     if (action === 'getOperarios')   return getOperarios();
     if (action === 'getUsuarios')    return getUsuarios();
+    if (action === 'getAllInitData') return getAllInitData();
 
     return json({ status: 'error', error: 'Action not found or protected: ' + action });
   } catch (err) {
@@ -384,13 +385,115 @@ function getHistorial() {
   return json({ ok: true, data });
 }
 
-// ── Dashboard ─────────────────────────────────────────────────────────────────
-function getDashboard() {
-  const hist = JSON.parse(getHistorial().getContent()).data;
-  const maq  = JSON.parse(getMaquinas().getContent()).data;
+
+// ── Optimización: Todo en uno ────────────────────────────────────────────────
+/**
+ * Obtiene todos los datos base para el dashboard de una sola vez.
+ * Esto reduce drásticamente el tiempo de carga al evitar múltiples llamadas HTTP.
+ */
+function getAllInitData() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(SHEET_ID);
+  
+  // Obtenemos los objetos de respuesta pero sin convertirlos a JSON aún para eficiencia
+  const salasResponse = getSalas(ss);
+  const maquinasResponse = getMaquinas(ss);
+  const operariosResponse = getOperarios(ss);
+  const usuariosResponse = getUsuarios(ss);
+  const dashboardResponse = getDashboard(ss);
+  const historialResponse = getHistorial(ss);
+
+  return json({
+    ok: true,
+    data: {
+      salas: salasResponse.data,
+      maquinas: maquinasResponse.data,
+      operarios: operariosResponse.data,
+      usuarios: usuariosResponse.data,
+      dashboard: dashboardResponse.data,
+      historial: historialResponse.data
+    }
+  });
+}
+
+// ── Modificación de funciones para aceptar un objeto SS (Spreadsheet) opcional
+// Esto evita abrir el documento múltiples veces en una sola ejecución.
+
+function getSalas(injectedSS) {
+  const ss = injectedSS || SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(SHEET_ID);
+  const rows = getRowsToObjects(ss.getSheetByName('Salas'));
+  const res = { ok: true, data: rows };
+  return injectedSS ? res : json(res);
+}
+
+function getMaquinas(injectedSS) {
+  const ss = injectedSS || SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(SHEET_ID);
+  const salas = getRowsToObjects(ss.getSheetByName('Salas'));
+  const maquinas = getRowsToObjects(ss.getSheetByName('Equipos'));
+  const hoy = new Date();
+
+  const data = maquinas.map(m => {
+    const sala = salas.find(s => s.id === m.sala_id);
+    const frec = parseInt(m.frecuencia_dias) || 7;
+    let estadoMant = 'pendiente';
+    if (m.ultimo_mantenimiento) {
+      const ult = new Date(m.ultimo_mantenimiento);
+      const difDias = (hoy - ult) / (1000 * 60 * 60 * 24);
+      if (difDias > frec) estadoMant = 'vencido';
+      else if (difDias > frec * 0.8) estadoMant = 'proximo';
+      else estadoMant = 'ok';
+    }
+    return {
+      ...m,
+      sala_nombre: sala ? sala.nombre : 'Sin sala',
+      estado_mantenimiento: estadoMant
+    };
+  });
+
+  const res = { ok: true, data };
+  return injectedSS ? res : json(res);
+}
+
+function getOperarios(injectedSS) {
+  const ss = injectedSS || SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(SHEET_ID);
+  const rows = getRowsToObjects(ss.getSheetByName('Operarios'))
+    .filter(o => o.activo == '1' || o.activo === 'true')
+    .map(o => ({ id: o.id, nombre: o.nombre, pin: '****', creado_en: o.creado_en }));
+  const res = { ok: true, data: rows };
+  return injectedSS ? res : json(res);
+}
+
+function getUsuarios(injectedSS) {
+  const ss = injectedSS || SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(SHEET_ID);
+  const rows = getRowsToObjects(ss.getSheetByName('Usuarios'))
+    .filter(u => u.activo == '1' || u.activo === 'true')
+    .map(u => ({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, creado_en: u.creado_en, activo: true }));
+  const res = { ok: true, data: rows };
+  return injectedSS ? res : json(res);
+}
+
+function getHistorial(injectedSS) {
+  const ss = injectedSS || SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(SHEET_ID);
+  const rows = getRowsToObjects(ss.getSheetByName('Registros'));
+  const data = rows.map(r => ({
+    id: r.id,
+    maquina: r.activo_nombre || r.activo_id,
+    sala: r.sala_nombre,
+    operario: r.operario_nombre,
+    iniciado_en: r.timestamp,
+    completado_en: r.timestamp,
+    observaciones: r.notas,
+    tipo: r.tipo
+  })).reverse();
+  const res = { ok: true, data };
+  return injectedSS ? res : json(res);
+}
+
+function getDashboard(injectedSS) {
+  const hist = (injectedSS ? getHistorial(injectedSS) : JSON.parse(getHistorial().getContent())).data;
+  const maq = (injectedSS ? getMaquinas(injectedSS) : JSON.parse(getMaquinas().getContent())).data;
 
   const hoyDate = new Date().toISOString().split('T')[0];
-  const last7   = new Date(); last7.setDate(last7.getDate() - 7);
+  const last7 = new Date(); last7.setDate(last7.getDate() - 7);
   let hoy = 0, semana = 0;
   const porDiaMap = {};
 
@@ -415,5 +518,6 @@ function getDashboard() {
 
   porMaquina.sort((a, b) => b.total_sesiones - a.total_sesiones);
 
-  return json({ ok: true, data: { hoy, semana, pendientes, proximos, porDia, porMaquina } });
+  const res = { ok: true, data: { hoy, semana, pendientes, proximos, porDia, porMaquina } };
+  return injectedSS ? res : json(res);
 }

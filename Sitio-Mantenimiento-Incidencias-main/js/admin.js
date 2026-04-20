@@ -34,23 +34,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tbody = document.getElementById('dashboardUltimos');
     if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)"><span class="spinner" style="display:inline-block;margin-right:8px"></span>Conectando con Google Sheets...</td></tr>';
     
+    // Cargar TODO en una sola llamada
     await cargarDatosBase();
-  } catch (err) {
-    console.error('Error durante la carga inicial:', err);
-  } finally {
-    isCargando = false;
-    renderMaquinas(); 
-  }
-
-  try {
-    await cargarDashboard();
+    
     // Auto-sincronización cada 2 minutos
     setInterval(() => {
       console.log('Sincronización automática con el Sistema de Gestión...');
       recargarTodo();
     }, 120000);
   } catch (err) {
-    console.warn('Error en componentes secundarios:', err);
+    console.error('Error durante la carga inicial:', err);
+  } finally {
+    isCargando = false;
   }
 });
 
@@ -73,16 +68,21 @@ function skeletonTabla(cols = 5) {
 }
 
 async function cargarDatosBase() {
-  const [salas, maquinas, operarios, usuarios] = await Promise.all([
-    apiFetch('/api/salas'),
-    apiFetch('/api/maquinas'),
-    apiFetch('/api/operarios'),
-    apiFetch('/api/usuarios'),
-  ]);
-  datosSalas = salas.data || [];
-  datosMaquinas = maquinas.data || [];
-  datosOperarios = operarios.data || [];
-  datosUsuarios = usuarios.data || [];
+  console.time('Carga Inicial Bundled');
+  // Una sola llamada para traerlo TODO
+  const res = await apiFetch('/api/all-data');
+  console.timeEnd('Carga Inicial Bundled');
+  
+  if (res.ok && res.data) {
+    const d = res.data;
+    datosSalas = d.salas || [];
+    datosMaquinas = d.maquinas || [];
+    datosOperarios = d.operarios || [];
+    datosUsuarios = d.usuarios || [];
+    
+    // Poblar dashboard con los datos ya recibidos
+    actualizarVistaDashboard(d.dashboard, d.historial);
+  }
 
   // Actualizar la vista actual ahora que los datos están listos
   renderActualSection();
@@ -195,28 +195,40 @@ function toggleSidebar() {
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
+// ── Dashboard ─────────────────────────────────────────────────────────────────
 async function cargarDashboard() {
+  // Ahora es solo un wrapper por si se llama manualmente
   const res = await apiFetch('/api/dashboard');
-  if (!res.ok) return;
-  const d = res.data;
+  if (res.ok) {
+     const histRes = await apiFetch('/api/historial?');
+     actualizarVistaDashboard(res.data, histRes.ok ? histRes.data : []);
+  }
+}
 
-  document.getElementById('kpi-hoy').textContent = d.hoy;
-  document.getElementById('kpi-semana').textContent = d.semana;
-  document.getElementById('kpi-pendientes').textContent = d.pendientes;
-  document.getElementById('kpi-proximos').textContent = d.proximos;
+function actualizarVistaDashboard(stats, historial) {
+  if (!stats) return;
+
+  const d = stats;
+  const kpiHoy = document.getElementById('kpi-hoy');
+  if (kpiHoy) kpiHoy.textContent = d.hoy;
+  const kpiSem = document.getElementById('kpi-semana');
+  if (kpiSem) kpiSem.textContent = d.semana;
+  const kpiPen = document.getElementById('kpi-pendientes');
+  if (kpiPen) kpiPen.textContent = d.pendientes;
+  const kpiProx = document.getElementById('kpi-proximos');
+  if (kpiProx) kpiProx.textContent = d.proximos;
 
   // Gráfica de días
-  renderBarChart('chartDias', d.porDia.slice(-14).map(r => ({
+  renderBarChart('chartDias', (d.porDia || []).slice(-14).map(r => ({
     label: formatFechaDia(r.dia), value: r.total
   })));
 
   // Gráfica de máquinas
-  const maqData = d.porMaquina.map(r => ({ label: r.nombre, value: r.total_sesiones }));
+  const maqData = (d.porMaquina || []).map(r => ({ label: r.nombre, value: r.total_sesiones }));
   renderBarChart('chartMaquinas', maqData.slice(0, 12));
 
   // Últimos mantenimientos
-  const histRes = await apiFetch('/api/historial?');
-  if (histRes.ok) renderUltimosMantenimientos(histRes.data.slice(0, 8));
+  if (historial) renderUltimosMantenimientos(historial.slice(0, 8));
 }
 
 function renderBarChart(containerId, items) {
@@ -765,6 +777,7 @@ async function apiFetch(url, options = {}) {
     }
     else if (url.includes('/api/dashboard')) action = 'getDashboard';
     else if (url.includes('/api/historial')) action = 'getHistorial';
+    else if (url.includes('/api/all-data')) action = 'getAllInitData';
     else if (url.includes('/api/login-admin')) action = 'loginAdmin';
     else if (url.includes('/api/sesion/') && url.includes('/detalle')) {
        action = 'getHistorial'; // Placeholder si es necesario
@@ -885,9 +898,7 @@ async function recargarTodo() {
   if (grid) grid.innerHTML = skeletonMaquinas();
   
   await cargarDatosBase();
-  await cargarDashboard();
   isCargando = false;
-  renderActualSection();
 }
 
 // Cerrar modal al hacer clic fuera
