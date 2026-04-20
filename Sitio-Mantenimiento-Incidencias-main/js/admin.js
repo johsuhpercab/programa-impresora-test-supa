@@ -762,9 +762,8 @@ async function apiFetch(url, options = {}) {
     else if (url.includes('/api/maquinas') && method === 'GET') action = 'getMaquinas';
     else if (url.includes('/api/maquina/') && method === 'GET' && url.includes('/qr')) {
        // Operario uses operario.html in the same directory
-       const baseUrl = window.location.href.split('#')[0].split('?')[0];
-       const baseDir = baseUrl.substring(0, baseUrl.lastIndexOf('/'));
-       const u = baseDir + "/operario.html?id=" + url.split('/')[3];
+       const urlObj = new URL('operario.html', window.location.origin + window.location.pathname);
+       const u = urlObj.href + "?id=" + url.split('/')[3];
        return { ok: true, data: { qr: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(u), url: u } };
     }
     else if (url.includes('/api/maquinas') && method === 'POST') action = 'manageMaquinas';
