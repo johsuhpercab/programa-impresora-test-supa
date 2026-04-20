@@ -79,7 +79,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load secondary data
   try {
     await cargarDashboard();
-    cargarInfoServidor();
     const selectRol = document.getElementById('simuladorRol');
     if (selectRol) cambiarRolSimulado(selectRol.value);
   } catch (err) {
@@ -158,12 +157,7 @@ async function cargarDatosBase() {
   }
 }
 
-async function cargarInfoServidor() {
-  const res = await apiFetch('/api/info');
-  if (res.ok) {
-    document.getElementById('serverInfo').textContent = `🌐 ${res.data.ip}:${res.data.puerto}`;
-  }
-}
+
 
 // ── Navegación ────────────────────────────────────────────────────────────────
 const sectionTitles = {
@@ -752,9 +746,6 @@ async function eliminarUsuarioAdmin(id) {
 // ── Utilidades ────────────────────────────────────────────────────────────────
 async function apiFetch(url, options = {}) {
   try {
-    const isLocalInfo = url.includes('/api/info');
-    if (isLocalInfo) return { ok: true, data: { status: "Cloud", info: "Google Sheets" } };
-
     let action = '';
     let payload = options.body;
     let method = options.method || 'GET';
