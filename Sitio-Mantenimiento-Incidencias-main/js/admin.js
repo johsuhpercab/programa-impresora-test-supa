@@ -54,26 +54,37 @@ function cambiarRolSimulado(nuevoRol) {
 
 // ── Inicialización ────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  isCargando = true;
-  // Show skeletons before data loads
-  const grid = document.getElementById('gridMaquinas');
-  if (grid) grid.innerHTML = skeletonMaquinas();
-  const tbody = document.getElementById('dashboardUltimos');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)"><span class="spinner" style="display:inline-block;margin-right:8px"></span>Conectando con Google Sheets...</td></tr>';
-  
-  const maqBadge = document.getElementById('badge-maquinas');
-  if (maqBadge) {
-    maqBadge.textContent = '...';
-    maqBadge.style.display = 'inline';
+  try {
+    isCargando = true;
+    // Show initial skeletons
+    const grid = document.getElementById('gridMaquinas');
+    if (grid) grid.innerHTML = skeletonMaquinas();
+    const tbody = document.getElementById('dashboardUltimos');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)"><span class="spinner" style="display:inline-block;margin-right:8px"></span>Conectando con Google Sheets...</td></tr>';
+    
+    const maqBadge = document.getElementById('badge-maquinas');
+    if (maqBadge) {
+      maqBadge.textContent = '...';
+      maqBadge.style.display = 'inline';
+    }
+
+    await cargarDatosBase();
+  } catch (err) {
+    console.error('Error durante la carga inicial:', err);
+  } finally {
+    isCargando = false;
+    renderMaquinas(); // Render real data (or empty state) now that loading is done
   }
 
-  await cargarDatosBase();
-  isCargando = false;
-  
-  await cargarDashboard();
-  cargarInfoServidor();
-  const selectRol = document.getElementById('simuladorRol');
-  if (selectRol) cambiarRolSimulado(selectRol.value);
+  // Load secondary data
+  try {
+    await cargarDashboard();
+    cargarInfoServidor();
+    const selectRol = document.getElementById('simuladorRol');
+    if (selectRol) cambiarRolSimulado(selectRol.value);
+  } catch (err) {
+    console.warn('Error en componentes secundarios:', err);
+  }
 });
 
 function skeletonMaquinas() {
@@ -267,6 +278,7 @@ function renderUltimosMantenimientos(registros) {
 
 // ── Máquinas ──────────────────────────────────────────────────────────────────
 function renderMaquinas() {
+  const salaFiltro = document.getElementById('filtroSalaMaquinas') ? document.getElementById('filtroSalaMaquinas').value : '';
   const grid = document.getElementById('gridMaquinas');
   
   if (isCargando && !datosMaquinas.length) {
