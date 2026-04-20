@@ -574,8 +574,6 @@ async function cargarHistorial() {
   if (empty) empty.style.display = 'none';
 
   const res = await apiFetch('/api/historial?' + params.toString());
-  const tbody = document.getElementById('tablaHistorial');
-  const empty = document.getElementById('historialEmpty');
 
   if (!res.ok || !res.data.length) {
     tbody.innerHTML = '';
