@@ -44,10 +44,10 @@ function showError(msg) {
 
 // ── PIN ───────────────────────────────────────────────────────────────────────
 function pinKey(digit) {
-  if (pinBuffer.length >= 6) return;
+  if (pinBuffer.length >= 4) return;
   pinBuffer += digit;
   actualizarDotsPIN();
-  if (pinBuffer.length >= 4) verificarPIN();
+  if (pinBuffer.length === 4) verificarPIN();
 }
 
 function pinDelete() {
@@ -57,7 +57,7 @@ function pinDelete() {
 }
 
 function actualizarDotsPIN() {
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 4; i++) {
     const dot = document.getElementById('d' + i);
     if (!dot) continue;
     dot.classList.toggle('filled', i < pinBuffer.length);
@@ -160,13 +160,52 @@ function reiniciar() {
   showScreen('pin');
 }
 
-// ── API ───────────────────────────────────────────────────────────────────────
+const API = window.API_URL || 'https://script.google.com/macros/s/AKfycbxtJLSCIzCzkc90A-Q-pOQnInLQlKkR3GPWJUFF1g993JCjodqmkDoY95KAod-u1fPl/exec'; // Compartir URL con admin.js o inyectarla
+
 async function apiFetch(url, options = {}) {
-  const opts = {
-    method: options.method || 'GET',
-    headers: { 'Content-Type': 'application/json' },
-  };
-  if (options.body) opts.body = JSON.stringify(options.body);
-  const res = await fetch(url, opts);
-  return await res.json();
+  try {
+    let action = '';
+    let payload = options.body;
+    let method = options.method || 'GET';
+
+    if (url.includes('/api/maquina/') && method === 'GET') {
+      action = 'getMaquinaById';
+      url += '&id=' + url.split('/')[3]; 
+    }
+    else if (url.includes('/api/operarios/verificar-pin')) action = 'verificarPin';
+    else if (url.includes('/api/sesion/iniciar')) {
+      // Dummy response as GAS doesn't require "starting" a session explicitly
+      return { ok: true, data: { sesion_id: new Date().getTime() } };
+    }
+    else if (url.includes('/api/sesion/') && url.includes('/completar')) {
+      action = 'enviarIncidencia';
+      payload = {
+        maquina_id: maquinaId,
+        maquina_nombre: maquinaData?.nombre,
+        sala_nombre: maquinaData?.sala_nombre,
+        operario_nombre: operarioData?.nombre,
+        notas: options.body.observaciones || '',
+        tipo: 'Mantenimiento'
+      };
+    }
+
+    if (API === 'INSERTA_TU_WEB_APP_URL_AQUI') {
+      return { ok: false, error: 'Falta añadir la URL del Sheet API' };
+    }
+
+    if (method === 'GET' || action === 'getMaquinaById') {
+      const gUrl = `${API}?action=${action}${action==='getMaquinaById' ? '&id='+url.split('=')[1] : ''}`;
+      const res = await fetch(gUrl);
+      return await res.json();
+    } else {
+      const res = await fetch(API, {
+        method: 'POST',
+        body: JSON.stringify({ action, method, payload }),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      return await res.json();
+    }
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
 }

@@ -1,10 +1,11 @@
 'use strict';
 
-const API = '';
+const API = 'https://script.google.com/macros/s/AKfycbxtJLSCIzCzkc90A-Q-pOQnInLQlKkR3GPWJUFF1g993JCjodqmkDoY95KAod-u1fPl/exec'; // <--- PEGAR LA URL DE LA WEB APP AQUI
 let datosSalas = [];
 let datosMaquinas = [];
 let datosOperarios = [];
 let datosUsuarios = [];
+let isCargando = false;
 
 let rolActual = 'admin';
 
@@ -53,12 +54,49 @@ function cambiarRolSimulado(nuevoRol) {
 
 // ── Inicialización ────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  await cargarDatosBase();
-  await cargarDashboard();
-  cargarInfoServidor();
-  const selectRol = document.getElementById('simuladorRol');
-  if (selectRol) cambiarRolSimulado(selectRol.value);
+  try {
+    isCargando = true;
+    // Show initial skeletons
+    const grid = document.getElementById('gridMaquinas');
+    if (grid) grid.innerHTML = skeletonMaquinas();
+    const tbody = document.getElementById('dashboardUltimos');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)"><span class="spinner" style="display:inline-block;margin-right:8px"></span>Conectando con Google Sheets...</td></tr>';
+    
+    const maqBadge = document.getElementById('badge-maquinas');
+    if (maqBadge) {
+      maqBadge.textContent = '...';
+      maqBadge.style.display = 'inline';
+    }
+
+    await cargarDatosBase();
+  } catch (err) {
+    console.error('Error durante la carga inicial:', err);
+  } finally {
+    isCargando = false;
+    renderMaquinas(); // Render real data (or empty state) now that loading is done
+  }
+
+  // Load secondary data
+  try {
+    await cargarDashboard();
+    cargarInfoServidor();
+    const selectRol = document.getElementById('simuladorRol');
+    if (selectRol) cambiarRolSimulado(selectRol.value);
+  } catch (err) {
+    console.warn('Error en componentes secundarios:', err);
+  }
 });
+
+function skeletonMaquinas() {
+  const card = `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;animation:pulse 1.5s ease-in-out infinite">
+    <div style="height:14px;background:var(--border);border-radius:6px;width:60%;margin-bottom:12px"></div>
+    <div style="height:10px;background:var(--border);border-radius:6px;width:40%;margin-bottom:20px"></div>
+    <div style="height:10px;background:var(--border);border-radius:6px;width:80%;margin-bottom:8px"></div>
+    <div style="height:10px;background:var(--border);border-radius:6px;width:70%"></div>
+  </div>`;
+  const inner = Array(6).fill(card).join('');
+  return `<div class="grid-maquinas-inner" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;display:grid">${inner}</div>`;
+}
 
 async function cargarDatosBase() {
   const [salas, maquinas, operarios, usuarios] = await Promise.all([
@@ -71,6 +109,11 @@ async function cargarDatosBase() {
   datosMaquinas = maquinas.data || [];
   datosOperarios = operarios.data || [];
   datosUsuarios = usuarios.data || [];
+
+  // Update UI now that data is ready
+  if (document.getElementById('section-maquinas').classList.contains('active')) {
+    renderMaquinas();
+  }
 
   // Poblar selects de salas
   ['filtroSalaMaquinas', 'filtroSala', 'filtroSalaQR', 'nuevoMaquinaSala'].forEach(id => {
@@ -106,6 +149,13 @@ async function cargarDatosBase() {
   const badge = document.getElementById('badge-alertas');
   if (alertas > 0) { badge.textContent = alertas; badge.style.display = 'inline'; }
   else badge.style.display = 'none';
+
+  // Badge máquinas total
+  const maqBadge = document.getElementById('badge-maquinas');
+  if (maqBadge) {
+    maqBadge.textContent = datosMaquinas.length;
+    maqBadge.style.display = datosMaquinas.length > 0 ? 'inline' : 'none';
+  }
 }
 
 async function cargarInfoServidor() {
@@ -228,14 +278,24 @@ function renderUltimosMantenimientos(registros) {
 
 // ── Máquinas ──────────────────────────────────────────────────────────────────
 function renderMaquinas() {
-  const salaFiltro = document.getElementById('filtroSalaMaquinas').value;
+  const salaFiltro = document.getElementById('filtroSalaMaquinas') ? document.getElementById('filtroSalaMaquinas').value : '';
+  const grid = document.getElementById('gridMaquinas');
+  
+  if (isCargando && !datosMaquinas.length) {
+    grid.innerHTML = skeletonMaquinas();
+    return;
+  }
+
   const lista = salaFiltro
     ? datosMaquinas.filter(m => String(m.sala_id) === String(salaFiltro))
     : datosMaquinas;
 
-  const grid = document.getElementById('gridMaquinas');
   if (!lista.length) {
-    grid.innerHTML = '<div class="empty-state"><div class="icon">🖨️</div><p>No hay máquinas en esta sala</p></div>';
+    if (isCargando) {
+       grid.innerHTML = skeletonMaquinas();
+    } else {
+       grid.innerHTML = '<div class="empty-state"><div class="icon">🖨️</div><p>No hay máquinas en esta sala</p></div>';
+    }
     return;
   }
 
@@ -269,11 +329,11 @@ function renderMaquinas() {
         </div>
         <div class="maquina-actions">
           ${rolActual === 'admin' ? `
-            <button class="btn btn-primary btn-sm" onclick="verQR(${m.id}, '${escapar(m.nombre)}', '${escapar(m.sala_nombre)}')">📱 QR</button>
-            <button class="btn btn-outline btn-sm" onclick="editarMaquina(${m.id})">✏️ Editar</button>
-            <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);padding:4px 8px" onclick="eliminarMaquina(${m.id})" title="Eliminar máquina">🗑️</button>
+            <button class="btn btn-primary btn-sm" onclick="verQR('${m.id}', '${escapar(m.nombre)}', '${escapar(m.sala_nombre)}')">📱 QR</button>
+            <button class="btn btn-outline btn-sm" onclick="editarMaquina('${m.id}')">✏️ Editar</button>
+            <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);padding:4px 8px" onclick="eliminarMaquina('${m.id}')" title="Eliminar máquina">🗑️</button>
           ` : `
-            <button class="btn btn-primary btn-sm" onclick="verQR(${m.id}, '${escapar(m.nombre)}', '${escapar(m.sala_nombre)}')">📱 QR</button>
+            <button class="btn btn-primary btn-sm" onclick="verQR('${m.id}', '${escapar(m.nombre)}', '${escapar(m.sala_nombre)}')">📱 QR</button>
           `}
         </div>
       </div>
@@ -353,6 +413,8 @@ async function guardarMaquina() {
     cerrarModal('modalMaquina');
     await cargarDatosBase();
     renderMaquinas();
+  } else {
+    alert('Error al guardar: ' + (res.error || 'Error desconocido'));
   }
 }
 
@@ -415,8 +477,13 @@ function renderQRs() {
     : datosMaquinas;
 
   const grid = document.getElementById('gridQRs');
+  if (isCargando && !datosMaquinas.length) {
+     grid.innerHTML = skeletonMaquinas();
+     return;
+  }
+  
   grid.innerHTML = lista.map(m => `
-    <div class="maquina-card fade-in" style="cursor:pointer" onclick="verQR(${m.id}, '${escapar(m.nombre)}', '${escapar(m.sala_nombre)}')">
+    <div class="maquina-card fade-in" style="cursor:pointer" onclick="verQR('${m.id}', '${escapar(m.nombre)}', '${escapar(m.sala_nombre)}')">
       <div class="maquina-header">
         <div>
           <div class="maquina-nombre">${m.nombre}</div>
@@ -683,10 +750,61 @@ async function eliminarUsuarioAdmin(id) {
 // ── Utilidades ────────────────────────────────────────────────────────────────
 async function apiFetch(url, options = {}) {
   try {
-    const opts = { method: options.method || 'GET', headers: { 'Content-Type': 'application/json' } };
-    if (options.body) opts.body = JSON.stringify(options.body);
-    const res = await fetch(url, opts);
-    return await res.json();
+    const isLocalInfo = url.includes('/api/info');
+    if (isLocalInfo) return { ok: true, data: { ip: "127.0.0.1", puerto: 80 } };
+
+    let action = '';
+    let payload = options.body;
+    let method = options.method || 'GET';
+    let id = null;
+
+    if (url.includes('/api/salas')) action = 'getSalas';
+    else if (url.includes('/api/maquinas') && method === 'GET') action = 'getMaquinas';
+    else if (url.includes('/api/maquina/') && method === 'GET' && url.includes('/qr')) {
+       // Operario uses operario.html in the same directory
+       const urlObj = new URL('operario.html', window.location.origin + window.location.pathname);
+       const u = urlObj.href + "?id=" + url.split('/')[3];
+       return { ok: true, data: { qr: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(u), url: u } };
+    }
+    else if (url.includes('/api/maquinas') && method === 'POST') action = 'manageMaquinas';
+    else if (url.includes('/api/maquina/') && (method === 'PUT' || method === 'DELETE')) {
+       action = 'manageMaquinas';
+       id = url.split('/')[3];
+    }
+    else if (url.includes('/api/operarios') && method === 'GET') action = 'getOperarios';
+    else if (url.includes('/api/operarios') && method === 'POST') action = 'manageOperarios';
+    else if (url.includes('/api/usuarios') && method === 'GET') action = 'getUsuarios';
+    else if (url.includes('/api/usuarios') && method === 'POST') action = 'manageUsuarios';
+    else if (url.includes('/api/usuario/') && method === 'DELETE') {
+       action = 'manageUsuarios';
+       id = url.split('/')[3];
+    }
+    else if (url.includes('/api/dashboard')) action = 'getDashboard';
+    else if (url.includes('/api/historial')) action = 'getHistorial';
+    else if (url.includes('/api/sesion/') && url.includes('/detalle')) {
+       const historyRes = await fetch(`${API}?action=getHistorial`);
+       const h = await historyRes.json();
+       const realId = url.split('/')[3];
+       const found = h.data.find(x => x.id == realId);
+       return { ok: true, data: { sesion: found || {}, items: [] } };
+    }
+
+    if (API === 'INSERTA_TU_WEB_APP_URL_AQUI') {
+      console.warn('Falta añadir la URL del Sheet en admin.js');
+      return { ok: true, data: [] };
+    }
+
+    if (method === 'GET') {
+      const res = await fetch(`${API}?action=${action}`);
+      return await res.json();
+    } else {
+      const res = await fetch(API, {
+        method: 'POST',
+        body: JSON.stringify({ action, method, payload, id }),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      return await res.json();
+    }
   } catch (e) {
     return { ok: false, error: e.message };
   }
@@ -720,10 +838,16 @@ function escapar(str) {
 }
 
 async function recargarTodo() {
+  isCargando = true;
+  const grid = document.getElementById('gridMaquinas');
+  if (grid) grid.innerHTML = skeletonMaquinas();
+  
   showLoader(true);
   await cargarDatosBase();
   await cargarDashboard();
   showLoader(false);
+  isCargando = false;
+  renderMaquinas();
 }
 
 // Cerrar modal al hacer clic fuera
