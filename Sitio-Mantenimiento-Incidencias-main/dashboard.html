@@ -7,9 +7,36 @@
   <title>Panel de Gestión – Impresoras y Máquinas 3D</title>
   <meta name="description" content="Sistema de gestión de mantenimiento preventivo para impresoras y máquinas 3D">
   <link rel="stylesheet" href="css/main.css">
+  <script>
+    // ── Guard de Seguridad Instantáneo ──
+    (function() {
+      const pin = localStorage.getItem('admin_pin');
+      if (!pin) {
+        document.documentElement.classList.add('auth-locked');
+      }
+    })();
+  </script>
+  <style>
+    .auth-locked .layout { display: none !important; }
+    .auth-locked .admin-login-overlay { display: flex !important; opacity: 1 !important; visibility: visible !important; }
+  </style>
 </head>
 
 <body>
+  
+  <!-- ── Admin Login Overlay ── -->
+  <div class="admin-login-overlay" id="adminLoginOverlay">
+    <div class="login-card" id="loginCard">
+      <span class="login-icon">🔒</span>
+      <h2>Acceso Restringido</h2>
+      <p>Introduce el PIN administrativo para continuar</p>
+      <div class="pin-input-group">
+        <input type="password" id="adminPinInput" class="pin-input" maxlength="6" placeholder="••••" inputmode="numeric">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="intentarLogin()">Entrar</button>
+      <div id="loginError" class="login-error"></div>
+    </div>
+  </div>
 
   <!-- Loader (Desactivado) -->
   <div id="loaderOverlay" style="display:none"></div>
@@ -65,7 +92,8 @@
       </nav>
 
       <div class="sidebar-footer">
-        v1.0 · Sistema de Gestión de Mantenimiento
+        <div style="margin-bottom:8px">v1.0 · Sistema de Gestión</div>
+        <button class="btn btn-outline btn-sm btn-full" onclick="cerrarSesionAdmin()" style="font-size:11px;padding:6px">🚪 Cerrar Sesión</button>
       </div>
     </aside>
     <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>

@@ -57,7 +57,28 @@ function setupIfNeeded() {
     registros.setFrozenRows(1);
   }
 
+  // Configuración
+  let config = ss.getSheetByName('Config');
+  if (!config) {
+    config = ss.insertSheet('Config');
+    config.appendRow(['clave', 'valor', 'descripcion']);
+    config.setFrozenRows(1);
+    config.appendRow(['admin_pin', '1234', 'PIN global de acceso al panel de administración']);
+  }
+
   props.setProperty('initialized', 'true');
+}
+
+function getAdminPin() {
+  const sheet = getSheet('Config');
+  const rows = getRowsToObjects(sheet);
+  const row = rows.find(r => r.clave === 'admin_pin');
+  return row ? String(row.valor).trim() : '1234';
+}
+
+function checkAuth(pin) {
+  if (!pin) return false;
+  return String(pin).trim() === getAdminPin();
 }
 
 // ── Entry points ─────────────────────────────────────────────────────────────
@@ -66,14 +87,26 @@ function doPost(e) {
     setupIfNeeded();
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
+    const pin = data.auth_pin;
+
+    // Acciones Públicas (Operario)
+    if (action === 'verificarPin')    return verificarPin(data.payload.pin);
+    if (action === 'enviarIncidencia') return guardarIncidencia(data);
+
+    // Login Admin
+    if (action === 'loginAdmin') {
+       if (checkAuth(pin)) return json({ ok: true, message: 'Acceso concedido' });
+       return json({ ok: false, error: 'PIN de Administrador incorrecto' });
+    }
+
+    // Acciones Protegidas
+    if (!checkAuth(pin)) return json({ ok: false, error: 'No autorizado. Se requiere PIN de Administrador.', code: 403 });
 
     if (action === 'manageMaquinas')  return handleMaquinas(data);
     if (action === 'manageOperarios') return handleOperarios(data);
     if (action === 'manageUsuarios')  return handleUsuarios(data);
-    if (action === 'verificarPin')    return verificarPin(data.payload.pin);
-    if (action === 'enviarIncidencia') return guardarIncidencia(data);
 
-    return json({ status: 'error', error: 'Action not found: ' + action });
+    return json({ status: 'error', error: 'Action not found or protected: ' + action });
   } catch (err) {
     return json({ status: 'error', error: err.message });
   }
@@ -83,14 +116,20 @@ function doGet(e) {
   try {
     setupIfNeeded();
     const action = e && e.parameter && e.parameter.action;
+    const pin = e && e.parameter && e.parameter.auth_pin;
 
+    // Acciones Públicas
     if (action === 'getSalas')       return getSalas();
     if (action === 'getMaquinas')    return getMaquinas();
+    if (action === 'getMaquinaById') return getMaquinaById(e.parameter.id);
+
+    // Acciones Protegidas (Dashboard / Admin)
+    if (!checkAuth(pin)) return json({ ok: false, error: 'Acceso Denegado. PIN incorrecto.', code: 403 });
+
     if (action === 'getOperarios')   return getOperarios();
     if (action === 'getUsuarios')    return getUsuarios();
     if (action === 'getDashboard')   return getDashboard();
     if (action === 'getHistorial')   return getHistorial();
-    if (action === 'getMaquinaById') return getMaquinaById(e.parameter.id);
 
     return json({ status: 'ok', message: 'API del Sistema de Gestión activo y configurado.' });
   } catch (err) {
