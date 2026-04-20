@@ -9,82 +9,44 @@ let isCargando = false;
 
 let rolActual = 'admin';
 
-// ── Simulator Roles ────────────────────────────────────────────────────────
+// ── Simulator Roles (Eliminado para usar seguridad real) ──────────────────
 function cambiarRolSimulado(nuevoRol) {
-  rolActual = nuevoRol;
-  
-  // Update icon
-  const iconD = { admin: '🛡️', tecnico: '🔧', usuario: '👤' };
-  const icon = document.getElementById('roleIcon');
-  if (icon) icon.textContent = iconD[nuevoRol] || '👤';
-
-  // UI updates for badges and locks on sidebar
-  const els = ['operarios', 'usuarios', 'qrcodes'];
-  els.forEach(sect => {
-    const navItem = document.getElementById('nav-' + sect);
-    const badge = document.getElementById('badge-' + sect);
-    if (!navItem) return;
-    if (rolActual !== 'admin') {
-      navItem.classList.add('locked');
-      if (badge) badge.style.display = 'inline-block';
-    } else {
-      navItem.classList.remove('locked');
-      if (badge) badge.style.display = 'none';
-    }
-  });
-
-  const btnNuevaMaquina = document.getElementById('btnNuevaMaquina');
-  if (btnNuevaMaquina) {
-    btnNuevaMaquina.style.display = rolActual === 'admin' ? 'inline-block' : 'none';
-  }
-
-  // Re-render UI views dependent on role
-  renderMaquinas(); 
-  
-  // Force navigation out if currently on restricted section
-  const currentSection = document.querySelector('.section.active');
-  if (currentSection && rolActual !== 'admin') {
-    const activeId = currentSection.id;
-    if (activeId === 'section-operarios' || activeId === 'section-usuarios' || activeId === 'section-qrcodes') {
-      navigateTo('dashboard');
-    }
-  }
+  // Función mantenida solo para compatibilidad de UI si es necesario, 
+  // pero la seguridad real ahora depende del PIN.
 }
 
 
-// ── Inicialización ────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+  const pin = localStorage.getItem('admin_pin');
+  if (!pin) return; // Esperar al login manual
+
   try {
     isCargando = true;
-    // Show initial skeletons
+    
+    // Inyectar interfaz de forma segura
+    const container = document.getElementById('dashboardContent');
+    if (container) {
+      container.innerHTML = DASHBOARD_HTML;
+    }
+
     const grid = document.getElementById('gridMaquinas');
     if (grid) grid.innerHTML = skeletonMaquinas();
     const tbody = document.getElementById('dashboardUltimos');
     if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)"><span class="spinner" style="display:inline-block;margin-right:8px"></span>Conectando con Google Sheets...</td></tr>';
     
-    const maqBadge = document.getElementById('badge-maquinas');
-    if (maqBadge) {
-      maqBadge.textContent = '...';
-      maqBadge.style.display = 'inline';
-    }
-
     await cargarDatosBase();
   } catch (err) {
     console.error('Error durante la carga inicial:', err);
   } finally {
     isCargando = false;
-    renderMaquinas(); // Render real data (or empty state) now that loading is done
+    renderMaquinas(); 
   }
 
-  // Load secondary data
   try {
     await cargarDashboard();
-    const selectRol = document.getElementById('simuladorRol');
-    if (selectRol) cambiarRolSimulado(selectRol.value);
-
-    // Auto-sincronización cada 2 minutos para mantener el panel "vivo"
+    // Auto-sincronización cada 2 minutos
     setInterval(() => {
-      console.log('Sincronización automática con MantApp Cloud...');
+      console.log('Sincronización automática con el Sistema de Gestión...');
       recargarTodo();
     }, 120000);
   } catch (err) {
@@ -422,9 +384,7 @@ async function guardarMaquina() {
     estado: document.getElementById('editEstado').value,
   };
   if (!datos.nombre) return;
-  showLoader(true);
   const res = await apiFetch(`/api/maquina/${id}`, { method: 'PUT', body: datos });
-  showLoader(false);
   if (res.ok) {
     cerrarModal('modalMaquina');
     await cargarDatosBase();
@@ -456,12 +416,10 @@ async function crearMaquina() {
     return;
   }
 
-  showLoader(true);
   const res = await apiFetch('/api/maquinas', { 
     method: 'POST', 
     body: { nombre, sala_id, tipo, frecuencia_dias, modelo } 
   });
-  showLoader(false);
 
   if (res.ok) {
     cerrarModal('modalNuevaMaquina');
@@ -474,9 +432,7 @@ async function crearMaquina() {
 
 async function eliminarMaquina(id) {
   if (!confirm('¿Estás seguro de que deseas eliminar esta máquina por completo? Se borrarán también sus registros de mantenimiento.')) return;
-  showLoader(true);
   const res = await apiFetch(`/api/maquina/${id}`, { method: 'DELETE' });
-  showLoader(false);
   if (res.ok) {
     await cargarDatosBase();
     renderMaquinas();
@@ -686,9 +642,7 @@ async function crearOperario() {
     return;
   }
 
-  showLoader(true);
   const res = await apiFetch('/api/operarios', { method: 'POST', body: { nombre, pin } });
-  showLoader(false);
 
   if (res.ok) {
     cerrarModal('modalOperario');
@@ -758,9 +712,7 @@ async function crearUsuario() {
     return;
   }
 
-  showLoader(true);
   const res = await apiFetch('/api/usuarios', { method: 'POST', body: { nombre, email, rol } });
-  showLoader(false);
 
   if (res.ok) {
     cerrarModal('modalUsuario');
@@ -773,9 +725,7 @@ async function crearUsuario() {
 
 async function eliminarUsuarioAdmin(id) {
   if (!confirm('¿Desactivar este usuario?')) return;
-  showLoader(true);
   const res = await apiFetch(`/api/usuario/${id}`, { method: 'DELETE' });
-  showLoader(false);
   if (res.ok) {
     await cargarDatosBase();
     renderUsuarios();
@@ -784,16 +734,18 @@ async function eliminarUsuarioAdmin(id) {
 
 // ── Utilidades ────────────────────────────────────────────────────────────────
 async function apiFetch(url, options = {}) {
+  const pin = localStorage.getItem('admin_pin');
+  
   try {
     let action = '';
     let payload = options.body;
     let method = options.method || 'GET';
     let id = null;
 
+    // Determinar acción
     if (url.includes('/api/salas')) action = 'getSalas';
     else if (url.includes('/api/maquinas') && method === 'GET') action = 'getMaquinas';
     else if (url.includes('/api/maquina/') && method === 'GET' && url.includes('/qr')) {
-       // Operario uses operario.html in the same directory
        const urlObj = new URL('operario.html', window.location.origin + window.location.pathname);
        const u = urlObj.href + "?id=" + url.split('/')[3];
        return { ok: true, data: { qr: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(u), url: u } };
@@ -813,43 +765,98 @@ async function apiFetch(url, options = {}) {
     }
     else if (url.includes('/api/dashboard')) action = 'getDashboard';
     else if (url.includes('/api/historial')) action = 'getHistorial';
+    else if (url.includes('/api/login-admin')) action = 'loginAdmin';
     else if (url.includes('/api/sesion/') && url.includes('/detalle')) {
-       const historyRes = await fetch(`${API}?action=getHistorial`);
-       const h = await historyRes.json();
-       const realId = url.split('/')[3];
-       const found = h.data.find(x => x.id == realId);
-       return { ok: true, data: { sesion: found || {}, items: [] } };
+       action = 'getHistorial'; // Placeholder si es necesario
     }
 
-    if (API === 'INSERTA_TU_WEB_APP_URL_AQUI') {
+    if (API.includes('INSERTA_TU_WEB_APP_URL_AQUI')) {
       console.warn('Falta añadir la URL del Sheet en admin.js');
       return { ok: true, data: [] };
     }
 
-    if (method === 'GET') {
-      const res = await fetch(`${API}?action=${action}`);
-      return await res.json();
-    } else {
-      const res = await fetch(API, {
-        method: 'POST',
-        body: JSON.stringify({ action, method, payload, id }),
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-      });
-      return await res.json();
+    // Siempre enviamos auth_pin si existe
+    let fetchUrl = API + (API.includes('?') ? '&' : '?') + 'action=' + action;
+    if (id) fetchUrl += '&id=' + id;
+    if (pin) fetchUrl += '&auth_pin=' + pin;
+
+    let fetchOptions = {
+      method: 'POST',
+      body: JSON.stringify({
+        action: action,
+        id: id,
+        auth_pin: pin,
+        payload: payload,
+        method: method
+      }),
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+    };
+
+    const response = await fetch(fetchUrl, fetchOptions);
+    const result = await response.json();
+    
+    if (result.code === 403) {
+      console.error('Acceso no autorizado: PIN incorrecto o sesión caducada');
+      cerrarSesionAdmin();
+      return { ok: false, error: 'No autorizado' };
     }
-  } catch (e) {
-    return { ok: false, error: e.message };
+    
+    return result;
+  } catch (err) {
+    console.error('Error en apiFetch:', err);
+    return { ok: false, error: 'Error de conexión con el servidor' };
   }
+}
+
+// ── Gestión de Autenticación ──────────────────────────────────────────────────
+async function intentarLogin() {
+  const input = document.getElementById('adminPinInput');
+  const error = document.getElementById('loginError');
+  const card = document.getElementById('loginCard');
+  const pin = input.value.trim();
+
+  if (!pin) return;
+
+  error.innerHTML = '<span class="spinner-sm"></span> Verificando...';
+  
+  // Guardamos temporalmente para validar contra el servidor
+  localStorage.setItem('admin_pin', pin);
+
+  const res = await apiFetch('/api/login-admin', { method: 'POST' });
+  
+  if (res.ok) {
+    error.innerHTML = '<span style="color:var(--success)">✅ ¡Correcto! Entrando...</span>';
+    
+    // Inyectar interfaz inmediatamente por seguridad
+    const container = document.getElementById('dashboardContent');
+    if (container) {
+      container.innerHTML = DASHBOARD_HTML;
+    }
+    
+    setTimeout(() => {
+      document.documentElement.classList.remove('auth-locked');
+      location.reload();
+    }, 500);
+  } else {
+    localStorage.removeItem('admin_pin');
+    error.innerHTML = '❌ PIN administrativo incorrecto';
+    card.classList.add('shake');
+    setTimeout(() => card.classList.remove('shake'), 400);
+    input.value = '';
+    input.focus();
+  }
+}
+
+function cerrarSesionAdmin() {
+  localStorage.removeItem('admin_pin');
+  location.reload();
 }
 
 function abrirModal(id) { document.getElementById(id).classList.add('open'); }
 function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
 
 function showLoader(show) {
-  const overlay = document.getElementById('loaderOverlay');
-  const topInd = document.getElementById('topLoadingIndicator');
-  if (overlay) overlay.classList.toggle('show', show);
-  if (topInd) topInd.style.display = show ? 'flex' : 'none';
+  // Deshabilitado por petición del usuario
 }
 
 function formatFechaHora(str) {
@@ -877,10 +884,8 @@ async function recargarTodo() {
   const grid = document.getElementById('gridMaquinas');
   if (grid) grid.innerHTML = skeletonMaquinas();
   
-  showLoader(true);
   await cargarDatosBase();
   await cargarDashboard();
-  showLoader(false);
   isCargando = false;
   renderActualSection();
 }

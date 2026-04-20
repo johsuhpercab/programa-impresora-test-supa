@@ -22,6 +22,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     isCargando = true;
+    
+    // Inyectar interfaz de forma segura
+    const container = document.getElementById('dashboardContent');
+    if (container) {
+      container.innerHTML = DASHBOARD_HTML;
+    }
+
     const grid = document.getElementById('gridMaquinas');
     if (grid) grid.innerHTML = skeletonMaquinas();
     const tbody = document.getElementById('dashboardUltimos');
@@ -819,6 +826,13 @@ async function intentarLogin() {
   
   if (res.ok) {
     error.innerHTML = '<span style="color:var(--success)">✅ ¡Correcto! Entrando...</span>';
+    
+    // Inyectar interfaz inmediatamente por seguridad
+    const container = document.getElementById('dashboardContent');
+    if (container) {
+      container.innerHTML = DASHBOARD_HTML;
+    }
+    
     setTimeout(() => {
       document.documentElement.classList.remove('auth-locked');
       location.reload();

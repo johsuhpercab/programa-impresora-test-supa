@@ -4,8 +4,32 @@
    ═══════════════════════════════════════════════════════════ */
 
 // ─── API LOCAL (servidor Node.js) ───────────────────────────────────────────
-// Detectar automáticamente la URL base del servidor
-const API_BASE = window.location.origin;
+// Detectar URL o inyectarla
+const API_URL = 'https://script.google.com/macros/s/AKfycbzcbeZYyHN2guCWwDc7rYekWruf9RhzOCp4dvlW-2JYK9ALA1KcBHIIPYHu0F4h3gHk/exec'; 
+
+async function apiFetch(url, options = {}) {
+  let action = '';
+  let method = options.method || 'GET';
+  let payload = options.body;
+
+  if (url.includes('/api/maquinas/lista')) action = 'getMaquinas';
+  else if (url.includes('/api/incidencias') && method === 'GET') action = 'getHistorial';
+  else if (url.includes('/api/incidencias') && method === 'POST') action = 'enviarIncidencia';
+
+  if (method === 'GET') {
+    const res = await fetch(`${API_URL}?action=${action}`);
+    return res;
+  } else {
+    // POST request
+    const bodyObj = JSON.parse(payload);
+    bodyObj.action = action;
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(bodyObj)
+    });
+    return res;
+  }
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 /* ── DOM refs ───────────────────────────────────────────── */
@@ -106,11 +130,17 @@ async function loadMachines(preselect = null) {
   let machines = [];
 
   try {
-    // Carga desde la API local del servidor Node.js
-    const res  = await fetch(`${API_BASE}/api/maquinas/lista`, { cache: 'no-store' });
+    const res  = await apiFetch(`${API_URL}/api/maquinas/lista`, { cache: 'no-store' });
     const json = await res.json();
-    if (json.status === 'ok' && json.machines.length) {
-      machines = json.machines;
+    // GAS returns { ok: true, data: [...] }
+    const list = json.data || json.machines || [];
+    if (list.length) {
+      machines = list.map(m => ({
+        id:     m.nombre || m.id,
+        space:  (m.sala_nombre || 'Maker').replace('Espacio ', ''),
+        type:   m.tipo || '',
+        status: m.estado === 'activa' || m.estado === 'Activa' ? 'Activa' : 'Inactiva'
+      }));
     }
   } catch (_) { /* servidor no disponible */ }
 
@@ -432,7 +462,7 @@ async function submitToServer() {
   successOverlay.classList.remove('hidden');
 
   try {
-    const res = await fetch(`${API_BASE}/api/incidencias`, {
+    const res = await apiFetch(`${API_URL}/api/incidencias`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(payload),
@@ -503,10 +533,18 @@ async function fetchGlobalHistory() {
   historyList.innerHTML = '<div class="history-empty"><span class="spinner" style="display:inline-block; border-color:var(--accent); border-top-color:transparent;"></span> Cargando historial...</div>';
 
   try {
-    const res  = await fetch(`${API_BASE}/api/incidencias`, { cache: 'no-store' });
+    const res  = await apiFetch(`${API_URL}/api/incidencias`, { cache: 'no-store' });
     const json = await res.json();
-    if (json.status === 'ok') {
-      globalHistoryCache = json.history || [];
+    // GAS returns { ok: true, data: [...] }
+    if (json.ok || json.status === 'ok') {
+      const raw = json.data || json.history || [];
+      globalHistoryCache = raw.map(r => ({
+        assetId:   r.assetId  || r.maquina || r.activo_nombre || '',
+        type:      r.type     || r.tipo    || '',
+        notes:     r.notes    || r.observaciones || r.notas || '',
+        timestamp: r.timestamp || r.completado_en || r.iniciado_en || '',
+        hasPhotos: false
+      }));
       renderGlobalHistory();
     } else {
       throw new Error(json.error);

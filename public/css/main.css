@@ -322,71 +322,106 @@ tr:hover td { background: var(--bg-card-hover); }
 /* ── Loading ─────────────────────────────────────────────────────────────── */
 .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loader-overlay {
+/* Loader desactivado */
+.loader-overlay { display: none !important; }
+
+/* ── Top Loading Indicator ───────────────────────────────────────────────── */
+/* ── Admin Login Overlay ────────────────────────────────────────────────── */
+.admin-login-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 15, 26, 0.85);
-  backdrop-filter: blur(10px);
-  z-index: 9999;
-  display: none;
-  place-items: center;
-  transition: all 0.3s ease;
+  background: radial-gradient(circle at center, rgba(15, 15, 26, 0.8), rgba(9, 9, 15, 1));
+  backdrop-filter: blur(20px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.loader-overlay.show { display: grid; }
+.admin-login-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
 
-.loader-content {
+.login-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  padding: 40px;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 400px;
   text-align: center;
-  animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(79, 142, 247, 0.1);
+  transform: translateY(20px);
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.admin-login-overlay.show .login-card {
+  transform: translateY(0);
 }
 
-.spinner-giant {
-  width: 100px;
-  height: 100px;
-  border: 4px solid var(--border);
-  border-top: 4px solid var(--accent);
-  border-bottom: 4px solid var(--accent);
-  border-radius: 50%;
-  margin: 0 auto 24px;
-  box-shadow: 0 0 30px var(--accent-glow);
-  animation: spin 1s quadratic-bezier(0.4, 0, 0.2, 1) infinite;
+.login-icon {
+  font-size: 48px;
+  margin-bottom: 24px;
+  display: block;
+  filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
 }
 
-.loader-text {
-  font-size: 22px;
+.login-card h2 {
+  font-size: 24px;
   font-weight: 800;
-  color: white;
   margin-bottom: 8px;
   letter-spacing: -0.02em;
 }
 
-.loader-subtext {
-  font-size: 14px;
+.login-card p {
   color: var(--text-secondary);
-  opacity: 0.8;
+  font-size: 14px;
+  margin-bottom: 32px;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.pin-input-group {
+  position: relative;
+  margin-bottom: 24px;
 }
 
-/* ── Top Loading Indicator ───────────────────────────────────────────────── */
-.top-loading-hw {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-accent);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
-  box-shadow: var(--shadow-glow);
-  animation: fadeIn 0.3s ease;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+.pin-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: 12px;
+  color: white;
+  font-size: 24px;
+  text-align: center;
+  letter-spacing: 0.5em;
+  font-weight: 700;
+  outline: none;
+  transition: all 0.3s;
+}
+.pin-input:focus {
+  border-color: var(--accent);
+  background: rgba(79, 142, 247, 0.05);
+  box-shadow: 0 0 20px rgba(79, 142, 247, 0.15);
+}
+
+.login-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin-top: 12px;
+  min-height: 20px;
+  font-weight: 500;
+}
+
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+.login-card.shake {
+  animation: shakeError 0.4s cubic-bezier(.36,.07,.19,.97) both;
 }
 .spinner-sm {
   width: 14px;
