@@ -160,7 +160,7 @@ function reiniciar() {
   showScreen('pin');
 }
 
-const API = window.API_URL || 'INSERTA_TU_WEB_APP_URL_AQUI'; // Compartir URL con admin.js o inyectarla
+const API = window.API_URL || 'https://script.google.com/macros/s/AKfycbyxywW7pB-bcJbEvBxogykPNckoeGCNq_MYZvynmwgHTZW91LWhBYnMAacGqU8NZrGs/exec'; // Compartir URL con admin.js o inyectarla
 
 async function apiFetch(url, options = {}) {
   try {

@@ -1,6 +1,6 @@
 'use strict';
 
-const API = 'INSERTA_TU_WEB_APP_URL_AQUI'; // <--- PEGAR LA URL DE LA WEB APP AQUI
+const API = 'https://script.google.com/macros/s/AKfycbyxywW7pB-bcJbEvBxogykPNckoeGCNq_MYZvynmwgHTZW91LWhBYnMAacGqU8NZrGs/exec'; // <--- PEGAR LA URL DE LA WEB APP AQUI
 let datosSalas = [];
 let datosMaquinas = [];
 let datosOperarios = [];
