@@ -11,7 +11,15 @@ const SHEET_ID = '1msNplZKo4KbDlKbUwWYoisxqOftZ1xbXX2rs6KdeqT8';
 // ── Auto-init ────────────────────────────────────────────────────────────────
 function setupIfNeeded() {
   const props = PropertiesService.getScriptProperties();
-  if (props.getProperty('initialized') === 'true') return; // Fast exit after first run
+  // Si ya se inicializó, solo verificar si falta alguna hoja específica (como Config)
+  if (props.getProperty('initialized') === 'true') {
+     const ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(SHEET_ID);
+     if (!ss.getSheetByName('Config')) {
+       // Si falta la hoja Config, continuamos para crearla
+     } else {
+       return; 
+     }
+  }
   const ss = SpreadsheetApp.getActiveSpreadsheet() || SpreadsheetApp.openById(SHEET_ID);
 
   // Salas
@@ -105,6 +113,14 @@ function doPost(e) {
     if (action === 'manageMaquinas')  return handleMaquinas(data);
     if (action === 'manageOperarios') return handleOperarios(data);
     if (action === 'manageUsuarios')  return handleUsuarios(data);
+
+    // Acciones de Lectura (también permitidas vía POST para compatibilidad)
+    if (action === 'getSalas')       return getSalas();
+    if (action === 'getMaquinas')    return getMaquinas();
+    if (action === 'getDashboard')   return getDashboard();
+    if (action === 'getHistorial')   return getHistorial();
+    if (action === 'getOperarios')   return getOperarios();
+    if (action === 'getUsuarios')    return getUsuarios();
 
     return json({ status: 'error', error: 'Action not found or protected: ' + action });
   } catch (err) {
