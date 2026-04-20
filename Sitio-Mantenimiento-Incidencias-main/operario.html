@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Mantenimiento – GestiónPrint</title>
+  <meta name="description" content="Checklist de mantenimiento preventivo">
+  <meta name="theme-color" content="#0f0f1a">
+  <link rel="stylesheet" href="css/mobile.css">
+</head>
+<body>
+
+  <!-- ════ PANTALLA: CARGANDO ════ -->
+  <div class="screen active fade-up" id="screen-loading">
+    <div class="loader-screen">
+      <div class="spinner-lg"></div>
+      <div class="loader-text">Cargando máquina...</div>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA: ERROR ════ -->
+  <div class="screen" id="screen-error">
+    <div class="error-screen">
+      <div class="bicon">❌</div>
+      <h2>Máquina no encontrada</h2>
+      <p id="errorMsg">El código QR no es válido o la máquina ya no está disponible. Contacta con el administrador.</p>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA: PIN ════ -->
+  <div class="screen" id="screen-pin">
+    <header class="app-header">
+      <div class="header-icon">🔐</div>
+      <div class="header-info">
+        <div class="header-title">Identificación</div>
+        <div class="header-sub">Introduce tu PIN de operario</div>
+      </div>
+    </header>
+
+    <div class="screen-content">
+      <div class="maquina-badge fade-up" id="pinMaquinaBadge">
+        <span class="badge-icon">🖨️</span>
+        <div>
+          <div class="badge-nombre" id="pinMaquinaNombre">–</div>
+          <div class="badge-sala" id="pinMaquinaSala">–</div>
+        </div>
+      </div>
+
+      <div class="pin-label">INTRODUCE TU PIN</div>
+
+      <div class="pin-display">
+        <div class="pin-dot" id="d0"></div>
+        <div class="pin-dot" id="d1"></div>
+        <div class="pin-dot" id="d2"></div>
+        <div class="pin-dot" id="d3"></div>
+        <div class="pin-dot" id="d4"></div>
+        <div class="pin-dot" id="d5"></div>
+      </div>
+
+      <div id="pinError"></div>
+
+      <div class="pin-pad">
+        <div class="pin-key" onclick="pinKey('1')">1</div>
+        <div class="pin-key" onclick="pinKey('2')">2</div>
+        <div class="pin-key" onclick="pinKey('3')">3</div>
+        <div class="pin-key" onclick="pinKey('4')">4</div>
+        <div class="pin-key" onclick="pinKey('5')">5</div>
+        <div class="pin-key" onclick="pinKey('6')">6</div>
+        <div class="pin-key" onclick="pinKey('7')">7</div>
+        <div class="pin-key" onclick="pinKey('8')">8</div>
+        <div class="pin-key" onclick="pinKey('9')">9</div>
+        <div class="pin-key empty"></div>
+        <div class="pin-key" onclick="pinKey('0')">0</div>
+        <div class="pin-key delete" onclick="pinDelete()">⌫</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA: CHECKLIST ════ -->
+  <div class="screen" id="screen-checklist">
+    <header class="app-header">
+      <div class="header-icon">📋</div>
+      <div class="header-info">
+        <div class="header-title" id="checkMaquinaNombre">Mantenimiento</div>
+        <div class="header-sub" id="checkSalaNombre">–</div>
+      </div>
+    </header>
+
+    <div class="screen-content">
+      <!-- Info operario -->
+      <div class="bienvenida-card fade-up">
+        <span class="op-icon">👷</span>
+        <div>
+          <div class="op-nombre" id="operarioNombreLabel">–</div>
+          <div class="op-label">Operario identificado</div>
+        </div>
+      </div>
+
+      <!-- Campo único de reporte -->
+      <div class="reporte-section fade-up">
+        <div class="reporte-label">📝 REPORTE DEL PROBLEMA ENCONTRADO EN LA IMPRESORA</div>
+        <div class="reporte-subtitle">Describe el estado de la máquina, incidencias observadas o trabajos realizados.</div>
+        <textarea
+          class="reporte-textarea"
+          id="reporteTextarea"
+          placeholder="Ej: Se ha encontrado el cabezal obstruido. Se ha limpiado y calibrado. La impresión vuelve a ser correcta..."
+          rows="7"
+          oninput="onReporteChange()"
+        ></textarea>
+        <div class="reporte-error" id="reporteError" style="display:none">⚠️ El campo es obligatorio. Escribe al menos 1 carácter.</div>
+      </div>
+    </div>
+
+    <div class="bottom-bar">
+      <button class="btn-enviar bloqueado" id="btnEnviar" onclick="enviarChecklist()">
+        ✏️ Rellena el reporte para continuar
+      </button>
+    </div>
+  </div>
+
+  <!-- ════ PANTALLA: ÉXITO ════ -->
+  <div class="screen" id="screen-exito">
+    <div class="success-screen">
+      <div class="success-icon">✅</div>
+      <div class="success-title">¡Mantenimiento<br>registrado!</div>
+      <div class="success-sub">El registro ha quedado guardado<br>en la base de datos correctamente.</div>
+
+      <div class="success-details fade-up">
+        <div class="success-detail-row">
+          <div class="success-detail-label">Máquina</div>
+          <div class="success-detail-val" id="exitoMaquina">–</div>
+        </div>
+        <div class="success-detail-row">
+          <div class="success-detail-label">Operario</div>
+          <div class="success-detail-val" id="exitoOperario">–</div>
+        </div>
+        <div class="success-detail-row">
+          <div class="success-detail-label">Fecha y hora</div>
+          <div class="success-detail-val" id="exitoFecha">–</div>
+        </div>
+      </div>
+
+      <button class="btn-nuevo" onclick="reiniciar()">🔄 Nuevo mantenimiento</button>
+    </div>
+  </div>
+
+<script src="js/checklist.js"></script>
+</body>
+</html>
