@@ -130,11 +130,17 @@ async function loadMachines(preselect = null) {
   let machines = [];
 
   try {
-    // Carga desde la API local del servidor Node.js
     const res  = await apiFetch(`${API_URL}/api/maquinas/lista`, { cache: 'no-store' });
     const json = await res.json();
-    if (json.status === 'ok' && json.machines.length) {
-      machines = json.machines;
+    // GAS returns { ok: true, data: [...] }
+    const list = json.data || json.machines || [];
+    if (list.length) {
+      machines = list.map(m => ({
+        id:     m.nombre || m.id,
+        space:  (m.sala_nombre || 'Maker').replace('Espacio ', ''),
+        type:   m.tipo || '',
+        status: m.estado === 'activa' || m.estado === 'Activa' ? 'Activa' : 'Inactiva'
+      }));
     }
   } catch (_) { /* servidor no disponible */ }
 
@@ -529,8 +535,16 @@ async function fetchGlobalHistory() {
   try {
     const res  = await apiFetch(`${API_URL}/api/incidencias`, { cache: 'no-store' });
     const json = await res.json();
-    if (json.status === 'ok') {
-      globalHistoryCache = json.history || [];
+    // GAS returns { ok: true, data: [...] }
+    if (json.ok || json.status === 'ok') {
+      const raw = json.data || json.history || [];
+      globalHistoryCache = raw.map(r => ({
+        assetId:   r.assetId  || r.maquina || r.activo_nombre || '',
+        type:      r.type     || r.tipo    || '',
+        notes:     r.notes    || r.observaciones || r.notas || '',
+        timestamp: r.timestamp || r.completado_en || r.iniciado_en || '',
+        hasPhotos: false
+      }));
       renderGlobalHistory();
     } else {
       throw new Error(json.error);
