@@ -160,7 +160,7 @@ function reiniciar() {
   showScreen('pin');
 }
 
-const API = window.API_URL || 'https://script.google.com/macros/s/AKfycbxtJLSCIzCzkc90A-Q-pOQnInLQlKkR3GPWJUFF1g993JCjodqmkDoY95KAod-u1fPl/exec'; // Compartir URL con admin.js o inyectarla
+const API = window.API_URL || 'https://script.google.com/macros/s/AKfycbzcbeZYyHN2guCWwDc7rYekWruf9RhzOCp4dvlW-2JYK9ALA1KcBHIIPYHu0F4h3gHk/exec'; // Compartir URL con admin.js o inyectarla
 
 async function apiFetch(url, options = {}) {
   try {

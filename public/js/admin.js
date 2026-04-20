@@ -1,6 +1,6 @@
 'use strict';
 
-const API = 'https://script.google.com/macros/s/AKfycbxtJLSCIzCzkc90A-Q-pOQnInLQlKkR3GPWJUFF1g993JCjodqmkDoY95KAod-u1fPl/exec'; // <--- PEGAR LA URL DE LA WEB APP AQUI
+const API = 'https://script.google.com/macros/s/AKfycbzcbeZYyHN2guCWwDc7rYekWruf9RhzOCp4dvlW-2JYK9ALA1KcBHIIPYHu0F4h3gHk/exec'; // <--- PEGAR LA URL DE LA WEB APP AQUI
 let datosSalas = [];
 let datosMaquinas = [];
 let datosOperarios = [];
