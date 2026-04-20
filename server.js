@@ -11,7 +11,7 @@ const app = express();
 const PORT = 3000;
 
 // URL del Webhook de Google Apps Script (Dejar vacío si no se usa)
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwKp8a44WAD3prlKUFS2uZYU9ND8kKbaaWPUYnJZdBrUVYM9Vl2CfT4TdWz4DqCgVh7/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFTokQyQo7FoVtt4ZHoNAQb5XjlKbDCOUmNWxw0ollklhxJrm9HJidl7Maj99eIRRE/exec";
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' })); // Límite ampliado para fotos en base64
