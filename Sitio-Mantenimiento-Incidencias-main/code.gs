@@ -70,7 +70,7 @@ function doPost(e) {
     if (action === 'manageMaquinas')  return handleMaquinas(data);
     if (action === 'manageOperarios') return handleOperarios(data);
     if (action === 'manageUsuarios')  return handleUsuarios(data);
-    if (action === 'verificarPin')    return verificarPin(data.pin);
+    if (action === 'verificarPin')    return verificarPin(data.payload.pin);
     if (action === 'enviarIncidencia') return guardarIncidencia(data);
 
     return json({ status: 'error', error: 'Action not found: ' + action });
@@ -230,12 +230,9 @@ function handleOperarios(data) {
   const sheet = getSheet('Operarios');
 
   if (data.method === 'POST') {
-    const rows = getRowsToObjects(sheet);
-    if (rows.find(o => o.pin === data.payload.pin && (o.activo == '1' || o.activo === 'true'))) {
-      return json({ ok: false, error: 'Ya existe un operario con ese PIN' });
-    }
     const id = new Date().getTime().toString();
-    sheet.appendRow([id, data.payload.nombre, data.payload.pin, '1', new Date().toISOString()]);
+    // Forzamos formato texto con ' para evitar que Google Sheets borre ceros a la izquierda
+    sheet.appendRow([id, data.payload.nombre, "'" + data.payload.pin, '1', new Date().toISOString()]);
     return json({ ok: true, data: { id } });
   }
 
@@ -251,7 +248,14 @@ function handleOperarios(data) {
 
 function verificarPin(pin) {
   const rows = getRowsToObjects(getSheet('Operarios'));
-  const o    = rows.find(x => x.pin == pin && (x.activo == '1' || x.activo === 'true'));
+  const o = rows.find(x => {
+    // Comparación robusta: manejamos strings ("0000") y números (0)
+    const pinBD = String(x.pin || "").trim();
+    const pinUser = String(pin || "").trim();
+    const matchPin = (pinBD == pinUser) || (Number(pinBD) === Number(pinUser));
+    const matchActivo = (x.activo == '1' || x.activo === 'true' || x.activo === 1);
+    return matchPin && matchActivo;
+  });
   if (o) return json({ ok: true, data: { id: o.id, nombre: o.nombre } });
   return json({ ok: false, error: 'PIN incorrecto' });
 }
