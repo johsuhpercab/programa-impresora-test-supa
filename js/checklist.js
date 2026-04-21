@@ -111,44 +111,7 @@ function setOpTipo(tipo) {
   console.log('Tipo de reporte cambiado a:', modoActual);
 }
 
-// ── PIN ───────────────────────────────────────────────────────────────────────
-function pinKey(digit) {
-  if (pinBuffer.length >= 4) return;
-  pinBuffer += digit;
-  actualizarDotsPIN();
-  if (pinBuffer.length === 4) verificarPIN();
-}
-
-function pinDelete() {
-  pinBuffer = pinBuffer.slice(0, -1);
-  actualizarDotsPIN();
-  document.getElementById('pinError').innerHTML = '';
-}
-
-function actualizarDotsPIN() {
-  for (let i = 0; i < 4; i++) {
-    const dot = document.getElementById('d' + i);
-    if (!dot) continue;
-    dot.classList.toggle('filled', i < pinBuffer.length);
-  }
-}
-
-async function verificarPIN() {
-  await new Promise(r => setTimeout(r, 200));
-  const res = await apiFetch('/api/operarios/verificar-pin', {
-    method: 'POST',
-    body: { pin: pinBuffer },
-  });
-
-  if (res.ok) {
-    operarioData = res.data;
-    await iniciarSesion();
-  } else {
-    document.getElementById('pinError').innerHTML =
-      '<div class="error-msg">❌ PIN incorrecto. Inténtalo de nuevo.</div>';
-    pinBuffer = '';
-    actualizarDotsPIN();
-    setTimeout(() => { document.getElementById('pinError').innerHTML = ''; }, 2500);
+// ── Reporte ───────────────────────────────────────────────────────────────────
 async function iniciarSesion() {
   const res = await apiFetch('/api/sesion/iniciar', {
     method: 'POST',

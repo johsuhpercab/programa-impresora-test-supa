@@ -216,18 +216,18 @@
         <textarea
           class="reporte-textarea"
           id="reporteTextarea"
-          placeholder="Ej: Se ha encontrado el cabezal obstruido. Se ha limpiado y calibrado. La impresión vuelve a ser correcta..."
+          placeholder="Ej: Se ha encontrado el cabezal obstruido. Se ha limpiado y calibrado..."
           rows="7"
           oninput="onReporteChange()"
         ></textarea>
         
         <div class="photo-upload-section" style="margin-top:20px">
           <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="onPhotoSelected()">
-          <button class="btn-photo" onclick="document.getElementById('photoInput').click()">
+          <button class="btn-photo" type="button" onclick="document.getElementById('photoInput').click()">
             <span id="photoIcon">📷</span> <span id="photoText">Añadir foto de evidencia</span>
           </button>
           <div id="photoPreviewContainer" style="display:none; margin-top:12px; position:relative; width:80px; height:80px">
-            <img id="photoPreviewImg" style="width:100%; height:100%; object-fit:cover; border-radius:12px; border:2px solid var(--accent-maint)">
+            <img id="photoPreviewImg" src="" alt="Vista previa" style="width:100%; height:100%; object-fit:cover; border-radius:12px; border:2px solid var(--accent-maint)">
             <div onclick="cancelPhoto()" style="position:absolute; top:-8px; right:-8px; background:var(--accent-inc); color:white; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; cursor:pointer">✕</div>
           </div>
         </div>
