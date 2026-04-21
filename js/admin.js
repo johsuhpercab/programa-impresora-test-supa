@@ -770,6 +770,7 @@ async function toggleResolucionIncidencia(id, nuevoEstado) {
 async function verDetalleSesion(id) {
   cerrarModal('modalHistorialMaquina');
   const container = document.getElementById('detalleContenido');
+  const titleEl = document.querySelector('#modalDetalle .modal-title');
   if(!container) return;
   container.innerHTML = '<div style="padding:40px;text-align:center"><span class="spinner"></span> Cargando...</div>';
   abrirModal('modalDetalle');
@@ -784,12 +785,15 @@ async function verDetalleSesion(id) {
   const isInc = sesion.tipo === 'Incidencia';
   const resuelta = sesion.resuelta || false;
 
+  // Cambiar título del modal dinámicamente
+  if (titleEl) titleEl.textContent = isInc ? 'Detalle de la Incidencia' : 'Detalle del Mantenimiento';
+
   container.innerHTML = `
     <div class="detail-container">
-      <div class="detail-header-info">
-        <div class="detail-machine"><span class="machine-icon">🖨️</span><div><div class="machine-name">${sesion.maquina}</div><div class="machine-sala">📍 ${sesion.sala}</div></div></div>
+      <div class="detail-header-info" style="${isInc ? 'border-bottom: 2px solid var(--danger)' : ''}">
+        <div class="detail-machine"><span class="machine-icon">${isInc ? '🚨' : '🖨️'}</span><div><div class="machine-name">${sesion.maquina}</div><div class="machine-sala">📍 ${sesion.sala}</div></div></div>
         <div style="display:flex;gap:8px">
-          <div class="estado-badge ${isInc?'vencido':'ok'}">${isInc?'🚨 Incidencia':'🛠️ Mantenimiento'}</div>
+          <div class="estado-badge ${isInc?'vencido':'ok'}">${isInc?'Incidencia':'Mantenimiento'}</div>
           ${isInc ? `<div class="estado-badge ${resuelta?'ok':'vencido'}" style="cursor:pointer" onclick="toggleResolucionIncidencia('${sesion.id}', ${!resuelta}); cerrarModal('modalDetalle');">${resuelta?'✅ Resuelta':'🚨 Pendiente'}</div>` : ''}
         </div>
       </div>
@@ -797,13 +801,16 @@ async function verDetalleSesion(id) {
         <div class="detail-stat"><div class="label">👷 Operario</div><div class="value">${sesion.operario}</div></div>
         <div class="detail-stat"><div class="label">📅 Fecha</div><div class="value">${formatFechaHora(sesion.completado_en)}</div></div>
       </div>
-      <div class="detail-section"><div class="section-label">📝 Observaciones${isInc ? ' / Reporte de Fallo' : ''}</div><div class="detail-notes">${sesion.observaciones || 'Sin notas'}</div></div>
-      ${sesion.fotos && sesion.fotos.length > 0 ? `<div class="detail-section"><div class="section-label">🖼️ Fotos de evidencia</div><div class="detail-photos">${sesion.fotos.map(f => `<img src="${f}" onclick="window.open('${f}')" style="width:100%;border-radius:12px;margin-bottom:10px;cursor:zoom-in" loading="lazy">`).join('')}</div></div>` : ''}
+      <div class="detail-section">
+        <div class="section-label">${isInc ? '🚩 Informe de Fallo' : '📝 Observaciones'}</div>
+        <div class="detail-notes" style="${isInc ? 'background:rgba(239, 68, 68, 0.05); border-left:4px solid var(--danger)' : ''}">${sesion.observaciones || 'Sin notas'}</div>
+      </div>
+      ${sesion.fotos && sesion.fotos.length > 0 ? `<div class="detail-section"><div class="section-label">🖼️ Evidencias Fotográficas</div><div class="detail-photos">${sesion.fotos.map(f => `<img src="${f}" onclick="window.open('${f}')" style="width:100%;border-radius:12px;margin-bottom:10px;cursor:zoom-in" loading="lazy">`).join('')}</div></div>` : ''}
       
       ${isInc && !resuelta ? `
-        <div style="margin-top:24px;padding:16px;background:rgba(16,185,129,0.1);border-radius:12px;border:1px solid var(--success);text-align:center">
-          <p style="margin-bottom:12px;font-size:14px;color:rgba(16,185,129,1)">¿Ya se ha solucionado este problema?</p>
-          <button class="btn btn-primary" style="width:100%" onclick="toggleResolucionIncidencia('${sesion.id}', true); cerrarModal('modalDetalle');">✅ Marcar como Resuelta</button>
+        <div style="margin-top:24px;padding:20px;background:rgba(16,185,129,0.1);border-radius:12px;border:1px solid var(--success);text-align:center">
+          <p style="margin-bottom:12px;font-size:14px;color:rgba(16,185,129,1);font-weight:600">✅ ¿Se ha resuelto este problema?</p>
+          <button class="btn btn-primary" style="width:100%" onclick="toggleResolucionIncidencia('${sesion.id}', true); cerrarModal('modalDetalle');">Marcar como Solucionada</button>
         </div>
       ` : ''}
     </div>
