@@ -24,17 +24,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     const client = window.supabaseClient;
     console.log("Buscando máquina en Supabase con criterio:", maquinaId);
     
-    // Buscamos por ID OR por Nombre
-    const { data: maquina, error: mError } = await client
+    // ESTRATEGIA SEGURA: 
+    // 1. Intentamos buscar por ID directo
+    let { data: maquina, error: mError } = await client
       .from('equipos')
       .select('*, salas(nombre)')
-      .or(`id.eq.${maquinaId},nombre.eq.${maquinaId}`)
-      .maybeSingle(); 
+      .eq('id', maquinaId)
+      .maybeSingle();
+
+    // 2. Si no hay resultado (o era un nombre y dio error de tipos), buscamos por NOMBRE
+    if (!maquina) {
+      console.log("No encontrado por ID, probando por nombre...");
+      const { data: maquinaByNombre, error: nError } = await client
+        .from('equipos')
+        .select('*, salas(nombre)')
+        .eq('nombre', maquinaId)
+        .maybeSingle();
+      
+      maquina = maquinaByNombre;
+      if (nError) {
+        console.error("Error buscando por nombre:", nError);
+      }
+    }
     
-    if (mError) {
-      console.error("Error de Supabase:", mError);
-      showError('Error de conexión: ' + mError.message);
-      return;
+    if (mError && !maquina) {
+      console.error("Error inicial de Supabase:", mError);
     }
 
     if (!maquina) {
