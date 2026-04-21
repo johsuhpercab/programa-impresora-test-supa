@@ -1293,42 +1293,52 @@ async function renderizarGaleria() {
 
 // ── Visita Guiada (Tour) ─────────────────────────────────────────────────────
 function iniciarTour() {
-  if (typeof driver === 'undefined' || !driver.js) {
-     console.error('Driver.js no está cargado');
+  // Intentar obtener la instancia del driver
+  const driverInstance = window.driver?.js?.driver || window.driver;
+  
+  if (!driverInstance) {
+     alert('Lo siento, la guía no se ha podido cargar. Por favor, refresca la página de nuevo (Ctrl + F5).');
      return;
   }
 
-  const driverObj = driver.js.driver({
+  const driverObj = driverInstance({
     showProgress: true,
+    overlayColor: 'rgba(0,0,0,0.75)',
     steps: [
       { 
+        popover: { 
+          title: '✨ Bienvenido al Panel', 
+          description: 'Hagamos un tour rápido para conocer las nuevas funcionalidades del sistema.' 
+        }
+      },
+      { 
         element: '#kpiGrid', 
-        popover: { title: '📊 Indicadores Clave', description: 'Aquí ves un resumen rápido de los mantenimientos de hoy, la semana y las máquinas que requieren atención urgente.' } 
+        popover: { title: '📊 Indicadores Clave', description: 'Resumen en tiempo real: mantenimientos de hoy, la semana y máquinas que ya tienen el mantenimiento vencido.' } 
       },
       { 
         element: '#tour-nav', 
-        popover: { title: '📂 Navegación', description: 'Cambia entre el Panel General, la gestión de Máquinas, el Historial completo o la Galería de fotos.' } 
+        popover: { title: '📂 Menú Principal', description: 'Desde aquí accedes a todas las secciones. Ahora incluimos una Galería para ver las fotos de los reportes.' } 
       },
       { 
         element: '#nav-maquinas', 
-        popover: { title: '🖨️ Gestión de Máquinas', description: 'Desde aquí puedes añadir nuevas impresoras, editar su frecuencia de mantenimiento y ver su estado actual.' } 
+        popover: { title: '🖨️ Control de Máquinas', description: 'Añade o edita impresoras. Configura cada cuántos días necesitan mantenimiento y el sistema te avisará.' } 
       },
       { 
         element: '#nav-qrcodes', 
-        popover: { title: '📱 Códigos QR', description: 'Genera e imprime códigos QR únicos para cada máquina. Los operarios solo tienen que escanearlos para reportar trabajo.' } 
+        popover: { title: '📱 Sistema de Códigos QR', description: 'Aquí generas los QR que irán pegados en las máquinas. ¡Los operarios escanean y listo! Sin necesidad de mandos ni claves.' } 
       },
       { 
         element: '#filtroOperario', 
-        popover: { title: '🔍 Buscador Inteligente', description: '¿Buscas a alguien específico? Escribe el nombre del operario aquí para filtrar el historial al instante.' } 
+        popover: { title: '🔍 Buscador de Operarios', description: 'Simplemente escribe el nombre de la persona que hizo el mantenimiento para filtrar los resultados abajo.' } 
       },
       { 
         element: '.sidebar-footer', 
-        popover: { title: '🏠 Salida Segura', description: 'Vuelve a la pantalla de inicio o cierra tu sesión administrativa desde aquí.' } 
+        popover: { title: '🚪 Salir', description: 'Puedes volver a la pantalla principal o cerrar tu sesión de administrador aquí.' } 
       }
     ],
     nextBtnText: 'Siguiente',
     prevBtnText: 'Anterior',
-    doneBtnText: 'Finalizar'
+    doneBtnText: '¡Entendido!',
   });
 
   driverObj.drive();
