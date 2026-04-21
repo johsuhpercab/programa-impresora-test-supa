@@ -436,7 +436,7 @@ const DASHBOARD_HTML = `
   <div class="overlay" id="modalDetalle">
     <div class="modal" style="max-width:560px">
       <div class="modal-header">
-        <div class="modal-title">Detalle del Mantenimiento</div>
+        <div class="modal-title">Detalles del Mantenimiento</div>
         <button class="modal-close" onclick="cerrarModal('modalDetalle')">✕</button>
       </div>
       <div id="detalleContenido"></div>

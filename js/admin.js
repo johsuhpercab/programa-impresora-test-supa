@@ -183,7 +183,7 @@ function renderIncidencias(filtro = 'todas') {
         </td>
         <td data-label="Acciones">
           <div style="display:flex;gap:4px">
-            <button class="btn btn-outline btn-sm" onclick="verDetalleSesion('${r.id}')">Detalle</button>
+            <button class="btn btn-outline btn-sm" onclick="verDetalleSesion('${r.id}')">Detalles</button>
             ${!resuelta ? `<button class="btn btn-primary btn-sm" onclick="toggleResolucionIncidencia('${r.id}', true)">Cerrar</button>` : ''}
           </div>
         </td>
@@ -740,7 +740,7 @@ function renderizarContenidoHistorial(data, tbody, empty) {
             ${r.tiene_fotos ? `<img src="${r.fotos[0]}" style="width:26px;height:26px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="event.stopPropagation(); window.open('${r.fotos[0]}','_blank')">` : ''}
           </div>
         </td>
-        <td data-label="Acciones"><button class="btn btn-outline btn-sm" onclick="verDetalleSesion('${r.id}')">Detalle</button></td>
+        <td data-label="Acciones"><button class="btn btn-outline btn-sm" onclick="verDetalleSesion('${r.id}')">Detalles</button></td>
       </tr>
     `;
   }).join('');
@@ -792,7 +792,7 @@ async function verDetalleSesion(id) {
   const resuelta = sesion.resuelta || false;
 
   // Cambiar título del modal dinámicamente
-  if (titleEl) titleEl.textContent = isInc ? 'Detalle de la Incidencia' : 'Detalle del Mantenimiento';
+  if (titleEl) titleEl.textContent = isInc ? 'Detalles de la Incidencia' : 'Detalles del Mantenimiento';
 
   container.innerHTML = `
     <div class="detail-container">
@@ -868,7 +868,7 @@ async function verHistorialMaquina(nombreMaquina) {
       <td data-label="Operario">${r.operario}</td>
       <td data-label="Tipo"><span class="estado-badge ${r.tipo==='Incidencia'?'vencido':'ok'}">${r.tipo}</span></td>
       <td data-label="Nota">${truncate(r.observaciones || '', 20)}</td>
-      <td><button class="btn btn-outline btn-sm" onclick="verDetalleSesion('${r.id}')">Ver</button></td>
+      <td><button class="btn btn-outline btn-sm" onclick="verDetalleSesion('${r.id}')">Detalles</button></td>
     </tr>
   `).join('');
 }
