@@ -1356,7 +1356,7 @@ function iniciarTour() {
       },
       { 
         element: '#filtroOperario', 
-        popover: { title: '🔍 Buscador de Operarios', description: 'Como ya no hay PINs, escribe aquí el nombre del operario para filtrar sus reportes rápidamente.' } 
+        popover: { title: '🔍 Buscador de Operarios', description: 'Busca reportes específicos escribiendo aquí el nombre del operario.' } 
       },
       { 
         element: '.sidebar-footer', 
