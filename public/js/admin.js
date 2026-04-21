@@ -257,15 +257,22 @@ function renderUltimosMantenimientos(registros) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">Sin mantenimientos aún</td></tr>';
     return;
   }
-  tbody.innerHTML = registros.map(r => `
-    <tr>
-      <td data-label="Máquina"><span class="fw-600">${r.maquina}</span></td>
-      <td data-label="Sala"><span class="text-muted">${r.sala}</span></td>
-      <td data-label="Operario">${r.operario}</td>
-      <td data-label="Fecha y hora">${formatFechaHora(r.completado_en)}</td>
-      <td data-label="Estado"><span class="estado-badge ok">✅ Completado</span></td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = registros.map(r => {
+    const isIncidencia = r.tipo === 'Incidencia';
+    const rowStyle = isIncidencia ? 'color: var(--danger); font-weight: 600;' : '';
+    const badgeClass = isIncidencia ? 'estado-badge vencido' : 'estado-badge ok';
+    const icon = isIncidencia ? '🚨' : '🛠️';
+
+    return `
+      <tr>
+        <td data-label="Máquina"><span style="${rowStyle}">${icon} ${r.maquina}</span></td>
+        <td data-label="Sala"><span class="text-muted">${r.sala}</span></td>
+        <td data-label="Operario">${r.operario}</td>
+        <td data-label="Fecha y hora">${formatFechaHora(r.completado_en)}</td>
+        <td data-label="Estado"><span class="${badgeClass}">${r.tipo || 'Mantenimiento'}</span></td>
+      </tr>
+    `;
+  }).join('');
 }
 
 // ── Máquinas ──────────────────────────────────────────────────────────────────
@@ -569,18 +576,24 @@ async function cargarHistorial() {
 
 function renderizarContenidoHistorial(data, tbody, empty) {
   if (empty) empty.style.display = 'none';
-  tbody.innerHTML = data.map(r => `
-    <tr>
-      <td data-label="#" class="text-muted">#${r.id}</td>
-      <td data-label="Máquina"><span class="fw-600">${r.maquina}</span><br><span class="text-muted" style="font-size:11px">${r.tipo_maquina || ''}</span></td>
-      <td data-label="Sala">${r.sala}</td>
-      <td data-label="Operario">${r.operario}</td>
-      <td data-label="Inicio" style="font-size:12px">${formatFechaHora(r.iniciado_en)}</td>
-      <td data-label="Fin" style="font-size:12px">${formatFechaHora(r.completado_en)}</td>
-      <td data-label="Observ." style="font-size:12px;color:var(--text-muted)">${r.observaciones || '–'}</td>
-      <td data-label="Acciones"><button class="btn btn-outline btn-sm" onclick="verDetalleSesion(${r.id})">Detalle</button></td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = data.map(r => {
+    const isIncidencia = r.tipo === 'Incidencia';
+    const rowStyle = isIncidencia ? 'color: var(--danger); font-weight: 600;' : '';
+    const icon = isIncidencia ? '🚨' : '🛠️';
+
+    return `
+      <tr style="${isIncidencia ? 'background: rgba(239, 68, 68, 0.03)' : ''}">
+        <td data-label="#" class="text-muted" style="font-size:10px">#${r.id.toString().substring(0, 8)}...</td>
+        <td data-label="Máquina"><span style="${rowStyle}">${icon} ${r.maquina}</span></td>
+        <td data-label="Sala">${r.sala}</td>
+        <td data-label="Operario">${r.operario}</td>
+        <td data-label="Inicio" style="font-size:11px">${formatFechaHora(r.iniciado_en)}</td>
+        <td data-label="Fin" style="font-size:11px">${formatFechaHora(r.completado_en)}</td>
+        <td data-label="Observ." style="font-size:11px;color:var(--text-muted)">${r.observaciones || '–'}</td>
+        <td data-label="Acciones"><button class="btn btn-outline btn-sm" onclick="verDetalleSesion('${r.id}')">Detalle</button></td>
+      </tr>
+    `;
+  }).join('');
 }
 
 async function verDetalleSesion(id) {
