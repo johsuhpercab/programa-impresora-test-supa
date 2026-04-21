@@ -94,13 +94,28 @@ function seleccionarModo(modo) {
   modoActual = modo === 'incidencia' ? 'Incidencia' : 'Mantenimiento';
   
   if (modo === 'incidencia') {
-    // Si es incidencia, saltamos identificación y ponemos un nombre genérico
+    // Si es incidencia desde el portal, saltamos identificación
     operarioData = { id: 0, nombre: 'Usuario (Incidencia)' };
     iniciarSesion();
   } else {
     // Si es mantenimiento, pedimos el PIN
     showScreen('pin');
   }
+}
+
+function setOpTipo(tipo) {
+  modoActual = tipo;
+  const mCard = document.getElementById('op-tipo-maint');
+  const iCard = document.getElementById('op-tipo-inc');
+  
+  if (tipo === 'Mantenimiento') {
+    mCard.classList.add('active');
+    iCard.classList.remove('active-inc');
+  } else {
+    mCard.classList.remove('active');
+    iCard.classList.add('active-inc');
+  }
+  console.log('Tipo de reporte cambiado a:', modoActual);
 }
 
 // ── PIN ───────────────────────────────────────────────────────────────────────

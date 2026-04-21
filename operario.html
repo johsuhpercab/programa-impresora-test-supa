@@ -92,6 +92,31 @@
       background: linear-gradient(45deg, transparent, rgba(255,255,255,0.03));
       pointer-events: none;
     }
+
+    .tipo-op-card {
+      flex: 1;
+      background: var(--card-bg);
+      border: 2px solid transparent;
+      padding: 12px;
+      border-radius: 12px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      cursor: pointer;
+      opacity: 0.5;
+      transition: all 0.2s;
+    }
+    .tipo-op-card.active {
+      opacity: 1;
+      background: rgba(79, 142, 247, 0.1);
+      border-color: var(--accent-maint);
+    }
+    .tipo-op-card.active-inc {
+      opacity: 1;
+      background: rgba(255, 71, 87, 0.1);
+      border-color: var(--accent-inc);
+    }
   </style>
   <link rel="stylesheet" href="css/mobile.css">
   <!-- Supabase SDK -->
@@ -220,6 +245,17 @@
         <div>
           <div class="op-nombre" id="operarioNombreLabel">–</div>
           <div class="op-label">Operario identificado</div>
+        </div>
+      </div>
+
+      <div class="tipo-selector-op fade-up" style="display:flex; gap:10px; margin-bottom:20px;">
+        <div id="op-tipo-maint" class="tipo-op-card active" onclick="setOpTipo('Mantenimiento')">
+          <span style="font-size:18px">🔧</span>
+          <span style="font-size:11px; font-weight:700">Mantenimiento</span>
+        </div>
+        <div id="op-tipo-inc" class="tipo-op-card" onclick="setOpTipo('Incidencia')">
+          <span style="font-size:18px">⚡</span>
+          <span style="font-size:11px; font-weight:700">Incidencia</span>
         </div>
       </div>
 
