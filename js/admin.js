@@ -269,10 +269,19 @@ function renderUltimosMantenimientos(registros) {
         <td data-label="Máquina"><span style="${rowStyle}">${icon} ${r.maquina}</span></td>
         <td data-label="Sala"><span class="text-muted">${r.sala}</span></td>
         <td data-label="Operario">${r.operario}</td>
-        <td data-label="Fecha y hora">${formatFechaHora(r.completado_en)}</td>
+        <td data-label="Fecha y hora">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <span>${formatFechaHora(r.completado_en)}</span>
+            ${r.tiene_fotos ? `
+              <div style="position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <img src="${r.fotos[0]}" style="width:28px;height:28px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">
+                <span style="position:absolute;font-size:9px;background:var(--accent);color:white;padding:1px 3px;border-radius:4px;bottom:-3px;right:-3px;box-shadow:0 2px 4px rgba(0,0,0,0.2)">${r.fotos.length}</span>
+              </div>
+            ` : ''}
+          </div>
+        </td>
         <td data-label="Acciones">
           <button class="btn btn-outline btn-sm">Detalle</button>
-          ${r.tiene_fotos ? '<span title="Tiene fotos" style="margin-left:8px;font-size:14px">📷</span>' : ''}
         </td>
       </tr>
     `;
@@ -593,10 +602,19 @@ function renderizarContenidoHistorial(data, tbody, empty) {
         <td data-label="Operario">${r.operario}</td>
         <td data-label="Inicio" style="font-size:11px">${formatFechaHora(r.iniciado_en)}</td>
         <td data-label="Fin" style="font-size:11px">${formatFechaHora(r.completado_en)}</td>
-        <td data-label="Observ." style="font-size:11px;color:var(--text-muted)">${r.observaciones || '–'}</td>
+        <td data-label="Observ." style="font-size:11px;color:var(--text-muted)">
+          <div style="display:flex;align-items:center;gap:12px;justify-content:space-between">
+            <span style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.observaciones || '–'}</span>
+            ${r.tiene_fotos ? `
+              <div onclick="event.stopPropagation(); window.open('${r.fotos[0]}', '_blank')" style="cursor:zoom-in;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <img src="${r.fotos[0]}" style="width:26px;height:26px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">
+                <span style="position:absolute;font-size:9px;background:var(--accent);color:white;padding:1px 3px;border-radius:4px;top:-4px;right:-4px;box-shadow:0 2px 4px rgba(0,0,0,0.2)">${r.fotos.length}</span>
+              </div>
+            ` : ''}
+          </div>
+        </td>
         <td data-label="Acciones">
           <button class="btn btn-outline btn-sm" onclick="verDetalleSesion('${r.id}')">Detalle</button>
-          ${r.tiene_fotos ? '<span title="Tiene fotos" style="margin-left:8px;font-size:14px">📷</span>' : ''}
         </td>
       </tr>
     `;
