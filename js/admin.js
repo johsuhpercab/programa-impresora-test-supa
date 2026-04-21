@@ -1084,11 +1084,19 @@ async function apiFetch(url, options = {}) {
 
     if (url.includes('/api/maquina/') && url.includes('/qr')) {
       const id = url.split('/')[3];
-      // Construir la URL que el operario escaneará
-      // Forzamos que siempre apunte a operario.html independientemente de si estamos en dashboard o admin
-      const currentPath = window.location.pathname;
-      let newPath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1) + 'operario.html';
-      const targetUrl = `${window.location.origin}${newPath}?maquinaId=${id}`;
+      
+      // Intentar obtener la IP real del servidor para que el QR funcione en el móvil
+      let baseOrigin = window.origin;
+      try {
+        const infoRes = await fetch('/api/info').then(r => r.json());
+        if (infoRes.ok && infoRes.data.url) {
+          baseOrigin = infoRes.data.url;
+        }
+      } catch (e) {
+        console.warn('No se pudo obtener la IP de red, usando origen local:', e);
+      }
+
+      const targetUrl = `${baseOrigin}/operario.html?maquinaId=${id}`;
       
       return {
         ok: true,

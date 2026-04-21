@@ -326,7 +326,7 @@ app.get('/api/info', (req, res) => {
 
 // ── Rutas HTML ──────────────────────────────────────────────────────────────
 app.get('/operario.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'operario.html'));
+  res.sendFile(path.join(__dirname, 'operario.html'));
 });
 
 // ── Arranque ─────────────────────────────────────────────────────────────────
