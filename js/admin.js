@@ -103,16 +103,7 @@ async function cargarDatosBase() {
     });
   });
 
-  // Poblar selects personal (historial)
-  const selOp = document.getElementById('filtroOperario');
-  if (selOp) {
-    selOp.innerHTML = '<option value="">Todo el personal</option>';
-    datosUsuarios.forEach(u => {
-      const opt = document.createElement('option');
-      opt.value = u.id; opt.textContent = u.nombre;
-      selOp.appendChild(opt);
-    });
-  }
+// El filtro de operario ahora es un input de texto, no necesita población inicial
 
   // Actualizar badge alertas
   const alertas = datosMaquinas.filter(m =>
@@ -137,14 +128,14 @@ const sectionTitles = {
   dashboard: ['Panel General', 'Resumen del sistema'],
   maquinas: ['Máquinas', 'Estado y gestión de todas las máquinas'],
   historial: ['Historial', 'Registro de mantenimientos realizados'],
-  operarios: ['Operarios', 'Gestión del personal de mantenimiento'],
   qrcodes: ['Códigos QR', 'QR individuales para el operario móvil'],
   galeria: ['Galería de Fotos', 'Últimas evidencias fotográficas de los reportes'],
+  usuarios: ['Administradores', 'Gestión de cuentas con acceso al panel']
 };
 
 function navigateTo(section) {
-  // Verificación de roles
-  const rutasRestringidas = ['operarios', 'usuarios', 'qrcodes'];
+  // Verificación de roles (solo admin puede ver gestión de máquinas, QR y usuarios)
+  const rutasRestringidas = ['usuarios', 'qrcodes'];
   let idToShow = section;
   
   if (rolActual !== 'admin' && rutasRestringidas.includes(section)) {
@@ -171,7 +162,6 @@ function navigateTo(section) {
   // Cargar datos bajo demanda
   if (section === 'maquinas') renderMaquinas();
   if (section === 'historial') { cargarHistorial(); poblarFiltroMaquinasHistorial(); }
-  if (section === 'operarios') renderOperarios();
   if (section === 'usuarios') renderUsuarios();
   if (section === 'qrcodes') renderQRs();
   if (section === 'galeria') renderizarGaleria();
@@ -183,7 +173,6 @@ function renderActualSection() {
   const id = activeSection.id.replace('section-', '');
   if (id === 'maquinas') renderMaquinas();
   if (id === 'historial') cargarHistorial();
-  if (id === 'operarios') renderOperarios();
   if (id === 'usuarios') renderUsuarios();
   if (id === 'qrcodes') renderQRs();
 }
@@ -639,9 +628,15 @@ async function cargarHistorial() {
   const params = new URLSearchParams();
   const sala = document.getElementById('filtroSala').value;
   const maquina = document.getElementById('filtroMaquina').value;
-  const operario = document.getElementById('filtroOperario').value;
+  const operario = document.getElementById('filtroOperario').value.trim();
   const desde = document.getElementById('filtroDesde').value;
   const hasta = document.getElementById('filtroHasta').value;
+
+  if (sala) params.append('sala_id', sala);
+  if (maquina) params.append('maquina_id', maquina);
+  if (operario) params.append('operario_nombre', operario);
+  if (desde) params.append('desde', desde);
+  if (hasta) params.append('hasta', hasta);
 
   const tbody = document.getElementById('tablaHistorial');
   const empty = document.getElementById('historialEmpty');
@@ -650,7 +645,6 @@ async function cargarHistorial() {
   const hasFilters = sala || maquina || operario || desde || hasta;
   
   if (!hasFilters && datosHistorial.length > 0) {
-    console.log('Mostrando historial desde memoria local (Instántaneo)');
     renderizarContenidoHistorial(datosHistorial, tbody, empty);
     return;
   }
@@ -835,69 +829,7 @@ function exportarCSV() {
   });
 }
 
-// ── Operarios ─────────────────────────────────────────────────────────────────
-function renderOperarios() {
-  const tbody = document.getElementById('tablaOperarios');
-  if (!tbody) return;
-
-  if (isCargando && !datosOperarios.length) {
-    tbody.innerHTML = skeletonTabla(5);
-    return;
-  }
-
-  tbody.innerHTML = datosOperarios.map(o => `
-    <tr>
-      <td data-label="ID" class="text-muted">#${o.id}</td>
-      <td data-label="Nombre"><span class="fw-600">${o.nombre}</span></td>
-      <td data-label="PIN">
-        <span style="background:var(--bg-secondary);padding:4px 10px;border-radius:6px;font-family:monospace;font-size:13px;letter-spacing:0.1em">****</span>
-      </td>
-      <td data-label="Estado"><span class="estado-badge ok">✅ Activo</span></td>
-      <td data-label="Acciones">
-        <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="eliminarOperario('${o.id}')">🗑️ Borrar</button>
-      </td>
-    </tr>
-  `).join('');
-}
-
-function abrirModalOperario() {
-  document.getElementById('nuevoNombre').value = '';
-  document.getElementById('nuevoPin').value = '';
-  document.getElementById('msgOperario').innerHTML = '';
-  abrirModal('modalOperario');
-}
-
-async function crearOperario() {
-  const nombre = document.getElementById('nuevoNombre').value.trim();
-  const pin = document.getElementById('nuevoPin').value.trim();
-  const msg = document.getElementById('msgOperario');
-
-  if (!nombre || !pin) {
-    msg.innerHTML = '<div class="alert alert-warning">⚠️ Completa todos los campos</div>';
-    return;
-  }
-
-  const res = await apiFetch('/api/operarios', { method: 'POST', body: { nombre, pin } });
-
-  if (res.ok) {
-    cerrarModal('modalOperario');
-    await cargarDatosBase();
-    renderOperarios();
-  } else {
-    msg.innerHTML = `<div class="alert alert-danger">❌ ${res.error}</div>`;
-  }
-}
-
-async function eliminarOperario(id) {
-  if (!confirm('¿Seguro que quieres borrar este operario?')) return;
-  const res = await apiFetch(`/api/operario/${id}`, { method: 'DELETE' });
-  if (res.ok) {
-    await cargarDatosBase();
-    renderOperarios();
-  } else {
-    alert('Error al borrar: ' + res.error);
-  }
-}
+// ── Usuarios Admin ────────────────────────────────────────────────────────────
 
 const ROL_BADGES = {
   admin:   { label: '🛡️ Administrador', cls: 'azul' },
@@ -1097,30 +1029,45 @@ async function apiFetch(url, options = {}) {
       }
     }
 
-    if (url.includes('/api/operarios') && method === 'POST') {
-      const { data, error } = await client.from('operarios').insert(payload).select().single();
-      if (error) throw error;
-      return { ok: true, data };
-    }
+    if (url.includes('/api/historial')) {
+      const searchParams = new URL(url, window.location.origin).searchParams;
+      let query = client.from('registros').select('*');
 
-    if (url.includes('/api/operarios') && method === 'POST') {
-      const { data, error } = await client.from('operarios').insert(payload).select().single();
-      if (error) throw error;
-      return { ok: true, data };
-    }
-
-    if (url.includes('/api/operario/')) {
-      const parts = url.split('/');
-      const id = parts[parts.length - 1];
-      console.log('Intentando borrar operario con ID:', id);
-      if (method === 'DELETE') {
-        const { error } = await client.from('operarios').delete().eq('id', id);
-        if (error) {
-          console.error('Error de Supabase al borrar:', error);
-          throw error;
-        }
-        return { ok: true };
+      if (searchParams.get('sala_id')) {
+        query = query.eq('sala_id', searchParams.get('sala_id'));
       }
+      if (searchParams.get('maquina_id')) {
+        query = query.eq('maquina_id', searchParams.get('maquina_id'));
+      }
+      if (searchParams.get('operario_nombre')) {
+        query = query.ilike('operario_nombre', `%${searchParams.get('operario_nombre')}%`);
+      }
+      if (searchParams.get('desde')) {
+        query = query.gte('timestamp', searchParams.get('desde'));
+      }
+      if (searchParams.get('hasta')) {
+        // Añadir final del día al filtro 'hasta'
+        query = query.lte('timestamp', searchParams.get('hasta') + 'T23:59:59');
+      }
+
+      const { data, error } = await query.order('timestamp', { ascending: false });
+      if (error) throw error;
+
+      return {
+        ok: true,
+        data: (data || []).map(r => ({
+          id: r.id,
+          maquina: r.maquina_nombre,
+          sala: r.sala_nombre,
+          operario: r.operario_nombre,
+          iniciado_en: r.timestamp,
+          completado_en: r.timestamp,
+          observaciones: r.notes,
+          tipo: r.tipo,
+          fotos: r.photos || [],
+          tiene_fotos: (r.photos && r.photos.length > 0)
+        }))
+      };
     }
 
     if (url.includes('/api/usuarios') && method === 'POST') {

@@ -715,3 +715,57 @@ tr:hover td { background: var(--bg-card-hover); }
   opacity: 0; transition: opacity 0.3s;
 }
 .detail-photo-wrapper:hover .photo-overlay { opacity: 1; }
+
+/* Tooltips de información */
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border-radius: 50%;
+  font-size: 11px;
+  margin-left: 6px;
+  cursor: help;
+  border: 1px solid var(--border);
+  position: relative;
+  vertical-align: middle;
+}
+
+.info-icon:hover {
+  background: var(--accent);
+  color: white;
+}
+
+.info-icon::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 150%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  width: 220px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 1000;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.info-icon:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-5px);
+}
+

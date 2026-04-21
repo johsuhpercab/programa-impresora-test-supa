@@ -187,9 +187,7 @@ const DASHBOARD_HTML = `
                 </select>
               </div>
               <div class="filtro-item">
-                <select class="form-control" id="filtroOperario" onchange="cargarHistorial()">
-                  <option value="">Todos los operarios</option>
-                </select>
+                <input type="text" id="filtroOperario" class="form-control" placeholder="🔍 Buscar operario..." oninput="cargarHistorial()">
               </div>
               <div class="filtro-item">
                 <input type="date" class="form-control" id="filtroDesde" onchange="cargarHistorial()">
@@ -313,7 +311,7 @@ const DASHBOARD_HTML = `
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Frecuencia (días)</label>
+          <label class="form-label">Frecuencia (días) <span class="info-icon" data-tooltip="Días recomendados entre mantenimientos preventivos.">?</span></label>
           <input class="form-control" id="editFrecuencia" type="number" min="1" max="365">
         </div>
       </div>
@@ -332,30 +330,6 @@ const DASHBOARD_HTML = `
         <button class="btn btn-outline" onclick="cerrarModal('modalMaquina')">Cancelar</button>
         <button class="btn btn-primary" onclick="guardarMaquina()">Guardar cambios</button>
       </div>
-    </div>
-  </div>
-
-  <!-- ── Modal: Nuevo Operario ── -->
-  <div class="overlay" id="modalOperario">
-    <div class="modal" style="max-width:400px">
-      <div class="modal-header">
-        <div class="modal-title">Gestión de Personal (Operarios)</div>
-        <button class="modal-close" onclick="cerrarModal('modalOperario')">✕</button>
-      </div>
-      <div id="msgOperario"></div>
-      <div class="form-group">
-        <label class="form-label">Nombre completo</label>
-        <input class="form-control" id="nuevoNombre" type="text" placeholder="Ej: Carlos García">
-      </div>
-      <div class="form-group">
-        <label class="form-label">PIN (4-6 dígitos)</label>
-        <input class="form-control" id="nuevoPin" type="text" maxlength="6" placeholder="Ej: 1234">
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="cerrarModal('modalOperario')">Cancelar</button>
-        <button class="btn btn-primary" onclick="crearOperario()">Crear operario</button>
-      </div>
-    </div>
   </div>
 
   <!-- ── Modal: Crear Máquina ── -->
@@ -386,7 +360,7 @@ const DASHBOARD_HTML = `
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Frecuencia (días)</label>
+          <label class="form-label">Frecuencia (días) <span class="info-icon" data-tooltip="Días recomendados entre mantenimientos preventivos.">?</span></label>
           <input class="form-control" id="nuevoMaquinaFrecuencia" type="number" min="1" max="365" value="7">
         </div>
       </div>
