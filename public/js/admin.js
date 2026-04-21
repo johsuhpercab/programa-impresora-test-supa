@@ -903,6 +903,30 @@ async function apiFetch(url, options = {}) {
       }
     }
 
+    if (url.includes('/api/sesion/') && url.includes('/detalle')) {
+      const id = url.split('/')[3];
+      const { data: reg, error } = await client.from('registros').select('*').eq('id', id).single();
+      if (error) throw error;
+      
+      return {
+        ok: true,
+        data: {
+          sesion: {
+            id: reg.id,
+            maquina: reg.maquina_nombre,
+            sala: reg.sala_nombre,
+            operario: reg.operario_nombre,
+            iniciado_en: reg.timestamp,
+            completado_en: reg.timestamp,
+            observaciones: reg.notas,
+            tipo: reg.tipo,
+            fotos: reg.photos || []
+          },
+          items: []
+        }
+      };
+    }
+
     // Fallback for unimplemented endpoints
     return { ok: false, error: 'Endpoint not implemented' };
 
