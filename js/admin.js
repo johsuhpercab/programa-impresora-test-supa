@@ -1295,7 +1295,7 @@ async function renderizarGaleria() {
 function iniciarTour() {
   const driverInstance = window.driver?.js?.driver || window.driver;
   if (!driverInstance) {
-     alert('Lo siento, la guía no se ha podido cargar. Por favor, refresca la página.');
+     alert('Guía no disponible. Refresca la página (Ctrl+F5).');
      return;
   }
 
@@ -1305,62 +1305,40 @@ function iniciarTour() {
     steps: [
       { 
         popover: { 
-          title: '✨ Bienvenido al Sistema', 
-          description: 'Hagamos un recorrido rápido para ver lo fácil que es gestionar tus impresoras ahora.' 
+          title: '✨ Bienvenido', 
+          description: 'Hagamos un recorrido ultrarrápido por el nuevo panel administrativo.' 
         }
       },
       { 
         element: '#kpiGrid', 
-        popover: { title: '📊 Resumen de Estado', description: 'Aquí tienes los contadores clave: mantenimientos hoy, vencidos y próximos. Todo se actualiza solo.' } 
+        popover: { title: '📊 Estado Actual', description: 'Aquí tienes un resumen en tiempo real de mantenimientos hoy, vencidos y próximos.' } 
       },
       { 
         element: '#nav-maquinas', 
         popover: { 
-          title: '🖨️ Gestión de Equipos', 
-          description: 'En esta sección controlas tu inventario de máquinas.',
-          onNextClick: () => {
-             navigateTo('maquinas');
-             setTimeout(() => driverObj.moveNext(), 150);
-          }
-        } 
-      },
-      { 
-        element: '#gridMaquinas', 
-        popover: { title: '🛠️ Tus Máquinas', description: 'Aquí puedes revisar cada impresora, editar su frecuencia o ver su historial individual.' } 
-      },
-      { 
-        element: '#nav-qrcodes', 
-        popover: { 
-          title: '📱 Códigos QR', 
-          description: 'Genera e imprime los códigos para las máquinas desde aquí.',
-          onNextClick: () => {
-             navigateTo('qrcodes');
-             setTimeout(() => driverObj.moveNext(), 150);
-          }
+          title: '🖨️ Tus Máquinas', 
+          description: 'Desde aquí gestionas todo tu inventario: añade impresoras, edita su frecuencia o revisa su estado.',
+          onNextClick: () => { navigateTo('qrcodes'); setTimeout(() => driverObj.moveNext(), 150); }
         } 
       },
       { 
         element: '#gridQRs', 
-        popover: { title: '🔗 Identificación QR', description: 'Cada máquina tiene su QR único. Pégalos en el equipo para que los operarios reporten al instante.' } 
+        popover: { 
+          title: '📱 Códigos QR', 
+          description: 'Imprime estos códigos y pégalos en las máquinas. Los operarios solo tienen que escanearlos para reportar trabajo.',
+          onNextClick: () => { navigateTo('historial'); setTimeout(() => driverObj.moveNext(), 150); }
+        } 
       },
       { 
         element: '#nav-historial', 
         popover: { 
-          title: '📋 Historial de Reportes', 
-          description: 'Veamos dónde se guardan todos los registros de trabajo.',
-          onNextClick: () => {
-             navigateTo('historial');
-             setTimeout(() => driverObj.moveNext(), 150);
-          }
+          title: '📋 Historial Completo', 
+          description: 'Aquí se guardan todos los reportes, fotos y notas enviadas por los operarios.' 
         } 
       },
       { 
-        element: '#filtroOperario', 
-        popover: { title: '🔍 Buscador de Operarios', description: 'Busca reportes específicos escribiendo aquí el nombre del operario.' } 
-      },
-      { 
         element: '.sidebar-footer', 
-        popover: { title: '🏠 ¡Todo listo!', description: 'Ya conoces lo esencial. ¡Buen trabajo gestionando tus equipos!' } 
+        popover: { title: '🏠 ¡Listo!', description: 'Ya tienes el control total del sistema. ¡Buen trabajo!' } 
       }
     ],
     nextBtnText: 'Siguiente',
