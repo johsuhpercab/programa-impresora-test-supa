@@ -450,4 +450,34 @@ const DASHBOARD_HTML = `
       <div id="detalleContenido"></div>
     </div>
   </div>
+
+  <!-- ── Modal: Historial Máquina ── -->
+  <div class="overlay" id="modalHistorialMaquina">
+    <div class="modal" style="max-width:800px; width: 95%">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="historialMaquinaTitulo">Historial de Máquina</div>
+          <div style="font-size:12px;color:var(--text-muted)" id="historialMaquinaSub">Cargando...</div>
+        </div>
+        <button class="modal-close" onclick="cerrarModal('modalHistorialMaquina')">✕</button>
+      </div>
+      <div class="table-wrap" style="max-height:60vh; overflow-y:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Operario</th>
+              <th>Tipo</th>
+              <th>Nota</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tablaHistorialMaquina"></tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="cerrarModal('modalHistorialMaquina')">Cerrar</button>
+      </div>
+    </div>
+  </div>
 `;

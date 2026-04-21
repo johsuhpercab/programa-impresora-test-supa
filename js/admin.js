@@ -317,7 +317,7 @@ function renderMaquinas() {
 
     return `
       <div class="maquina-card fade-in">
-        <div class="maquina-header">
+        <div class="maquina-header" onclick="verHistorialMaquina('${m.nombre}')" style="cursor:pointer" title="Ver historial de esta máquina">
           <div>
             <div class="maquina-nombre">${m.nombre}</div>
             <div class="maquina-tipo">${m.tipo}</div>
@@ -604,17 +604,23 @@ function renderizarContenidoHistorial(data, tbody, empty) {
 }
 
 async function verDetalleSesion(id) {
-  const res = await apiFetch(`/api/sesion/${id}/detalle`);
-  if (!res.ok) return;
-  const { sesion } = res.data;
-  const content = document.getElementById('detalleContenido');
+  const container = document.getElementById('detalleContenido');
+  container.innerHTML = '<div style="padding:40px;text-align:center"><span class="spinner"></span> Cargando detalle...</div>';
+  abrirModal('modalDetalle');
 
+  const res = await apiFetch(`/api/sesion/${id}/detalle`);
+  if (!res.ok) {
+    container.innerHTML = `<div class="alert alert-danger">Error: ${res.error}</div>`;
+    return;
+  }
+
+  const { sesion } = res.data;
   const isIncidencia = sesion.tipo === 'Incidencia';
   const tipoIcon = isIncidencia ? '🚨' : '🛠️';
   const tipoLabel = isIncidencia ? 'Incidencia' : 'Mantenimiento';
   const tipoClass = isIncidencia ? 'vencido' : 'ok';
 
-  content.innerHTML = `
+  container.innerHTML = `
     <div class="detail-container">
       <div class="detail-header-info">
         <div class="detail-machine">
@@ -662,7 +668,42 @@ async function verDetalleSesion(id) {
       ` : ''}
     </div>
   `;
-  abrirModal('modalDetalle');
+}
+
+async function verHistorialMaquina(nombreMaquina) {
+  document.getElementById('historialMaquinaTitulo').textContent = nombreMaquina;
+  document.getElementById('historialMaquinaSub').textContent = 'Filtrando registros...';
+  const tbody = document.getElementById('tablaHistorialMaquina');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px"><span class="spinner"></span> Buscando...</td></tr>';
+  abrirModal('modalHistorialMaquina');
+
+  // Buscamos en los datos locales primero (muy rápido)
+  const filtrados = datosHistorial.filter(r => r.maquina === nombreMaquina);
+  
+  if (!filtrados.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">No hay mantenimientos registrados todavía</td></tr>';
+    document.getElementById('historialMaquinaSub').textContent = '0 registros encontrados';
+    return;
+  }
+
+  document.getElementById('historialMaquinaSub').textContent = `${filtrados.length} mantenimientos realizados`;
+  
+  tbody.innerHTML = filtrados.map(r => {
+    const isInc = r.tipo === 'Incidencia';
+    return `
+      <tr>
+        <td data-label="Fecha" style="font-size:12px">${formatFechaHora(r.completado_en)}</td>
+        <td data-label="Operario" style="font-size:13px">${r.operario}</td>
+        <td data-label="Tipo"><span class="estado-badge ${isInc ? 'vencido' : 'ok'}" style="font-size:10px;padding:2px 6px">${r.tipo}</span></td>
+        <td data-label="Nota" title="${r.observaciones || ''}" style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${r.observaciones || '<span class="text-muted">Sin notas</span>'}
+        </td>
+        <td data-label="Acciones">
+          <button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:11px" onclick="verDetalleSesion('${r.id}')">Ver detalle</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function exportarCSV() {
