@@ -23,10 +23,15 @@
 
   <!-- ════ PANTALLA: ERROR ════ -->
   <div class="screen" id="screen-error">
-    <div class="error-screen">
-      <div class="bicon">❌</div>
-      <h2>Máquina no encontrada</h2>
-      <p id="errorMsg">El código QR no es válido o la máquina ya no está disponible. Contacta con el administrador.</p>
+    <div class="error-screen" style="padding: 40px 20px; text-align: center;">
+      <div style="font-size: 64px; margin-bottom: 20px;">❌</div>
+      <h2 style="margin-bottom: 12px; font-weight: 700;">Máquina no encontrada</h2>
+      <p id="errorMsg" style="margin-bottom: 30px; opacity: 0.8; font-size: 1.1rem; line-height: 1.4;">
+        No se especificó una máquina válida. Escanea el QR de nuevo o selecciona la impresora manualmente.
+      </p>
+      <button class="btn-nuevo" onclick="window.location.href='index.html'" style="width: 100%; max-width: 300px; margin: 0 auto; display: block;">
+        📋 Seleccionar manualmente
+      </button>
     </div>
   </div>
 
