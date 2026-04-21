@@ -7,7 +7,7 @@ let operarioData = null;
 let sesionId = null;
 let pinBuffer = '';
 let modoActual = 'Mantenimiento'; // 'Mantenimiento' o 'Incidencia'
-let selectedPhoto = null;
+let selectedPhotos = [];
 
 // ── Arranque ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -167,21 +167,49 @@ function onPhotoSelected() {
 
   const reader = new FileReader();
   reader.onload = (e) => {
-    selectedPhoto = e.target.result;
-    document.getElementById('photoPreviewImg').src = selectedPhoto;
-    document.getElementById('photoPreviewContainer').style.display = 'block';
-    document.getElementById('photoText').textContent = 'Foto añadida';
-    document.getElementById('photoIcon').textContent = '✅';
+    selectedPhotos.push(e.target.result);
+    renderPhotoPreviews();
   };
   reader.readAsDataURL(file);
+  // Limpiar input para permitir seleccionar la misma foto o resetear el selector
+  document.getElementById('photoInput').value = '';
+}
+
+function renderPhotoPreviews() {
+  const grid = document.getElementById('photoPreviewsGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  
+  selectedPhotos.forEach((src, index) => {
+    const container = document.createElement('div');
+    container.style = "position:relative; width:80px; height:80px; flex-shrink:0";
+    container.innerHTML = `
+      <img src="${src}" style="width:100%; height:100%; object-fit:cover; border-radius:12px; border:2px solid var(--accent-maint)">
+      <div onclick="removePhoto(${index})" style="position:absolute; top:-8px; right:-8px; background:var(--accent-inc); color:white; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:bold; cursor:pointer; border:2px solid #0f0f1a">✕</div>
+    `;
+    grid.appendChild(container);
+  });
+  
+  const text = document.getElementById('photoText');
+  const icon = document.getElementById('photoIcon');
+  if (selectedPhotos.length > 0) {
+    text.textContent = `Añadir otra foto (${selectedPhotos.length})`;
+    icon.textContent = '📸';
+  } else {
+    text.textContent = 'Añadir foto de evidencia';
+    icon.textContent = '📷';
+  }
+}
+
+function removePhoto(index) {
+  selectedPhotos.splice(index, 1);
+  renderPhotoPreviews();
 }
 
 function cancelPhoto() {
-  selectedPhoto = null;
+  selectedPhotos = [];
   document.getElementById('photoInput').value = '';
-  document.getElementById('photoPreviewContainer').style.display = 'none';
-  document.getElementById('photoText').textContent = 'Añadir foto de evidencia';
-  document.getElementById('photoIcon').textContent = '📷';
+  renderPhotoPreviews();
 }
 
 async function enviarChecklist() {
@@ -206,7 +234,7 @@ async function enviarChecklist() {
     body: { 
       observaciones: reporte,
       nombre_usuario: nombreUser, // Enviamos el nombre escrito
-      fotos: selectedPhoto ? [selectedPhoto] : []
+      fotos: selectedPhotos // Mandamos el array completo
     },
   });
 
@@ -225,7 +253,7 @@ async function enviarChecklist() {
 
 function reiniciar() {
   sesionId = null;
-  selectedPhoto = null;
+  selectedPhotos = [];
   modoActual = 'Mantenimiento';
   
   // Limpiar campos del formulario

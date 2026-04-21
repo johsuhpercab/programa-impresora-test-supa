@@ -234,9 +234,8 @@
           <button class="btn-photo" type="button" onclick="document.getElementById('photoInput').click()">
             <span id="photoIcon">📷</span> <span id="photoText">Añadir foto de evidencia</span>
           </button>
-          <div id="photoPreviewContainer" style="display:none; margin-top:12px; position:relative; width:80px; height:80px">
-            <img id="photoPreviewImg" src="" alt="Vista previa" style="width:100%; height:100%; object-fit:cover; border-radius:12px; border:2px solid var(--accent-maint)">
-            <div onclick="cancelPhoto()" style="position:absolute; top:-8px; right:-8px; background:var(--accent-inc); color:white; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; cursor:pointer">✕</div>
+          <div id="photoPreviewsGrid" style="display:flex; flex-wrap:wrap; gap:12px; margin-top:16px;">
+            <!-- Las miniaturas se inyectarán aquí por JS -->
           </div>
         </div>
 
