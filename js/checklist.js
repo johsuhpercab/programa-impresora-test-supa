@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
+    const client = window.supabaseClient;
     console.log("Buscando máquina en Supabase con criterio:", maquinaId);
     
     // Buscamos por ID OR por Nombre (ponemos comillas por si son texto)
