@@ -117,11 +117,14 @@ async function apiFetch(url, options = {}) {
 async function handlePhotoUploads(base64Photos) {
   const client = window.supabaseClient;
   const urls = [];
+  console.log(`Iniciando subida de ${base64Photos.length} fotos...`);
   
   for (let i = 0; i < base64Photos.length; i++) {
     const b64 = base64Photos[i];
     const blob = await (await fetch(b64)).blob();
     const fileName = `${Date.now()}_${i}.jpg`;
+    
+    console.log(`Subiendo foto ${i+1}/${base64Photos.length}...`);
     const { data, error } = await client.storage
       .from('photos')
       .upload(fileName, blob, { contentType: 'image/jpeg' });
@@ -132,6 +135,7 @@ async function handlePhotoUploads(base64Photos) {
     }
     
     const { data: { publicUrl } } = client.storage.from('photos').getPublicUrl(data.path);
+    console.log(`Foto ${i+1} subida con éxito: ${publicUrl}`);
     urls.push(publicUrl);
   }
   return urls;
