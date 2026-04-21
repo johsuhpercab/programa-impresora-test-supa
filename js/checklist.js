@@ -220,13 +220,16 @@ async function enviarChecklist() {
 }
 
 function reiniciar() {
-  pinBuffer = '';
-  actualizarDotsPIN();
-  operarioData = null;
   sesionId = null;
   selectedPhoto = null;
   modoActual = 'Mantenimiento';
-  document.getElementById('pinError').innerHTML = '';
+  
+  // Limpiar campos del formulario
+  const userInp = document.getElementById('userNameInput');
+  const reportTxt = document.getElementById('reporteTextarea');
+  if (userInp) userInp.value = '';
+  if (reportTxt) reportTxt.value = '';
+  
   cancelPhoto(); // Limpiar UI de foto
   showScreen('portal');
 }
