@@ -362,20 +362,15 @@ function renderPhotoGrid() {
   if (photoAddContainer) photoAddContainer.style.display = atMax ? 'none' : 'flex';
 
   if (state.photos.length === 0) {
-    photoHint.textContent = state.type === 'Mantenimiento'
-      ? 'Puedes añadir hasta 5 fotos (opcional)'
-      : 'Añade al menos 1 foto (máx 5)';
+    photoHint.textContent = 'Puedes añadir hasta 5 fotos (opcional)';
   } else if (atMax) {
     photoHint.textContent = 'Máximo de fotos alcanzado';
   } else {
     photoHint.textContent = `${state.photos.length}/${MAX_PHOTOS} fotos — puedes añadir más`;
   }
 
-  if (state.type === 'Mantenimiento') {
-    btnNext3.disabled = false;
-  } else {
-    btnNext3.disabled = state.photos.length === 0;
-  }
+  // Las fotos ahora son opcionales para todo (Mantenimiento e Incidencia)
+  btnNext3.disabled = false;
 }
 
 const cameraOverlay = document.getElementById('cameraOverlay');
