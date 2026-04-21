@@ -1058,6 +1058,41 @@ function cerrarSesionAdmin() { localStorage.removeItem('admin_pin'); location.re
 function abrirModal(id) { document.getElementById(id)?.classList.add('open'); }
 function cerrarModal(id) { document.getElementById(id)?.classList.remove('open'); }
 function formatFechaHora(str) { if (!str) return '–'; const d = new Date(str); return d.toLocaleDateString('es-ES') + ' ' + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }); }
+function renderizarGaleria() {
+  const container = document.getElementById('galeriaContent');
+  if (!container) return;
+  container.innerHTML = '';
+
+  // Filtrar solo registros que tengan fotos
+  const registrosConFotos = datosHistorial.filter(r => r.fotos && r.fotos.length > 0);
+
+  if (registrosConFotos.length === 0) {
+    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;opacity:0.5"><h3>No hay fotos aún</h3><p>Las fotos de los reportes aparecerán aquí.</p></div>';
+    return;
+  }
+
+  // Ahora cada tarjeta representa un REGISTRO (un grupo de fotos)
+  registrosConFotos.forEach(reg => {
+    const card = document.createElement('div');
+    card.className = 'photo-card fade-in';
+    card.onclick = () => verDetalleSesion(reg.id);
+
+    const numFotos = reg.fotos.length;
+    const badgeHtml = numFotos > 1 ? `<div class="photo-badge">+${numFotos} fotos</div>` : '';
+
+    card.innerHTML = `
+      <div class="photo-img-wrapper">
+        <img src="${reg.fotos[0]}" loading="lazy">
+        ${badgeHtml}
+      </div>
+      <div class="photo-info">
+        <div class="photo-title">${reg.maquina}</div>
+        <div class="photo-date">${formatFechaHora(reg.completado_en)}</div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
 function formatFechaDia(str) { if (!str) return '–'; const [y, m, d] = str.split('-'); return `${d}/${m}`; }
 function truncate(str, len) { return str.length > len ? str.slice(0, len) + '…' : str; }
 function escapar(str) { return String(str).replace(/'/g, "\\'"); }
@@ -1065,18 +1100,6 @@ async function recargarTodo() { await cargarDatosBase(); }
 
 document.querySelectorAll('.overlay').forEach(ov => ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); }));
 
-async function renderizarGaleria() {
-  const container = document.getElementById('galeriaContent'); if (!container) return;
-  container.innerHTML = 'Cargando galería...';
-  try {
-    const { data: registros, error } = await window.supabaseClient.from('registros').select('*').not('photos', 'is', null).order('timestamp', { ascending: false });
-    if (error) throw error;
-    const allPhotos = [];
-    registros.forEach(r => { if (Array.isArray(r.photos)) r.photos.forEach(url => allPhotos.push({ url, maquina: r.maquina_nombre, operario: r.operario_nombre, fecha: r.timestamp, id: r.id })); });
-    if (!allPhotos.length) { container.innerHTML = 'Galaría vacía'; return; }
-    container.innerHTML = allPhotos.map(p => `<div class="gallery-card" onclick="verDetalleSesion('${p.id}')"><img src="${p.url}"><div class="gallery-info"><div class="gallery-title">${p.maquina}</div><div class="gallery-meta">${formatFechaHora(p.fecha)}</div></div></div>`).join('');
-  } catch (err) { container.innerHTML = 'Error cargando galería'; }
-}
 
 function iniciarTour() {
   const driverInstance = window.driver?.js?.driver || window.driver;
