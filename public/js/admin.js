@@ -818,13 +818,26 @@ async function apiFetch(url, options = {}) {
         return { ...m, sala_nombre: m.salas ? m.salas.nombre : 'Sin sala', estado_mantenimiento: estadoMant };
       });
 
+      // Group by day for the chart
+      const registrosData = registros.data || [];
+      const porDiaMap = {};
+      const porMaquinaMap = {};
+      
+      registrosData.forEach(r => {
+        const dia = r.timestamp.split('T')[0];
+        porDiaMap[dia] = (porDiaMap[dia] || 0) + 1;
+        
+        const maq = r.maquina_nombre || 'Desconocida';
+        porMaquinaMap[maq] = (porMaquinaMap[maq] || 0) + 1;
+      });
+
       const dashboard = {
-        hoy: (registros.data || []).filter(r => r.timestamp.startsWith(hoy) && r.tipo === 'Mantenimiento').length,
-        semana: (registros.data || []).filter(r => (r.tipo === 'Mantenimiento' || !r.tipo)).length, 
+        hoy: registrosData.filter(r => r.timestamp.startsWith(hoy) && r.tipo === 'Mantenimiento').length,
+        semana: registrosData.filter(r => (r.tipo === 'Mantenimiento' || !r.tipo)).length, 
         pendientes: formattedMaquinas.filter(m => m.estado_mantenimiento === 'vencido' || m.estado_mantenimiento === 'pendiente').length,
         proximos: formattedMaquinas.filter(m => m.estado_mantenimiento === 'proximo').length,
-        porDia: [], // Placeholder
-        porMaquina: [] // Placeholder
+        porDia: Object.entries(porDiaMap).map(([dia, total]) => ({ dia, total })).sort((a,b) => a.dia.localeCompare(b.dia)),
+        porMaquina: Object.entries(porMaquinaMap).map(([nombre, total_sesiones]) => ({ nombre, total_sesiones })).sort((a,b) => b.total_sesiones - a.total_sesiones)
       };
 
       return {
