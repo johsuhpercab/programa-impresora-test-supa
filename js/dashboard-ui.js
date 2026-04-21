@@ -71,15 +71,7 @@ const DASHBOARD_HTML = `
           </div>
         </div>
         <div class="topbar-actions">
-          <div class="role-selector" title="Simulador de Roles">
-            <span id="roleIcon">🛡️</span>
-            <select id="simuladorRol" onchange="cambiarRolSimulado(this.value)">
-              <option value="admin">Administrador</option>
-              <option value="tecnico">Técnico</option>
-              <option value="usuario">Usuario (Lectura)</option>
-            </select>
-          </div>
-          <button class="btn btn-primary btn-sm" onclick="recargarTodo()">↺ Actualizar</button>
+          <!-- Ya no necesitamos simuladores ni botones manuales, el sistema es auto-suficiente -->
         </div>
       </header>
 
