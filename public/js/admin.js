@@ -929,6 +929,21 @@ async function apiFetch(url, options = {}) {
       };
     }
 
+    if (url.includes('/api/maquina/') && url.includes('/qr')) {
+      const id = url.split('/')[3];
+      // Construir la URL que el operario escaneará
+      const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', 'operario.html');
+      const targetUrl = `${baseUrl}?maquinaId=${id}`;
+      
+      return {
+        ok: true,
+        data: {
+          qr: `https://quickchart.io/qr?text=${encodeURIComponent(targetUrl)}&size=300&margin=2`,
+          url: targetUrl
+        }
+      };
+    }
+
     // Fallback for unimplemented endpoints
     return { ok: false, error: 'Endpoint not implemented' };
 
