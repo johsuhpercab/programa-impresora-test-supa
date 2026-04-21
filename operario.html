@@ -150,17 +150,17 @@
   <!-- ════ PANTALLA: PORTAL ════ -->
   <div class="screen" id="screen-portal">
     <div class="portal-container fade-up" style="padding-top: 60px;">
-      <div class="portal-header" style="display:flex; justify-content:space-between; align-items:start; text-align:left; margin-bottom: 30px;">
-        <div>
-          <h1 id="portalMaquinaNombre" style="margin:0">Cargando...</h1>
-          <p id="portalMaquinaSala" style="margin:0">Elige una opción</p>
+      <div class="portal-header" style="display:flex; justify-content:space-between; align-items:center; text-align:left; gap:20px; margin-bottom: 40px;">
+        <div style="flex: 1;">
+          <h1 id="portalMaquinaNombre" style="margin:0; font-size:24px;">Cargando...</h1>
+          <p id="portalMaquinaSala" style="margin:0; opacity:0.6;">Elige una opción</p>
         </div>
-        <div style="display:flex; gap:8px;">
-          <button onclick="window.location.href='index.html'" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; padding:8px 12px; border-radius:10px; font-size:11px; cursor:pointer">
-            🔄 Cambiar Impresora
+        <div style="display:flex; gap:8px; flex-shrink: 0;">
+          <button onclick="window.location.href='index.html'" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; padding:8px 12px; border-radius:10px; font-size:11px; cursor:pointer; white-space: nowrap;">
+            🔄 Cambiar
           </button>
-          <button onclick="window.location.href='dashboard.html'" style="background:rgba(79, 142, 247, 0.1); border:1px solid var(--accent-maint); color:var(--accent-maint); padding:8px 12px; border-radius:10px; font-size:11px; font-weight:700; cursor:pointer">
-            🛡️ Administración
+          <button onclick="window.location.href='dashboard.html'" style="background:rgba(79, 142, 247, 0.1); border:1px solid var(--accent-maint); color:var(--accent-maint); padding:8px 12px; border-radius:10px; font-size:11px; font-weight:700; cursor:pointer; white-space: nowrap;">
+            🛡️ Admin
           </button>
         </div>
       </div>
