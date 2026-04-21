@@ -24,11 +24,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const client = window.supabaseClient;
     console.log("Buscando máquina en Supabase con criterio:", maquinaId);
     
-    // Buscamos por ID OR por Nombre (ponemos comillas por si son texto)
+    // Buscamos por ID OR por Nombre
     const { data: maquina, error: mError } = await client
       .from('equipos')
       .select('*, salas(nombre)')
-      .or(`id.eq."${maquinaId}",nombre.eq."${maquinaId}"`)
+      .or(`id.eq.${maquinaId},nombre.eq.${maquinaId}`)
       .maybeSingle(); 
     
     if (mError) {
