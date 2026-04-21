@@ -1061,40 +1061,33 @@ function renderizarGaleria() {
   if (!container) return;
   container.innerHTML = '';
 
-  let todasLasFotos = [];
-  datosHistorial.forEach(reg => {
-    if (reg.fotos && reg.fotos.length > 0) {
-      reg.fotos.forEach(url => {
-        todasLasFotos.push({
-          url,
-          maquina: reg.maquina,
-          fecha: reg.completado_en,
-          idSesion: reg.id
-        });
-      });
-    }
-  });
+  // Filtrar solo registros que tengan fotos
+  const registrosConFotos = datosHistorial.filter(r => r.fotos && r.fotos.length > 0);
 
-  if (todasLasFotos.length === 0) {
+  if (registrosConFotos.length === 0) {
     container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;opacity:0.5"><h3>No hay fotos aún</h3><p>Las fotos de los reportes aparecerán aquí.</p></div>';
     return;
   }
 
-  // Ordenar por fecha descendente
-  todasLasFotos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
-  todasLasFotos.forEach(foto => {
+  registrosConFotos.forEach(reg => {
     const card = document.createElement('div');
-    card.className = 'photo-card fade-in';
-    card.onclick = () => verDetalleSesion(foto.idSesion);
+    card.className = 'gallery-card fade-in'; // Usamos la clase del CSS
+    card.onclick = () => verDetalleSesion(reg.id);
+
+    const numFotos = reg.fotos.length;
+    const badgeHtml = numFotos > 1 ? `<div class="photo-badge">+${numFotos} fotos</div>` : '';
 
     card.innerHTML = `
       <div class="photo-img-wrapper">
-        <img src="${foto.url}" loading="lazy">
+        <img src="${reg.fotos[0]}" loading="lazy">
+        ${badgeHtml}
       </div>
-      <div class="photo-info">
-        <div class="photo-title">${foto.maquina}</div>
-        <div class="photo-date">${formatFechaHora(foto.fecha)}</div>
+      <div class="gallery-info">
+        <div class="gallery-title">${reg.maquina}</div>
+        <div class="gallery-meta">
+          <span>📅 ${formatFechaHora(reg.completado_en)}</span>
+          <span>👷 ${reg.operario}</span>
+        </div>
       </div>
     `;
     container.appendChild(card);
