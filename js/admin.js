@@ -142,6 +142,7 @@ const sectionTitles = {
   operarios: ['Operarios', 'Gestión del personal de mantenimiento'],
   usuarios: ['Usuarios', 'Gestión de usuarios del sistema'],
   qrcodes: ['Códigos QR', 'QR individuales para el operario móvil'],
+  galeria: ['Galería de Fotos', 'Últimas evidencias fotográficas de los reportes'],
 };
 
 function navigateTo(section) {
@@ -176,6 +177,7 @@ function navigateTo(section) {
   if (section === 'operarios') renderOperarios();
   if (section === 'usuarios') renderUsuarios();
   if (section === 'qrcodes') renderQRs();
+  if (section === 'galeria') renderizarGaleria();
 }
 
 function renderActualSection() {
@@ -1045,4 +1047,60 @@ document.querySelectorAll('.overlay').forEach(ov => {
 // Responsive
 if (window.innerWidth < 768) {
   document.getElementById('btnMenuMobile').style.display = 'flex';
+}
+
+// ── Galería de Fotos ──────────────────────────────────────────────────────────
+async function renderizarGaleria() {
+  const container = document.getElementById('galeriaContent');
+  if (!container) return;
+  
+  container.innerHTML = `
+    <div style="grid-column:1/-1;text-align:center;padding:60px;background:var(--bg-card);border-radius:12px;border:1px solid var(--border)">
+      <div class="spinner" style="margin-bottom:16px"></div>
+      <p style="color:var(--text-muted)">Cargando galería de imágenes...</p>
+    </div>
+  `;
+  
+  try {
+    const { data: registros, error } = await window.supabaseClient
+      .from('registros')
+      .select('id, maquina_nombre, operario_nombre, timestamp, photos')
+      .not('photos', 'is', null)
+      .order('timestamp', { ascending: false });
+      
+    if (error) throw error;
+    
+    const allPhotos = [];
+    registros.forEach(r => {
+      if (Array.isArray(r.photos)) {
+        r.photos.forEach(url => {
+          allPhotos.push({ url, maquina: r.maquina_nombre, operario: r.operario_nombre, fecha: r.timestamp, id: r.id });
+        });
+      }
+    });
+    
+    if (allPhotos.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:80px;background:var(--bg-card);border-radius:12px;border:1px solid var(--border)">
+          <div style="font-size:48px;margin-bottom:16px">🖼️</div>
+          <h3 style="margin-bottom:8px">Galería vacía</h3>
+          <p style="color:var(--text-muted)">No se han encontrado fotos todavía.</p>
+        </div>
+      `;
+      return;
+    }
+    
+    container.innerHTML = allPhotos.map(p => `
+      <div class="gallery-card" onclick="verDetalleSesion('${p.id}')">
+        <img src="${p.url}" alt="Foto ${p.maquina}" loading="lazy">
+        <div class="gallery-info">
+          <div class="gallery-title">${p.maquina}</div>
+          <div class="gallery-meta">${formatFechaHora(p.fecha)} · ${p.operario}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error("Error cargando galería:", err);
+    container.innerHTML = '❌ Error de conexión';
+  }
 }

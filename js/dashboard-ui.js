@@ -34,6 +34,10 @@ const DASHBOARD_HTML = `
             <span class="nav-icon">📋</span>
             <span>Historial</span>
           </div>
+          <div class="nav-item" id="nav-galeria" onclick="navigateTo('galeria')">
+            <span class="nav-icon">🖼️</span>
+            <span>Galería</span>
+          </div>
         </div>
         <div class="nav-section">
           <div class="nav-section-title">Administración</div>
@@ -230,6 +234,19 @@ const DASHBOARD_HTML = `
               <div class="icon">📋</div>
               <p>No se encontraron registros con esos filtros</p>
             </div>
+          </div>
+        </div>
+
+        <!-- ══════════ GALERÍA ══════════ -->
+        <div class="section fade-in" id="section-galeria">
+          <div class="section-header">
+            <div>
+              <div class="section-title">🖼️ Galería de Fotos</div>
+              <div class="section-subtitle">Últimas evidencias fotográficas de los reportes</div>
+            </div>
+          </div>
+          <div id="galeriaContent" class="photo-gallery-grid">
+            <!-- Se inyecta por JS -->
           </div>
         </div>
 
