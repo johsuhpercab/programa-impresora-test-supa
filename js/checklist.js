@@ -67,11 +67,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     maquinaId = maquinaData.id;
 
-    document.getElementById('pinMaquinaNombre').textContent = maquinaData.nombre;
-    document.getElementById('pinMaquinaSala').textContent = maquinaData.sala_nombre + ' · ' + maquinaData.tipo;
-    
-    document.getElementById('portalMaquinaNombre').textContent = maquinaData.nombre;
-    document.getElementById('portalMaquinaSala').textContent = maquinaData.sala_nombre;
+    const pNm = document.getElementById('portalMaquinaNombre');
+    const pSl = document.getElementById('portalMaquinaSala');
+    if (pNm) pNm.textContent = maquinaData.nombre;
+    if (pSl) pSl.textContent = maquinaData.sala_nombre;
 
     showScreen('portal');
   } catch (e) {
