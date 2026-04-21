@@ -33,14 +33,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const grid = document.getElementById('gridMaquinas');
     if (grid) grid.innerHTML = skeletonMaquinas();
     const tbody = document.getElementById('dashboardUltimos');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)"><span class="spinner" style="display:inline-block;margin-right:8px"></span>Conectando con Google Sheets...</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)"><span class="spinner" style="display:inline-block;margin-right:8px"></span>Conectando con Supabase...</td></tr>';
     
     // Cargar TODO en una sola llamada
     await cargarDatosBase();
     
     // Auto-sincronización cada 2 minutos
     setInterval(() => {
-      console.log('Sincronización automática con el Sistema de Gestión...');
+      console.log('Sincronización automática con Supabase...');
       recargarTodo();
     }, 120000);
   } catch (err) {
