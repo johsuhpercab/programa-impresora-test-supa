@@ -508,37 +508,120 @@ function filtrarQRs() { renderQRs(); }
 async function verQR(id, nombre, sala) {
   document.getElementById('qrNombre').textContent = nombre;
   document.getElementById('qrSala').textContent = sala;
-  document.getElementById('qrImg').src = '';
-  document.getElementById('qrUrl').textContent = 'Generando QR...';
+  const qrContainer = document.getElementById('qrImgContainer'); // Necesitamos un contenedor, no un <img>
+  qrContainer.innerHTML = '';
+  document.getElementById('qrUrl').textContent = 'Generando...';
   abrirModal('modalQR');
 
-  const res = await apiFetch(`/api/maquina/${id}/qr`);
-  if (res.ok) {
-    document.getElementById('qrImg').src = res.data.qr;
-    const link = document.getElementById('qrUrl');
-    link.textContent = res.data.url;
-    link.href = res.data.url;
-  }
+  // Obtener URL base del servidor para el QR
+  let baseOrigin = window.origin;
+  try {
+    const infoRes = await fetch('/api/info').then(r => r.json());
+    if (infoRes.ok) baseOrigin = infoRes.data.url;
+  } catch (e) {}
+
+  const targetUrl = `${baseOrigin}/operario.html?maquinaId=${id}`;
+  document.getElementById('qrUrl').textContent = targetUrl;
+  document.getElementById('qrUrl').href = targetUrl;
+  
+  // Generar QR en el contenedor
+  new QRCode(qrContainer, {
+    text: targetUrl,
+    width: 256,
+    height: 256,
+    colorDark: "#1a1a2e",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+}
+
+function imprimirTodosLosQRs() {
+  const salaFiltro = document.getElementById('filtroSalaQR').value;
+  const lista = salaFiltro
+    ? datosMaquinas.filter(m => String(m.sala_id) === String(salaFiltro))
+    : datosMaquinas;
+
+  if (!lista.length) return alert('No hay máquinas para imprimir');
+
+  const printWindow = window.open('', '_blank');
+  
+  // Obtener URL base
+  let baseOrigin = window.origin;
+  // Nota: Esto es síncrono para la ventana de impresión, así que usamos el del sistema si podemos
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Imprimir todos los QRs</title>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+      <style>
+        body { font-family: sans-serif; display: flex; flex-wrap: wrap; gap: 20px; padding: 20px; justify-content: center; }
+        .qr-label { border: 1px solid #eee; padding: 15px; border-radius: 8px; text-align: center; width: 220px; page-break-inside: avoid; }
+        .qr-name { font-weight: bold; font-size: 16px; margin-bottom: 4px; }
+        .qr-sala { font-size: 12px; color: #666; margin-bottom: 10px; }
+        .qr-canvas { display: flex; justify-content: center; margin-bottom: 10px; }
+        .qr-url { font-size: 9px; color: #aaa; word-break: break-all; }
+        @media print { body { padding: 10px; } }
+      </style>
+    </head>
+    <body>
+      ${lista.map(m => `
+        <div class="qr-label">
+          <div class="qr-name">${m.nombre}</div>
+          <div class="qr-sala">${m.sala_nombre}</div>
+          <div class="qr-canvas" id="canvas-${m.id}"></div>
+          <div class="qr-url">${baseOrigin}/operario.html?maquinaId=${m.id}</div>
+        </div>
+      `).join('')}
+      
+      <script>
+        const base = "${baseOrigin}";
+        const maquinas = ${JSON.stringify(lista)};
+        
+        window.onload = () => {
+          maquinas.forEach(m => {
+            new QRCode(document.getElementById('canvas-' + m.id), {
+              text: base + "/operario.html?maquinaId=" + m.id,
+              width: 160,
+              height: 160,
+              colorDark: "#000000",
+              colorLight: "#ffffff",
+              correctLevel: QRCode.CorrectLevel.H
+            });
+          });
+          setTimeout(() => { window.print(); window.close(); }, 1000);
+        };
+      </script>
+    </body>
+    </html>
+  `;
+  
+  printWindow.document.write(html);
+  printWindow.document.close();
 }
 
 function imprimirQR() {
   const nombre = document.getElementById('qrNombre').textContent;
   const sala = document.getElementById('qrSala').textContent;
-  const img = document.getElementById('qrImg').src;
+  const container = document.getElementById('qrImgContainer');
+  const imgElement = container.querySelector('img');
+  const img = imgElement ? imgElement.src : '';
   const url = document.getElementById('qrUrl').textContent;
+  
   const w = window.open('', '_blank');
   w.document.write(`<!DOCTYPE html><html><head><title>QR - ${nombre}</title>
     <style>body{font-family:sans-serif;text-align:center;padding:40px}
     h2{margin-bottom:4px}p{color:#666;font-size:14px;margin-bottom:20px}
-    img{border:3px solid #000;border-radius:8px;width:220px}
+    img{border:3px solid #000;border-radius:8px;width:240px}
     .url{font-size:11px;color:#999;margin-top:16px;word-break:break-all}
     </style></head><body>
     <h2>${nombre}</h2><p>${sala}</p>
     <img src="${img}">
     <div class="url">${url}</div>
+    <script>window.onload=()=>{setTimeout(()=>window.print(),500)}</script>
     </body></html>`);
   w.document.close();
-  setTimeout(() => w.print(), 500);
 }
 
 // ── Historial ─────────────────────────────────────────────────────────────────

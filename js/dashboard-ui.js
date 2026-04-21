@@ -6,6 +6,10 @@
 
 const DASHBOARD_HTML = `
   <div class="layout">
+    <!-- Supabase & QR SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="js/supabase-config.js"></script>
     <!-- ── Sidebar ── -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
@@ -231,35 +235,6 @@ const DASHBOARD_HTML = `
           </div>
         </div>
 
-        <!-- ══════════ OPERARIOS ══════════ -->
-        <div class="section fade-in" id="section-operarios">
-          <div class="section-header">
-            <div>
-              <div class="section-title">👷 Operarios</div>
-              <div class="section-subtitle">Gestión de personal de mantenimiento</div>
-            </div>
-            <button class="btn btn-primary" onclick="abrirModalOperario()">+ Nuevo operario</button>
-          </div>
-
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>PIN</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tablaOperarios"></tbody>
-            </table>
-            <div id="usuariosEmpty" class="empty-state" style="display:none">
-              <div class="icon">👥</div>
-              <p>No hay usuarios creados todavía</p>
-            </div>
-          </div>
-        </div>
 
         <!-- ══════════ QR CODES ══════════ -->
         <div class="section fade-in" id="section-qrcodes">
@@ -268,10 +243,13 @@ const DASHBOARD_HTML = `
               <div class="section-title">📱 Códigos QR</div>
               <div class="section-subtitle">QR individuales para cada máquina — escanear con el móvil del operario</div>
             </div>
-            <select class="form-control" id="filtroSalaQR" onchange="filtrarQRs()"
-              style="width:160px;padding:8px 12px;font-size:13px">
-              <option value="">Todas las salas</option>
-            </select>
+            <div style="display:flex; gap:12px; align-items:center">
+              <select class="form-control" id="filtroSalaQR" onchange="filtrarQRs()"
+                style="width:160px;padding:8px 12px;font-size:13px">
+                <option value="">Todas las salas</option>
+              </select>
+              <button class="btn btn-primary" onclick="imprimirTodosLosQRs()">🖨️ Imprimir Todos los QRs</button>
+            </div>
           </div>
 
           <div
@@ -298,21 +276,16 @@ const DASHBOARD_HTML = `
 
   <!-- ── Modal: Ver QR ── -->
   <div class="overlay" id="modalQR">
-    <div class="modal" style="max-width:360px;text-align:center">
+    <div class="modal card" style="max-width:340px; text-align:center">
       <div class="modal-header">
-        <div class="modal-title">Código QR</div>
-        <button class="modal-close" onclick="cerrarModal('modalQR')">✕</button>
+        <div class="modal-title" id="qrNombre">Máquina</div>
+        <button class="btn-close" onclick="cerrarModal('modalQR')">✕</button>
       </div>
-      <div class="qr-container">
-        <div class="qr-maquina-nombre" id="qrNombre"></div>
-        <div class="qr-maquina-sala" id="qrSala"></div>
-        <img id="qrImg" src="" alt="QR Code">
-        <a class="qr-url" id="qrUrl" target="_blank" style="color:var(--accent);text-decoration:underline;word-break:break-all;display:block;margin-top:10px"></a>
-      </div>
-      <div class="modal-footer" style="justify-content:center">
-        <button class="btn btn-primary" onclick="imprimirQR()">🖨️ Imprimir QR</button>
-        <button class="btn btn-outline" onclick="cerrarModal('modalQR')">Cerrar</button>
-      </div>
+      <div style="margin-bottom:8px; color:var(--text-muted); font-size:14px" id="qrSala">Sala</div>
+      <div id="qrImgContainer" style="display:flex; justify-content:center; margin:20px 0; min-height:256px"></div>
+      <a id="qrUrl" class="text-accent" style="word-break:break-all; font-size:11px; margin-bottom:20px; display:block" target="_blank">URL</a>
+      <button class="btn btn-primary btn-full" onclick="imprimirQR()">🖨️ Imprimir Etiqueta</button>
+      <button class="btn btn-outline" onclick="cerrarModal('modalQR')">Cerrar</button>
     </div>
   </div>
 
