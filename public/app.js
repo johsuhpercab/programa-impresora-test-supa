@@ -66,19 +66,32 @@ async function apiFetch(url, options = {}) {
   }
 
   if (url.includes('/api/incidencias') && method === 'POST') {
-    // enviarIncidencia
-    // First, upload photos if any
+    // 1. First, find all details of the machine (including sala)
+    const { data: machine, error: mError } = await client
+      .from('equipos')
+      .select('*, salas(nombre)')
+      .or(`id.eq."${payload.assetId}",nombre.eq."${payload.assetId}"`)
+      .single();
+
+    if (mError) {
+      console.error("Machine not found for incident:", payload.assetId);
+    }
+
+    // 2. Upload photos if any
     let photoUrls = [];
     if (payload.photos && payload.photos.length > 0) {
       photoUrls = await handlePhotoUploads(payload.photos);
     }
 
+    // 3. Insert record with FULL details
     const { data: registro, error: rError } = await client
       .from('registros')
       .insert({
-        maquina_id: payload.assetId, // Note: payload.assetId might be name or ID currently, need to handle
-        maquina_nombre: payload.assetId, 
-        tipo: payload.type,
+        maquina_id: machine ? machine.id : payload.assetId,
+        maquina_nombre: machine ? machine.nombre : payload.assetId,
+        sala_nombre: (machine && machine.salas) ? machine.salas.nombre : 'Sin sala',
+        operario_nombre: 'Usuario (Incidencia)', // Fixed label for incidents
+        tipo: payload.type || 'Incidencia',
         notas: payload.notas,
         photos: photoUrls,
         timestamp: payload.timestamp || new Date().toISOString()
@@ -88,13 +101,11 @@ async function apiFetch(url, options = {}) {
 
     if (rError) throw rError;
 
-    // Update last maintenance in equipos
-    if (payload.assetId) {
-       // We try to match by ID or Name (since frontend currently sends name as id in some cases)
-       const { data: maq } = await client.from('equipos').select('id').or(`id.eq."${payload.assetId}",nombre.eq."${payload.assetId}"`).single();
-       if (maq) {
-         await client.from('equipos').update({ ultimo_mantenimiento: new Date().toISOString() }).eq('id', maq.id);
-       }
+    // 4. Update last maintenance date (even for incidents)
+    if (machine) {
+       await client.from('equipos')
+         .update({ ultimo_mantenimiento: new Date().toISOString() })
+         .eq('id', machine.id);
     }
 
     return { json: async () => ({ ok: true, data: registro }) };
