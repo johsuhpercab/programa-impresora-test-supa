@@ -147,12 +147,16 @@ function onReporteChange() {
 
 function actualizarBoton(texto) {
   const btn = document.getElementById('btnEnviar');
-  if (texto.trim().length > 0) {
+  const isValid = texto.trim().length > 0;
+  
+  if (isValid) {
     btn.className = 'btn-enviar activo';
     btn.textContent = '✅ Enviar informe';
+    btn.disabled = false;
   } else {
     btn.className = 'btn-enviar bloqueado';
     btn.textContent = '✏️ Rellena el reporte para continuar';
+    btn.disabled = true;
   }
 }
 
