@@ -316,8 +316,8 @@ function renderMaquinas() {
       : 'Sin mantenimiento registrado';
 
     return `
-      <div class="maquina-card fade-in">
-        <div class="maquina-header" onclick="verHistorialMaquina('${m.nombre}')" style="cursor:pointer" title="Ver historial de esta máquina">
+      <div class="maquina-card fade-in" onclick="verHistorialMaquina('${m.nombre}')" style="cursor:pointer" title="Ver historial completo">
+        <div class="maquina-header">
           <div>
             <div class="maquina-nombre">${m.nombre}</div>
             <div class="maquina-tipo">${m.tipo}</div>
@@ -332,11 +332,11 @@ function renderMaquinas() {
         </div>
         <div class="maquina-actions">
           ${rolActual === 'admin' ? `
-            <button class="btn btn-primary btn-sm" onclick="verQR('${m.id}', '${escapar(m.nombre)}', '${escapar(m.sala_nombre)}')">📱 QR</button>
-            <button class="btn btn-outline btn-sm" onclick="editarMaquina('${m.id}')">✏️ Editar</button>
-            <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);padding:4px 8px" onclick="eliminarMaquina('${m.id}')" title="Eliminar máquina">🗑️</button>
+            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); verQR('${m.id}', '${escapar(m.nombre)}', '${escapar(m.sala_nombre)}')">📱 QR</button>
+            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); editarMaquina('${m.id}')">✏️ Editar</button>
+            <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);padding:4px 8px" onclick="event.stopPropagation(); eliminarMaquina('${m.id}')" title="Eliminar máquina">🗑️</button>
           ` : `
-            <button class="btn btn-primary btn-sm" onclick="verQR('${m.id}', '${escapar(m.nombre)}', '${escapar(m.sala_nombre)}')">📱 QR</button>
+            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); verQR('${m.id}', '${escapar(m.nombre)}', '${escapar(m.sala_nombre)}')">📱 QR</button>
           `}
         </div>
       </div>
@@ -604,6 +604,9 @@ function renderizarContenidoHistorial(data, tbody, empty) {
 }
 
 async function verDetalleSesion(id) {
+  // Cerramos el modal de historial si está abierto para evitar solapamiento
+  cerrarModal('modalHistorialMaquina');
+
   const container = document.getElementById('detalleContenido');
   container.innerHTML = '<div style="padding:40px;text-align:center"><span class="spinner"></span> Cargando detalle...</div>';
   abrirModal('modalDetalle');
