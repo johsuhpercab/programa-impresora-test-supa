@@ -12,7 +12,7 @@ const DASHBOARD_HTML = `
         <div class="logo">
           <div class="logo-icon">🖨️</div>
           <div>
-            <h1>Gestión Espacio Impresoras</h1>
+            <h1>Gestión Impresoras</h1>
             <p>Panel de Administración</p>
           </div>
         </div>
