@@ -202,24 +202,29 @@ async function apiFetch(url, options = {}) {
     }
 
     if (url.includes('/api/sesion/') && url.includes('/completar')) {
+      // Use the names from the global state to ensure they aren't null
+      const registroPayload = {
+        maquina_id: maquinaId,
+        maquina_nombre: maquinaData?.nombre || 'Desconocida',
+        sala_nombre: maquinaData?.sala_nombre || 'Sin sala',
+        operario_nombre: operarioData?.nombre || 'Anonimo',
+        tipo: 'Mantenimiento',
+        notas: payload.observaciones,
+        timestamp: new Date().toISOString()
+      };
+
       const { data: registro, error: rError } = await client
         .from('registros')
-        .insert({
-          maquina_id: maquinaId,
-          maquina_nombre: maquinaData?.nombre,
-          sala_nombre: maquinaData?.sala_nombre,
-          operario_nombre: operarioData?.nombre,
-          tipo: 'Mantenimiento',
-          notas: payload.observaciones,
-          timestamp: new Date().toISOString()
-        })
+        .insert(registroPayload)
         .select()
         .single();
 
       if (rError) throw rError;
 
-      // Update last maintenance
-      await client.from('equipos').update({ ultimo_mantenimiento: new Date().toISOString() }).eq('id', maquinaId);
+      // Update last maintenance date on the machine
+      await client.from('equipos')
+        .update({ ultimo_mantenimiento: new Date().toISOString() })
+        .eq('id', maquinaId);
 
       return { ok: true, data: registro };
     }
