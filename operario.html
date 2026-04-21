@@ -122,6 +122,30 @@
     </div>
   </div>
 
+  <!-- ════ PANTALLA: PORTAL ════ -->
+  <div class="screen" id="screen-portal">
+    <div class="portal-container fade-up" style="padding-top: 60px;">
+      <div class="portal-header">
+        <h1 id="portalMaquinaNombre">Cargando...</h1>
+        <p id="portalMaquinaSala">Por favor, elige una opción para continuar</p>
+      </div>
+
+      <div class="portal-grid" style="max-width: 400px; margin: 0 auto; width: 100%;">
+        <div class="portal-card incident" onclick="seleccionarModo('incidencia')" style="background: rgba(255, 71, 87, 0.1); border: 1px solid var(--accent-inc);">
+          <div class="portal-card-icon">⚡</div>
+          <div class="portal-card-title">Informar de Incidencia</div>
+          <div class="portal-card-sub">Algo no funciona bien o está roto</div>
+        </div>
+
+        <div class="portal-card maintenance" onclick="seleccionarModo('mantenimiento')" style="background: rgba(79, 142, 247, 0.1); border: 1px solid var(--accent-maint);">
+          <div class="portal-card-icon">🔧</div>
+          <div class="portal-card-title">Mantenimiento Técnico</div>
+          <div class="portal-card-sub">Revisión periódica u operario identificado</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ════ PANTALLA: PIN ════ -->
   <div class="screen" id="screen-pin">
     <header class="app-header">
