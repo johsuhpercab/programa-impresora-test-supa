@@ -6,11 +6,13 @@ let maquinaData = null;
 let operarioData = null;
 let sesionId = null;
 let pinBuffer = '';
+let modoActual = 'Mantenimiento'; // 'Mantenimiento' o 'Incidencia'
+let selectedPhoto = null;
 
 // ── Arranque ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
-  const maquinaId = urlParams.get('maquinaId');
+  maquinaId = urlParams.get('maquinaId'); // Corrección: quitar 'const' para usar global
   console.log("ID de máquina recibido de la URL:", maquinaId);
 
   if (!maquinaId) {
@@ -46,13 +48,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Asignar datos de la máquina al estado global
     maquinaData = {
       ...maquina,
+      id: maquina.id, // Asegurar ID
       sala_nombre: maquina.salas ? maquina.salas.nombre : 'Sin sala'
     };
+    maquinaId = maquinaData.id;
 
     document.getElementById('pinMaquinaNombre').textContent = maquinaData.nombre;
     document.getElementById('pinMaquinaSala').textContent = maquinaData.sala_nombre + ' · ' + maquinaData.tipo;
+    
+    document.getElementById('portalMaquinaNombre').textContent = maquinaData.nombre;
+    document.getElementById('portalMaquinaSala').textContent = maquinaData.sala_nombre;
 
-    showScreen('pin');
+    showScreen('portal');
   } catch (e) {
     showError('Error de conexión con el servidor: ' + e.message);
   }
@@ -67,6 +74,19 @@ function showScreen(name) {
 function showError(msg) {
   document.getElementById('errorMsg').textContent = msg;
   showScreen('error');
+}
+
+function seleccionarModo(modo) {
+  modoActual = modo === 'incidencia' ? 'Incidencia' : 'Mantenimiento';
+  
+  if (modo === 'incidencia') {
+    // Si es incidencia, saltamos identificación y ponemos un nombre genérico
+    operarioData = { id: 0, nombre: 'Usuario (Incidencia)' };
+    iniciarSesion();
+  } else {
+    // Si es mantenimiento, pedimos el PIN
+    showScreen('pin');
+  }
 }
 
 // ── PIN ───────────────────────────────────────────────────────────────────────
@@ -147,6 +167,30 @@ function actualizarBoton(texto) {
   }
 }
 
+// ── Gestión de Fotos ─────────────────────────────────────────────────────────
+function onPhotoSelected() {
+  const file = document.getElementById('photoInput').files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    selectedPhoto = e.target.result;
+    document.getElementById('photoPreviewImg').src = selectedPhoto;
+    document.getElementById('photoPreviewContainer').style.display = 'block';
+    document.getElementById('photoText').textContent = 'Foto añadida';
+    document.getElementById('photoIcon').textContent = '✅';
+  };
+  reader.readAsDataURL(file);
+}
+
+function cancelPhoto() {
+  selectedPhoto = null;
+  document.getElementById('photoInput').value = '';
+  document.getElementById('photoPreviewContainer').style.display = 'none';
+  document.getElementById('photoText').textContent = 'Añadir foto de evidencia';
+  document.getElementById('photoIcon').textContent = '📷';
+}
+
 async function enviarChecklist() {
   const reporte = document.getElementById('reporteTextarea').value.trim();
 
@@ -162,7 +206,10 @@ async function enviarChecklist() {
 
   const res = await apiFetch(`/api/sesion/${sesionId}/completar`, {
     method: 'POST',
-    body: { observaciones: reporte },
+    body: { 
+      observaciones: reporte,
+      fotos: selectedPhoto ? [selectedPhoto] : []
+    },
   });
 
   if (res.ok) {
@@ -235,8 +282,9 @@ async function apiFetch(url, options = {}) {
         maquina_nombre: maquinaData?.nombre || 'Desconocida',
         sala_nombre: maquinaData?.sala_nombre || 'Sin sala',
         operario_nombre: operarioData?.nombre || 'Anonimo',
-        tipo: 'Mantenimiento',
+        tipo: modoActual,
         notas: payload.observaciones,
+        photos: payload.fotos || [], // Cambiado a 'photos' para marchar con la tabla
         timestamp: new Date().toISOString()
       };
 

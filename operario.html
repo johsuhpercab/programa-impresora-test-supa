@@ -6,6 +6,93 @@
   <title>Mantenimiento – GestiónPrint</title>
   <meta name="description" content="Checklist de mantenimiento preventivo">
   <meta name="theme-color" content="#0f0f1a">
+  <style>
+    :root {
+      --bg-portal: #0f0f1a;
+      --card-bg: #1a1a2e;
+      --accent-inc: #ff4757;
+      --accent-maint: #4f8ef7;
+      --text-white: #ffffff;
+    }
+    .portal-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 30px 20px;
+      background: var(--bg-portal);
+      color: var(--text-white);
+      text-align: center;
+    }
+    .portal-header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .portal-header p {
+      opacity: 0.6;
+      font-size: 14px;
+      margin-bottom: 40px;
+    }
+    .portal-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .portal-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 30px 20px;
+      border: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .portal-card:active {
+      transform: scale(0.96);
+    }
+    .portal-card-icon {
+      font-size: 44px;
+      margin-bottom: 16px;
+    }
+    .portal-card-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .portal-card-sub {
+      font-size: 13px;
+      opacity: 0.5;
+    }
+    .portal-card.incident { border-bottom: 4px solid var(--accent-inc); }
+    .portal-card.maintenance { border-bottom: 4px solid var(--accent-maint); }
+    
+    .btn-photo {
+      width: 100%;
+      background: var(--card-bg);
+      color: var(--text-white);
+      border: 1px dashed rgba(255,255,255,0.2);
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .btn-photo:active { background: rgba(255,255,255,0.05); }
+
+    .portal-card::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(45deg, transparent, rgba(255,255,255,0.03));
+      pointer-events: none;
+    }
+  </style>
   <link rel="stylesheet" href="css/mobile.css">
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -113,6 +200,18 @@
           rows="7"
           oninput="onReporteChange()"
         ></textarea>
+        
+        <div class="photo-upload-section" style="margin-top:20px">
+          <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="onPhotoSelected()">
+          <button class="btn-photo" onclick="document.getElementById('photoInput').click()">
+            <span id="photoIcon">📷</span> <span id="photoText">Añadir foto de evidencia</span>
+          </button>
+          <div id="photoPreviewContainer" style="display:none; margin-top:12px; position:relative; width:80px; height:80px">
+            <img id="photoPreviewImg" style="width:100%; height:100%; object-fit:cover; border-radius:12px; border:2px solid var(--accent-maint)">
+            <div onclick="cancelPhoto()" style="position:absolute; top:-8px; right:-8px; background:var(--accent-inc); color:white; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; cursor:pointer">✕</div>
+          </div>
+        </div>
+
         <div class="reporte-error" id="reporteError" style="display:none">⚠️ El campo es obligatorio. Escribe al menos 1 carácter.</div>
       </div>
     </div>
