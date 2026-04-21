@@ -264,12 +264,14 @@ function renderUltimosMantenimientos(registros) {
     const icon = isIncidencia ? '🚨' : '🛠️';
 
     return `
-      <tr>
+      <tr onclick="verDetalleSesion('${r.id}')" style="cursor:pointer">
         <td data-label="Máquina"><span style="${rowStyle}">${icon} ${r.maquina}</span></td>
         <td data-label="Sala"><span class="text-muted">${r.sala}</span></td>
         <td data-label="Operario">${r.operario}</td>
         <td data-label="Fecha y hora">${formatFechaHora(r.completado_en)}</td>
-        <td data-label="Estado"><span class="${badgeClass}">${r.tipo || 'Mantenimiento'}</span></td>
+        <td data-label="Acciones">
+          <button class="btn btn-outline btn-sm">Detalle</button>
+        </td>
       </tr>
     `;
   }).join('');
