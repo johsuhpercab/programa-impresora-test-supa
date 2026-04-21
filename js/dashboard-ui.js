@@ -6,12 +6,6 @@
 
 const DASHBOARD_HTML = `
   <div class="layout">
-    <!-- Supabase, QR SDK & Driver.js (Tour) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.bundle.js"></script>
-  <script src="js/supabase-config.js"></script>
     <!-- ── Sidebar ── -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
