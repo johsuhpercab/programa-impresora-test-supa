@@ -119,7 +119,79 @@ async function cargarDatosBase() {
     maqBadge.textContent = datosMaquinas.length;
     maqBadge.style.display = datosMaquinas.length > 0 ? 'inline' : 'none';
   }
+
+  // Badge incidencias pendientes
+  const pendientesCount = datosHistorial.filter(r => r.tipo === 'Incidencia' && !r.resuelta).length;
+  const incBadge = document.getElementById('badge-incidencias');
+  if (incBadge) {
+    incBadge.textContent = pendientesCount;
+    incBadge.style.display = pendientesCount > 0 ? 'inline' : 'none';
+  }
 }
+
+// ── Incidencias ─────────────────────────────────────────────────────────────
+function renderIncidencias(filtro = 'todas') {
+  const tbody = document.getElementById('tablaIncidencias');
+  const empty = document.getElementById('incidenciasEmpty');
+  if (!tbody) return;
+
+  // Actualizar estados de botones de filtro
+  ['todas', 'pendientes', 'resueltas'].forEach(f => {
+    const btn = document.getElementById(`btn-inc-${f}`);
+    if (btn) btn.classList.toggle('active', f === filtro);
+  });
+
+  let lista = datosHistorial.filter(r => r.tipo === 'Incidencia');
+  
+  const totalPendientes = lista.filter(r => !r.resuelta).length;
+  const totalResueltas = lista.filter(r => r.resuelta).length;
+
+  // Actualizar KPIs de la sección
+  if (document.getElementById('kpi-inc-pendientes')) document.getElementById('kpi-inc-pendientes').textContent = totalPendientes;
+  if (document.getElementById('kpi-inc-resueltas')) document.getElementById('kpi-inc-resueltas').textContent = totalResueltas;
+
+  if (filtro === 'pendientes') lista = lista.filter(r => !r.resuelta);
+  if (filtro === 'resueltas') lista = lista.filter(r => r.resuelta);
+
+  if (!lista.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  tbody.innerHTML = lista.map(r => {
+    const resuelta = r.resuelta || false;
+    const colorBg = resuelta ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.03)';
+    const statusLabel = resuelta 
+      ? `<span class="estado-badge ok" style="cursor:pointer" onclick="event.stopPropagation(); toggleResolucionIncidencia('${r.id}', false)">✅ Resuelta</span>`
+      : `<span class="estado-badge vencido" style="cursor:pointer" onclick="event.stopPropagation(); toggleResolucionIncidencia('${r.id}', true)">🚨 Pendiente</span>`;
+
+    return `
+      <tr style="background: ${colorBg}; transition: background 0.3s ease">
+        <td data-label="Máquina">
+          <div style="font-weight:700; color: ${resuelta ? 'var(--success)' : 'var(--danger)'}">
+            ${resuelta ? '✅' : '🚨'} ${r.maquina}
+          </div>
+        </td>
+        <td data-label="Sala">${r.sala}</td>
+        <td data-label="Operario">${r.operario}</td>
+        <td data-label="Fecha" style="font-size:11px">${formatFechaHora(r.completado_en)}</td>
+        <td data-label="Estado">${statusLabel}</td>
+        <td data-label="Observaciones" style="font-size:11px; max-width:200px; overflow:hidden; text-overflow:ellipsis">
+          ${r.observaciones || '–'}
+        </td>
+        <td data-label="Acciones">
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-outline btn-sm" onclick="verDetalleSesion('${r.id}')">Detalle</button>
+            ${!resuelta ? `<button class="btn btn-primary btn-sm" onclick="toggleResolucionIncidencia('${r.id}', true)">Cerrar</button>` : ''}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
 
 
 
@@ -127,6 +199,7 @@ async function cargarDatosBase() {
 const sectionTitles = {
   dashboard: ['Panel General', 'Resumen del sistema'],
   maquinas: ['Máquinas', 'Estado y gestión de todas las máquinas'],
+  incidencias: ['Centro de Incidencias', 'Gestión de fallos técnicos y reparaciones'],
   historial: ['Historial', 'Registro de mantenimientos realizados'],
   qrcodes: ['Códigos QR', 'QR individuales para el operario móvil'],
   galeria: ['Galería de Fotos', 'Últimas evidencias fotográficas de los reportes'],
@@ -161,6 +234,7 @@ function navigateTo(section) {
 
   // Cargar datos bajo demanda
   if (section === 'maquinas') renderMaquinas();
+  if (section === 'incidencias') renderIncidencias();
   if (section === 'historial') { cargarHistorial(); poblarFiltroMaquinasHistorial(); }
   if (section === 'usuarios') renderUsuarios();
   if (section === 'qrcodes') renderQRs();
@@ -172,6 +246,7 @@ function renderActualSection() {
   if (!activeSection) return;
   const id = activeSection.id.replace('section-', '');
   if (id === 'maquinas') renderMaquinas();
+  if (id === 'incidencias') renderIncidencias();
   if (id === 'historial') cargarHistorial();
   if (id === 'usuarios') renderUsuarios();
   if (id === 'qrcodes') renderQRs();

@@ -30,6 +30,11 @@ const DASHBOARD_HTML = `
             <span>Máquinas</span>
             <span class="nav-badge" id="badge-alertas" style="display:none">!</span>
           </div>
+          <div class="nav-item" id="nav-incidencias" onclick="navigateTo('incidencias')">
+            <span class="nav-icon">🚨</span>
+            <span>Incidencias</span>
+            <span class="nav-badge vencido" id="badge-incidencias" style="display:none">0</span>
+          </div>
           <div class="nav-item" id="nav-historial" onclick="navigateTo('historial')">
             <span class="nav-icon">📋</span>
             <span>Historial</span>
@@ -164,6 +169,55 @@ const DASHBOARD_HTML = `
             </div>
           </div>
           <div class="grid-maquinas" id="gridMaquinas"></div>
+        </div>
+
+        <!-- ══════════ INCIDENCIAS ══════════ -->
+        <div class="section fade-in" id="section-incidencias">
+          <div class="section-header">
+            <div>
+              <div class="section-title">🚨 Centro de Incidencias</div>
+              <div class="section-subtitle">Gestión de fallos técnicos y reparaciones</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline btn-sm active" id="btn-inc-todas" onclick="renderIncidencias('todas')">Todas</button>
+              <button class="btn btn-outline btn-sm" id="btn-inc-pendientes" onclick="renderIncidencias('pendientes')" style="border-color:var(--danger);color:var(--danger)">Pendientes</button>
+              <button class="btn btn-outline btn-sm" id="btn-inc-resueltas" onclick="renderIncidencias('resueltas')" style="border-color:var(--success);color:var(--success)">Resueltas</button>
+            </div>
+          </div>
+
+          <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px;">
+            <div class="kpi-card rojo" id="kpi-inc-pendientes-card">
+              <div class="kpi-value" id="kpi-inc-pendientes">0</div>
+              <div class="kpi-label">Pendientes</div>
+            </div>
+            <div class="kpi-card verde" id="kpi-inc-resueltas-card">
+              <div class="kpi-value" id="kpi-inc-resueltas">0</div>
+              <div class="kpi-label">Resueltas</div>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <div style="overflow-x:auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th>MAQUINA</th>
+                    <th>SALA</th>
+                    <th>OPERARIO</th>
+                    <th>FECHA</th>
+                    <th>ESTADO</th>
+                    <th>OBSERVACIONES</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="tablaIncidencias"></tbody>
+              </table>
+            </div>
+            <div id="incidenciasEmpty" class="empty-state" style="display:none">
+              <div class="icon">✨</div>
+              <p>No hay incidencias que coincidan con el filtro</p>
+            </div>
+          </div>
         </div>
 
         <!-- ══════════ HISTORIAL ══════════ -->
