@@ -819,8 +819,8 @@ async function apiFetch(url, options = {}) {
       });
 
       const dashboard = {
-        hoy: (registros.data || []).filter(r => r.timestamp.startsWith(hoy)).length,
-        semana: (registros.data || []).length, // Placeholder
+        hoy: (registros.data || []).filter(r => r.timestamp.startsWith(hoy) && r.tipo === 'Mantenimiento').length,
+        semana: (registros.data || []).filter(r => (r.tipo === 'Mantenimiento' || !r.tipo)).length, 
         pendientes: formattedMaquinas.filter(m => m.estado_mantenimiento === 'vencido' || m.estado_mantenimiento === 'pendiente').length,
         proximos: formattedMaquinas.filter(m => m.estado_mantenimiento === 'proximo').length,
         porDia: [], // Placeholder
