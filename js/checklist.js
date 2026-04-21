@@ -9,18 +9,41 @@ let pinBuffer = '';
 
 // ── Arranque ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  const params = new URLSearchParams(window.location.search);
-  maquinaId = params.get('id');
+  const urlParams = new URLSearchParams(window.location.search);
+  const maquinaId = urlParams.get('maquinaId');
+  console.log("ID de máquina recibido de la URL:", maquinaId);
 
   if (!maquinaId) {
-    showError('No se especificó una máquina. Escanea el QR directamente desde la máquina.');
+    showError('No se especificó ninguna máquina en la URL. Escanea el código QR de nuevo.');
     return;
   }
 
   try {
-    const maqRes = await apiFetch(`/api/maquina/${maquinaId}`);
-    if (!maqRes.ok) { showError('Máquina no encontrada (ID: ' + maquinaId + ')'); return; }
-    maquinaData = maqRes.data;
+    const { data: maquina, error: mError } = await client
+      .from('equipos')
+      .select('*, salas(nombre)')
+      .eq('id', maquinaId)
+      .single();
+    
+    if (mError) {
+      console.error("Error al buscar máquina en Supabase:", mError);
+      showError('Error de base de datos: ' + mError.message);
+      return;
+    }
+
+    if (!maquina) {
+      console.warn("La máquina no existe en la tabla 'equipos':", maquinaId);
+      showError('La máquina con ID ' + maquinaId + ' no existe en el sistema.');
+      return;
+    }
+
+    console.log("Máquina cargada con éxito:", maquina);
+    
+    // Asignar datos de la máquina al estado global
+    maquinaData = {
+      ...maquina,
+      sala_nombre: maquina.salas ? maquina.salas.nombre : 'Sin sala'
+    };
 
     document.getElementById('pinMaquinaNombre').textContent = maquinaData.nombre;
     document.getElementById('pinMaquinaSala').textContent = maquinaData.sala_nombre + ' · ' + maquinaData.tipo;
