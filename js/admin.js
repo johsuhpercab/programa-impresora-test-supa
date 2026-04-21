@@ -609,20 +609,20 @@ function imprimirTodosLosQRs() {
       </style>
     </head>
     <body>
-      \${lista.map(m => `
+      ${lista.map(m => `
         <div class="qr-label">
-          <div class="qr-name">\${m.nombre}</div>
-          <div class="qr-sala">\${m.sala_nombre}</div>
-          <div class="qr-canvas" id="canvas-\${m.id}"></div>
-          <div class="qr-url">\${baseOrigin}/operario.html?maquinaId=\${m.id}</div>
+          <div class="qr-name">${m.nombre}</div>
+          <div class="qr-sala">${m.sala_nombre}</div>
+          <div class="qr-canvas" id="canvas-${m.id}"></div>
+          <div class="qr-url">${baseOrigin}/operario.html?maquinaId=${m.id}</div>
         </div>
       `).join('')}
       <script>
         window.onload = () => {
-          const maquinas = \${JSON.stringify(lista)};
+          const maquinas = ${JSON.stringify(lista)};
           maquinas.forEach(m => {
             new QRCode(document.getElementById('canvas-' + m.id), {
-              text: "\${baseOrigin}/operario.html?maquinaId=" + m.id,
+              text: "${baseOrigin}/operario.html?maquinaId=" + m.id,
               width: 160,
               height: 160
             });
@@ -646,15 +646,15 @@ function imprimirQR() {
   const url = document.getElementById('qrUrl').textContent;
   
   const w = window.open('', '_blank');
-  w.document.write(`<!DOCTYPE html><html><head><title>QR - \${nombre}</title>
+  w.document.write(`<!DOCTYPE html><html><head><title>QR - ${nombre}</title>
     <style>body{font-family:sans-serif;text-align:center;padding:40px}
     h2{margin-bottom:4px}p{color:#666;font-size:14px;margin-bottom:20px}
     img{border:3px solid #000;border-radius:8px;width:240px}
     .url{font-size:11px;color:#999;margin-top:16px;word-break:break-all}
     </style></head><body>
-    <h2>\${nombre}</h2><p>\${sala}</p>
-    <img src="\${img}">
-    <div class="url">\${url}</div>
+    <h2>${nombre}</h2><p>${sala}</p>
+    <img src="${img}">
+    <div class="url">${url}</div>
     <script>window.onload=()=>{setTimeout(()=>window.print(),500)}</script>
     </body></html>`);
   w.document.close();
@@ -667,7 +667,7 @@ async function poblarFiltroMaquinasHistorial() {
   sel.innerHTML = '<option value="">Todas las máquinas</option>';
   datosMaquinas.forEach(m => {
     const opt = document.createElement('option');
-    opt.value = m.id; opt.textContent = `\${m.nombre} (\${m.sala_nombre})`;
+    opt.value = m.id; opt.textContent = `${m.nombre} (${m.sala_nombre})`;
     sel.appendChild(opt);
   });
 }
@@ -717,30 +717,30 @@ function renderizarContenidoHistorial(data, tbody, empty) {
     let resBadge = '';
     if (isInc) {
       resBadge = resuelta 
-        ? `<span class="estado-badge ok" style="margin-left:8px;font-size:10px;cursor:pointer" onclick="event.stopPropagation(); toggleResolucionIncidencia('\${r.id}', false)">✅ Resuelta</span>`
-        : `<span class="estado-badge vencido" style="margin-left:8px;font-size:10px;cursor:pointer" onclick="event.stopPropagation(); toggleResolucionIncidencia('\${r.id}', true)">🚨 Pendiente</span>`;
+        ? `<span class="estado-badge ok" style="margin-left:8px;font-size:10px;cursor:pointer" onclick="event.stopPropagation(); toggleResolucionIncidencia('${r.id}', false)">✅ Resuelta</span>`
+        : `<span class="estado-badge vencido" style="margin-left:8px;font-size:10px;cursor:pointer" onclick="event.stopPropagation(); toggleResolucionIncidencia('${r.id}', true)">🚨 Pendiente</span>`;
     }
 
     return `
-      <tr style="\${isInc && !resuelta ? 'background: rgba(239, 68, 68, 0.03)' : ''}">
-        <td data-label="#" class="text-muted" style="font-size:10px">#\${r.id.toString().substring(0, 8)}...</td>
+      <tr style="${isInc && !resuelta ? 'background: rgba(239, 68, 68, 0.03)' : ''}">
+        <td data-label="#" class="text-muted" style="font-size:10px">#${r.id.toString().substring(0, 8)}...</td>
         <td data-label="Máquina">
           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
-            <span style="\${isInc && !resuelta ? 'color:var(--danger);font-weight:600':''}">\${isInc ? (resuelta ? '✅':'🚨') : '🛠️'} \${r.maquina}</span>
-            \${resBadge}
+            <span style="${isInc && !resuelta ? 'color:var(--danger);font-weight:600':''}">${isInc ? (resuelta ? '✅':'🚨') : '🛠️'} ${r.maquina}</span>
+            ${resBadge}
           </div>
         </td>
-        <td data-label="Sala">\${r.sala}</td>
-        <td data-label="Operario">\${r.operario}</td>
-        <td data-label="Inicio" style="font-size:11px">\${formatFechaHora(r.iniciado_en)}</td>
-        <td data-label="Fin" style="font-size:11px">\${formatFechaHora(r.completado_en)}</td>
+        <td data-label="Sala">${r.sala}</td>
+        <td data-label="Operario">${r.operario}</td>
+        <td data-label="Inicio" style="font-size:11px">${formatFechaHora(r.iniciado_en)}</td>
+        <td data-label="Fin" style="font-size:11px">${formatFechaHora(r.completado_en)}</td>
         <td data-label="Observ." style="font-size:11px;color:var(--text-muted)">
           <div style="display:flex;align-items:center;gap:12px;justify-content:space-between">
-            <span style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\${r.observaciones || '–'}</span>
-            \${r.tiene_fotos ? `<img src="\${r.fotos[0]}" style="width:26px;height:26px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="event.stopPropagation(); window.open('\${r.fotos[0]}','_blank')">` : ''}
+            <span style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.observaciones || '–'}</span>
+            ${r.tiene_fotos ? `<img src="${r.fotos[0]}" style="width:26px;height:26px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="event.stopPropagation(); window.open('${r.fotos[0]}','_blank')">` : ''}
           </div>
         </td>
-        <td data-label="Acciones"><button class="btn btn-outline btn-sm" onclick="verDetalleSesion('\${r.id}')">Detalle</button></td>
+        <td data-label="Acciones"><button class="btn btn-outline btn-sm" onclick="verDetalleSesion('${r.id}')">Detalle</button></td>
       </tr>
     `;
   }).join('');
@@ -753,7 +753,7 @@ async function toggleResolucionIncidencia(id, nuevoEstado) {
     if (comentario === null) return; // Cancelado
   }
 
-  const res = await apiFetch(`/api/sesion/\${id}/resolver`, { 
+  const res = await apiFetch(`/api/sesion/${id}/resolver`, { 
     method: 'PUT', 
     body: { 
       resuelta: nuevoEstado,
@@ -781,9 +781,9 @@ async function verDetalleSesion(id) {
   container.innerHTML = '<div style="padding:40px;text-align:center"><span class="spinner"></span> Cargando...</div>';
   abrirModal('modalDetalle');
 
-  const res = await apiFetch(`/api/sesion/\${id}/detalle`);
+  const res = await apiFetch(`/api/sesion/${id}/detalle`);
   if (!res.ok) {
-    container.innerHTML = `<div class="alert alert-danger">Error: \${res.error}</div>`;
+    container.innerHTML = `<div class="alert alert-danger">Error: ${res.error}</div>`;
     return;
   }
 
@@ -796,11 +796,11 @@ async function verDetalleSesion(id) {
 
   container.innerHTML = `
     <div class="detail-container">
-      <div class="detail-header-info" style="\${isInc ? 'border-bottom: 2px solid var(--danger)' : ''}; margin-bottom: 20px;">
-        <div class="detail-machine"><span class="machine-icon">\${isInc ? '🚨' : '🖨️'}</span><div><div class="machine-name">\${sesion.maquina}</div><div class="machine-sala">📍 \${sesion.sala}</div></div></div>
+      <div class="detail-header-info" style="${isInc ? 'border-bottom: 2px solid var(--danger)' : ''}; margin-bottom: 20px;">
+        <div class="detail-machine"><span class="machine-icon">${isInc ? '🚨' : '🖨️'}</span><div><div class="machine-name">${sesion.maquina}</div><div class="machine-sala">📍 ${sesion.sala}</div></div></div>
         <div style="display:flex;gap:8px">
-          <div class="estado-badge \${isInc?'vencido':'ok'}">\${isInc?'Incidencia':'Mantenimiento'}</div>
-          \${isInc ? `<div class="estado-badge \${resuelta?'ok':'vencido'}" style="cursor:pointer" onclick="toggleResolucionIncidencia('\${sesion.id}', \${!resuelta}); cerrarModal('modalDetalle');">\${resuelta?'✅ Resuelta':'🚨 Pendiente'}</div>` : ''}
+          <div class="estado-badge ${isInc?'vencido':'ok'}">${isInc?'Incidencia':'Mantenimiento'}</div>
+          ${isInc ? `<div class="estado-badge ${resuelta?'ok':'vencido'}" style="cursor:pointer" onclick="toggleResolucionIncidencia('${sesion.id}', ${!resuelta}); cerrarModal('modalDetalle');">${resuelta?'✅ Resuelta':'🚨 Pendiente'}</div>` : ''}
         </div>
       </div>
 
@@ -808,41 +808,41 @@ async function verDetalleSesion(id) {
         <!-- Columna Izquierda: Información -->
         <div style="flex: 1; min-width: 280px;">
           <div class="detail-stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 16px;">
-            <div class="detail-stat"><div class="label">👷 Operario</div><div class="value" style="font-size:14px">\${sesion.operario}</div></div>
-            <div class="detail-stat"><div class="label">📅 Fecha</div><div class="value" style="font-size:14px">\${formatFechaHora(sesion.completado_en)}</div></div>
+            <div class="detail-stat"><div class="label">👷 Operario</div><div class="value" style="font-size:14px">${sesion.operario}</div></div>
+            <div class="detail-stat"><div class="label">📅 Fecha</div><div class="value" style="font-size:14px">${formatFechaHora(sesion.completado_en)}</div></div>
           </div>
           
           <div class="detail-section" style="margin-bottom: 20px;">
-            <div class="section-label">\${isInc ? '🚩 Informe de Fallo' : '📝 Observaciones'}</div>
-            <div class="detail-notes" style="font-size:13px; \${isInc ? 'background:rgba(239, 68, 68, 0.05); border-left:4px solid var(--danger)' : ''}">\${sesion.observaciones || 'Sin notas'}</div>
+            <div class="section-label">${isInc ? '🚩 Informe de Fallo' : '📝 Observaciones'}</div>
+            <div class="detail-notes" style="font-size:13px; ${isInc ? 'background:rgba(239, 68, 68, 0.05); border-left:4px solid var(--danger)' : ''}">${sesion.observaciones || 'Sin notas'}</div>
           </div>
 
-          \${sesion.comentario_resolucion ? `
+          ${sesion.comentario_resolucion ? `
             <div class="detail-section" style="margin-bottom: 20px;">
               <div class="section-label">✅ Solución / Resolución</div>
               <div class="detail-notes" style="font-size:13px; background:rgba(16, 185, 129, 0.05); border-left:4px solid var(--success); color:var(--success); font-weight:600">
-                \${sesion.comentario_resolucion}
+                ${sesion.comentario_resolucion}
               </div>
             </div>
           ` : ''}
 
           <div style="display:flex; flex-direction:column; gap:12px">
-            <button class="btn btn-outline btn-full" onclick="cerrarModal('modalDetalle'); verHistorialMaquina('\${sesion.maquina}')" style="background:var(--bg-secondary); padding: 10px; font-size: 13px;">📋 Ver Historial de la máquina</button>
+            <button class="btn btn-outline btn-full" onclick="cerrarModal('modalDetalle'); verHistorialMaquina('${sesion.maquina}')" style="background:var(--bg-secondary); padding: 10px; font-size: 13px;">📋 Ver Historial de la máquina</button>
             
-            \${isInc && !resuelta ? `
+            ${isInc && !resuelta ? `
               <div style="padding:16px;background:rgba(16,185,129,0.1);border-radius:12px;border:1px solid var(--success);text-align:center">
-                <button class="btn btn-primary btn-full" onclick="toggleResolucionIncidencia('\${sesion.id}', true); cerrarModal('modalDetalle');">✅ Resolver Incidencia</button>
+                <button class="btn btn-primary btn-full" onclick="toggleResolucionIncidencia('${sesion.id}', true); cerrarModal('modalDetalle');">✅ Resolver Incidencia</button>
               </div>
             ` : ''}
           </div>
         </div>
 
         <!-- Columna Derecha: Fotos -->
-        \${sesion.fotos && sesion.fotos.length > 0 ? `
+        ${sesion.fotos && sesion.fotos.length > 0 ? `
           <div style="width: 200px; flex-shrink: 0;">
             <div class="section-label">🖼️ Evidencias</div>
             <div style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
-              \${sesion.fotos.map(f => `<img src="\${f}" onclick="window.open('\${f}')" style="width:100%; height: 140px; object-fit: cover; border-radius:10px; cursor:zoom-in; border:1px solid var(--border)" loading="lazy">`).join('')}
+              ${sesion.fotos.map(f => `<img src="${f}" onclick="window.open('${f}')" style="width:100%; height: 140px; object-fit: cover; border-radius:10px; cursor:zoom-in; border:1px solid var(--border)" loading="lazy">`).join('')}
             </div>
           </div>
         ` : ''}
@@ -864,11 +864,11 @@ async function verHistorialMaquina(nombreMaquina) {
   }
   tbody.innerHTML = filtrados.map(r => `
     <tr>
-      <td data-label="Fecha">\${formatFechaHora(r.completado_en)}</td>
-      <td data-label="Operario">\${r.operario}</td>
-      <td data-label="Tipo"><span class="estado-badge \${r.tipo==='Incidencia'?'vencido':'ok'}">\${r.tipo}</span></td>
-      <td data-label="Nota">\${truncate(r.observaciones || '', 20)}</td>
-      <td><button class="btn btn-outline btn-sm" onclick="verDetalleSesion('\${r.id}')">Ver</button></td>
+      <td data-label="Fecha">${formatFechaHora(r.completado_en)}</td>
+      <td data-label="Operario">${r.operario}</td>
+      <td data-label="Tipo"><span class="estado-badge ${r.tipo==='Incidencia'?'vencido':'ok'}">${r.tipo}</span></td>
+      <td data-label="Nota">${truncate(r.observaciones || '', 20)}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="verDetalleSesion('${r.id}')">Ver</button></td>
     </tr>
   `).join('');
 }
@@ -876,11 +876,11 @@ async function verHistorialMaquina(nombreMaquina) {
 function exportarCSV() {
   const rows = [['ID', 'Máquina', 'Sala', 'Operario', 'Fecha', 'Observaciones']];
   datosHistorial.forEach(r => rows.push([r.id, r.maquina, r.sala, r.operario, r.completado_en, r.observaciones || '']));
-  const csv = rows.map(r => r.map(v => `"\${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `historial_\${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `historial_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
 
@@ -898,11 +898,11 @@ function renderUsuarios() {
     const rol = ROL_BADGES[u.rol] || { label: u.rol || 'usuario', cls: '' };
     return `
     <tr>
-      <td data-label="Nombre"><b>\${u.nombre}</b></td>
-      <td data-label="Rol"><span class="estado-badge \${rol.cls}">\${rol.label}</span></td>
-      <td data-label="PIN"><span style="font-family:monospace">\${u.pin || '–'}</span></td>
+      <td data-label="Nombre"><b>${u.nombre}</b></td>
+      <td data-label="Rol"><span class="estado-badge ${rol.cls}">${rol.label}</span></td>
+      <td data-label="PIN"><span style="font-family:monospace">${u.pin || '–'}</span></td>
       <td data-label="Estado"><span class="estado-badge ok">✅ Activo</span></td>
-      <td data-label="Acciones"><button class="btn btn-outline btn-sm" onclick="eliminarUsuarioAdmin('\${u.id}')">🗑️ Borrar</button></td>
+      <td data-label="Acciones"><button class="btn btn-outline btn-sm" onclick="eliminarUsuarioAdmin('${u.id}')">🗑️ Borrar</button></td>
     </tr>
   `;
   }).join('');
@@ -921,13 +921,13 @@ async function guardarUsuario() {
   const pin = document.getElementById('usuarioPin').value.trim();
   if (!nombre) return;
   const payload = { nombre, pin, activo: true };
-  let res = id ? await apiFetch(`/api/usuario/\${id}`, { method: 'PUT', body: payload }) : await apiFetch('/api/usuarios', { method: 'POST', body: payload });
+  let res = id ? await apiFetch(`/api/usuario/${id}`, { method: 'PUT', body: payload }) : await apiFetch('/api/usuarios', { method: 'POST', body: payload });
   if (res.ok) { cerrarModal('modalUsuario'); await cargarDatosBase(); renderUsuarios(); }
 }
 
 async function eliminarUsuarioAdmin(id) {
   if (confirm('¿Eliminar usuario?')) {
-    const res = await apiFetch(`/api/usuario/\${id}`, { method: 'DELETE' });
+    const res = await apiFetch(`/api/usuario/${id}`, { method: 'DELETE' });
     if (res.ok) { await cargarDatosBase(); renderUsuarios(); }
   }
 }
@@ -1080,18 +1080,18 @@ function renderizarGaleria() {
 
     card.innerHTML = `
       <div class="photo-img-wrapper">
-        <img src="\${reg.fotos[0]}" loading="lazy">
-        \${badgeHtml}
+        <img src="${reg.fotos[0]}" loading="lazy">
+        ${badgeHtml}
       </div>
       <div class="photo-info">
-        <div class="photo-title">\${reg.maquina}</div>
-        <div class="photo-date">\${formatFechaHora(reg.completado_en)}</div>
+        <div class="photo-title">${reg.maquina}</div>
+        <div class="photo-date">${formatFechaHora(reg.completado_en)}</div>
       </div>
     `;
     container.appendChild(card);
   });
 }
-function formatFechaDia(str) { if (!str) return '–'; const [y, m, d] = str.split('-'); return `\${d}/\${m}`; }
+function formatFechaDia(str) { if (!str) return '–'; const [y, m, d] = str.split('-'); return `${d}/${m}`; }
 function truncate(str, len) { return str.length > len ? str.slice(0, len) + '…' : str; }
 function escapar(str) { return String(str).replace(/'/g, "\\'"); }
 async function recargarTodo() { await cargarDatosBase(); }
