@@ -7,28 +7,123 @@
 // Detectar URL o inyectarla
 const API_URL = 'https://script.google.com/macros/s/AKfycbzcbeZYyHN2guCWwDc7rYekWruf9RhzOCp4dvlW-2JYK9ALA1KcBHIIPYHu0F4h3gHk/exec'; 
 
+// --- SUPABASE WRAPPER ---
 async function apiFetch(url, options = {}) {
-  let action = '';
-  let method = options.method || 'GET';
-  let payload = options.body;
+  const method = options.method || 'GET';
+  const payload = options.body ? JSON.parse(options.body) : null;
+  const client = window.supabaseClient;
 
-  if (url.includes('/api/maquinas/lista')) action = 'getMaquinas';
-  else if (url.includes('/api/incidencias') && method === 'GET') action = 'getHistorial';
-  else if (url.includes('/api/incidencias') && method === 'POST') action = 'enviarIncidencia';
+  if (url.includes('/api/maquinas/lista')) {
+    // getMaquinas
+    const { data: maquinas, error: mError } = await client
+      .from('equipos')
+      .select('*, salas(nombre)')
+      .eq('estado', 'activa');
+    
+    if (mError) throw mError;
 
-  if (method === 'GET') {
-    const res = await fetch(`${API_URL}?action=${action}`);
-    return res;
-  } else {
-    // POST request
-    const bodyObj = JSON.parse(payload);
-    bodyObj.action = action;
-    const res = await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify(bodyObj)
+    // Adapt to expected format
+    const formatted = maquinas.map(m => {
+      const hoy = new Date();
+      const frec = m.frecuencia_dias || 7;
+      let estadoMant = 'pendiente';
+
+      if (m.ultimo_mantenimiento) {
+        const ult = new Date(m.ultimo_mantenimiento);
+        const difDias = (hoy - ult) / (1000 * 60 * 60 * 24);
+        if (difDias > frec) estadoMant = 'vencido';
+        else if (difDias > frec * 0.8) estadoMant = 'proximo';
+        else estadoMant = 'ok';
+      }
+
+      return {
+        id: m.id,
+        nombre: m.nombre,
+        tipo: m.tipo,
+        sala_nombre: m.salas ? m.salas.nombre : 'Sin sala',
+        sala_id: m.sala_id,
+        modelo: m.modelo,
+        frecuencia_dias: frec,
+        estado: m.estado,
+        ultimo_mantenimiento: m.ultimo_mantenimiento,
+        estado_mantenimiento: estadoMant
+      };
     });
-    return res;
+
+    return { json: async () => ({ ok: true, data: formatted }) };
+  } 
+  
+  if (url.includes('/api/incidencias') && method === 'GET') {
+    // getHistorial
+    const { data, error } = await client
+      .from('registros')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(100);
+      
+    if (error) throw error;
+    return { json: async () => ({ ok: true, data }) };
   }
+
+  if (url.includes('/api/incidencias') && method === 'POST') {
+    // enviarIncidencia
+    // First, upload photos if any
+    let photoUrls = [];
+    if (payload.photos && payload.photos.length > 0) {
+      photoUrls = await handlePhotoUploads(payload.photos);
+    }
+
+    const { data: registro, error: rError } = await client
+      .from('registros')
+      .insert({
+        maquina_id: payload.assetId, // Note: payload.assetId might be name or ID currently, need to handle
+        maquina_nombre: payload.assetId, 
+        tipo: payload.type,
+        notas: payload.notas,
+        photos: photoUrls,
+        timestamp: payload.timestamp || new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (rError) throw rError;
+
+    // Update last maintenance in equipos
+    if (payload.assetId) {
+       // We try to match by ID or Name (since frontend currently sends name as id in some cases)
+       const { data: maq } = await client.from('equipos').select('id').or(`id.eq."${payload.assetId}",nombre.eq."${payload.assetId}"`).single();
+       if (maq) {
+         await client.from('equipos').update({ ultimo_mantenimiento: new Date().toISOString() }).eq('id', maq.id);
+       }
+    }
+
+    return { json: async () => ({ ok: true, data: registro }) };
+  }
+
+  return { json: async () => ({ ok: false, error: 'Endpoint not implemented in Supabase wrapper' }) };
+}
+
+async function handlePhotoUploads(base64Photos) {
+  const client = window.supabaseClient;
+  const urls = [];
+  
+  for (let i = 0; i < base64Photos.length; i++) {
+    const b64 = base64Photos[i];
+    const blob = await (await fetch(b64)).blob();
+    const fileName = `${Date.now()}_${i}.jpg`;
+    const { data, error } = await client.storage
+      .from('photos')
+      .upload(fileName, blob, { contentType: 'image/jpeg' });
+    
+    if (error) {
+      console.error('Error uploading photo:', error);
+      continue;
+    }
+    
+    const { data: { publicUrl } } = client.storage.from('photos').getPublicUrl(data.path);
+    urls.push(publicUrl);
+  }
+  return urls;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 

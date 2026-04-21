@@ -755,79 +755,134 @@ async function eliminarUsuarioAdmin(id) {
 }
 
 // ── Utilidades ────────────────────────────────────────────────────────────────
+// --- SUPABASE WRAPPER FOR ADMIN ---
 async function apiFetch(url, options = {}) {
+  const method = options.method || 'GET';
+  const payload = options.body; // In admin.js, body is already an object in most calls, but let's be safe
+  const client = window.supabaseClient;
   const pin = localStorage.getItem('admin_pin');
-  
+
+  // Simple PIN-based auth check (basic mockup of what GAS was doing)
+  if (url !== '/api/login-admin') {
+     const { data: config } = await client.from('config').select('valor').eq('clave', 'admin_pin').single();
+     if (config && config.valor !== pin) {
+       return { ok: false, error: 'No autorizado', code: 403 };
+     }
+  }
+
   try {
-    let action = '';
-    let payload = options.body;
-    let method = options.method || 'GET';
-    let id = null;
-
-    // Determinar acción
-    if (url.includes('/api/salas')) action = 'getSalas';
-    else if (url.includes('/api/maquinas') && method === 'GET') action = 'getMaquinas';
-    else if (url.includes('/api/maquina/') && method === 'GET' && url.includes('/qr')) {
-       const urlObj = new URL('operario.html', window.location.origin + window.location.pathname);
-       const u = urlObj.href + "?id=" + url.split('/')[3];
-       return { ok: true, data: { qr: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(u), url: u } };
-    }
-    else if (url.includes('/api/maquinas') && method === 'POST') action = 'manageMaquinas';
-    else if (url.includes('/api/maquina/') && (method === 'PUT' || method === 'DELETE')) {
-       action = 'manageMaquinas';
-       id = url.split('/')[3];
-    }
-    else if (url.includes('/api/operarios') && method === 'GET') action = 'getOperarios';
-    else if (url.includes('/api/operarios') && method === 'POST') action = 'manageOperarios';
-    else if (url.includes('/api/usuarios') && method === 'GET') action = 'getUsuarios';
-    else if (url.includes('/api/usuarios') && method === 'POST') action = 'manageUsuarios';
-    else if (url.includes('/api/usuario/') && method === 'DELETE') {
-       action = 'manageUsuarios';
-       id = url.split('/')[3];
-    }
-    else if (url.includes('/api/dashboard')) action = 'getDashboard';
-    else if (url.includes('/api/historial')) action = 'getHistorial';
-    else if (url.includes('/api/all-data')) action = 'getAllInitData';
-    else if (url.includes('/api/login-admin')) action = 'loginAdmin';
-    else if (url.includes('/api/sesion/') && url.includes('/detalle')) {
-       action = 'getHistorial'; // Placeholder si es necesario
+    if (url === '/api/login-admin') {
+      const { data: config } = await client.from('config').select('valor').eq('clave', 'admin_pin').single();
+      if (config && config.valor === pin) return { ok: true };
+      return { ok: false, error: 'PIN incorrecto' };
     }
 
-    if (API.includes('INSERTA_TU_WEB_APP_URL_AQUI')) {
-      console.warn('Falta añadir la URL del Sheet en admin.js');
-      return { ok: true, data: [] };
+    if (url.includes('/api/all-data')) {
+      const [salas, equipos, operarios, usuarios, registros] = await Promise.all([
+        client.from('salas').select('*'),
+        client.from('equipos').select('*, salas(nombre)'),
+        client.from('operarios').select('*').eq('activo', true),
+        client.from('usuarios').select('*').eq('activo', true),
+        client.from('registros').select('*').order('timestamp', { ascending: false }).limit(100)
+      ]);
+
+      // Calculate dashboard stats
+      const hoy = new Date().toISOString().split('T')[0];
+      const { data: statsHoy } = await client.rpc('count_registros_dia', { dia: hoy }); // We'll need a simple RPC or just filter
+      // For simplicity here, let's just calculate from the fetched records or do separate queries
+      
+      const formattedMaquinas = (equipos.data || []).map(m => {
+        const h = new Date();
+        const frec = m.frecuencia_dias || 7;
+        let estadoMant = 'pendiente';
+        if (m.ultimo_mantenimiento) {
+          const ult = new Date(m.ultimo_mantenimiento);
+          const difDias = (h - ult) / (1000 * 60 * 60 * 24);
+          if (difDias > frec) estadoMant = 'vencido';
+          else if (difDias > frec * 0.8) estadoMant = 'proximo';
+          else estadoMant = 'ok';
+        }
+        return { ...m, sala_nombre: m.salas ? m.salas.nombre : 'Sin sala', estado_mantenimiento: estadoMant };
+      });
+
+      const dashboard = {
+        hoy: (registros.data || []).filter(r => r.timestamp.startsWith(hoy)).length,
+        semana: (registros.data || []).length, // Placeholder
+        pendientes: formattedMaquinas.filter(m => m.estado_mantenimiento === 'vencido' || m.estado_mantenimiento === 'pendiente').length,
+        proximos: formattedMaquinas.filter(m => m.estado_mantenimiento === 'proximo').length,
+        porDia: [], // Placeholder
+        porMaquina: [] // Placeholder
+      };
+
+      return {
+        ok: true,
+        data: {
+          salas: salas.data,
+          maquinas: formattedMaquinas,
+          operarios: operarios.data,
+          usuarios: usuarios.data,
+          historial: (registros.data || []).map(r => ({
+            id: r.id,
+            maquina: r.maquina_nombre,
+            sala: r.sala_nombre,
+            operario: r.operario_nombre,
+            iniciado_en: r.timestamp,
+            completado_en: r.timestamp,
+            observaciones: r.notas,
+            tipo: r.tipo
+          })),
+          dashboard
+        }
+      };
     }
 
-    // Siempre enviamos auth_pin si existe
-    let fetchUrl = API + (API.includes('?') ? '&' : '?') + 'action=' + action;
-    if (id) fetchUrl += '&id=' + id;
-    if (pin) fetchUrl += '&auth_pin=' + pin;
-
-    let fetchOptions = {
-      method: 'POST',
-      body: JSON.stringify({
-        action: action,
-        id: id,
-        auth_pin: pin,
-        payload: payload,
-        method: method
-      }),
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-    };
-
-    const response = await fetch(fetchUrl, fetchOptions);
-    const result = await response.json();
-    
-    if (result.code === 403) {
-      console.error('Acceso no autorizado: PIN incorrecto o sesión caducada');
-      cerrarSesionAdmin();
-      return { ok: false, error: 'No autorizado' };
+    if (url.includes('/api/maquinas') && method === 'POST') {
+      const { data, error } = await client.from('equipos').insert(payload).select().single();
+      if (error) throw error;
+      return { ok: true, data };
     }
-    
-    return result;
+
+    if (url.includes('/api/maquina/')) {
+      const id = url.split('/')[3];
+      if (method === 'PUT') {
+        const { error } = await client.from('equipos').update(payload).eq('id', id);
+        if (error) throw error;
+        return { ok: true };
+      }
+      if (method === 'DELETE') {
+        const { error } = await client.from('equipos').delete().eq('id', id);
+        if (error) throw error;
+        return { ok: true };
+      }
+    }
+
+    if (url.includes('/api/operarios') && method === 'POST') {
+      const { data, error } = await client.from('operarios').insert(payload).select().single();
+      if (error) throw error;
+      return { ok: true, data };
+    }
+
+    if (url.includes('/api/usuarios') && method === 'POST') {
+      const { data, error } = await client.from('usuarios').insert(payload).select().single();
+      if (error) throw error;
+      return { ok: true, data };
+    }
+
+    if (url.includes('/api/usuario/')) {
+      const id = url.split('/')[3];
+      if (method === 'DELETE') {
+        const { error } = await client.from('usuarios').update({ activo: false }).eq('id', id);
+        if (error) throw error;
+        return { ok: true };
+      }
+    }
+
+    // Fallback for unimplemented endpoints
+    return { ok: false, error: 'Endpoint not implemented' };
+
   } catch (err) {
-    console.error('Error en apiFetch:', err);
-    return { ok: false, error: 'Error de conexión con el servidor' };
+    console.error('Error in Supabase apiFetch:', err);
+    return { ok: false, error: err.message };
   }
 }
 

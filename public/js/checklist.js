@@ -160,52 +160,74 @@ function reiniciar() {
   showScreen('pin');
 }
 
-const API = window.API_URL || 'https://script.google.com/macros/s/AKfycbzcbeZYyHN2guCWwDc7rYekWruf9RhzOCp4dvlW-2JYK9ALA1KcBHIIPYHu0F4h3gHk/exec'; // Compartir URL con admin.js o inyectarla
-
+// --- SUPABASE WRAPPER FOR CHECKLIST ---
 async function apiFetch(url, options = {}) {
+  const method = options.method || 'GET';
+  const payload = options.body;
+  const client = window.supabaseClient;
+
   try {
-    let action = '';
-    let payload = options.body;
-    let method = options.method || 'GET';
-
     if (url.includes('/api/maquina/') && method === 'GET') {
-      action = 'getMaquinaById';
-      url += '&id=' + url.split('/')[3]; 
-    }
-    else if (url.includes('/api/operarios/verificar-pin')) action = 'verificarPin';
-    else if (url.includes('/api/sesion/iniciar')) {
-      // Dummy response as GAS doesn't require "starting" a session explicitly
-      return { ok: true, data: { sesion_id: new Date().getTime() } };
-    }
-    else if (url.includes('/api/sesion/') && url.includes('/completar')) {
-      action = 'enviarIncidencia';
-      payload = {
-        maquina_id: maquinaId,
-        maquina_nombre: maquinaData?.nombre,
-        sala_nombre: maquinaData?.sala_nombre,
-        operario_nombre: operarioData?.nombre,
-        notas: options.body.observaciones || '',
-        tipo: 'Mantenimiento'
+      const id = url.split('/')[3];
+      const { data, error } = await client
+        .from('equipos')
+        .select('*, salas(nombre)')
+        .or(`id.eq."${id}",nombre.eq."${id}"`)
+        .single();
+      
+      if (error) throw error;
+      const formatted = {
+        ...data,
+        sala_nombre: data.salas ? data.salas.nombre : 'Sin sala'
       };
+      return { ok: true, data: formatted };
     }
 
-    if (API === 'INSERTA_TU_WEB_APP_URL_AQUI') {
-      return { ok: false, error: 'Falta añadir la URL del Sheet API' };
+    if (url.includes('/api/operarios/verificar-pin')) {
+      const { data, error } = await client
+        .from('operarios')
+        .select('*')
+        .eq('pin', payload.pin)
+        .eq('activo', true)
+        .single();
+      
+      if (error || !data) return { ok: false, error: 'PIN incorrecto' };
+      return { ok: true, data };
     }
 
-    if (method === 'GET' || action === 'getMaquinaById') {
-      const gUrl = `${API}?action=${action}${action==='getMaquinaById' ? '&id='+url.split('=')[1] : ''}`;
-      const res = await fetch(gUrl);
-      return await res.json();
-    } else {
-      const res = await fetch(API, {
-        method: 'POST',
-        body: JSON.stringify({ action, method, payload }),
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-      });
-      return await res.json();
+    if (url.includes('/api/sesion/iniciar')) {
+      // For Supabase, we don't strictly need to start a session in a separate table
+      // unless we want to track working time. For now, matching the dummy logic.
+      return { ok: true, data: { sesion_id: 'temp_sesion' } };
     }
-  } catch (e) {
-    return { ok: false, error: e.message };
+
+    if (url.includes('/api/sesion/') && url.includes('/completar')) {
+      const { data: registro, error: rError } = await client
+        .from('registros')
+        .insert({
+          maquina_id: maquinaId,
+          maquina_nombre: maquinaData?.nombre,
+          sala_nombre: maquinaData?.sala_nombre,
+          operario_nombre: operarioData?.nombre,
+          tipo: 'Mantenimiento',
+          notas: payload.observaciones,
+          timestamp: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (rError) throw rError;
+
+      // Update last maintenance
+      await client.from('equipos').update({ ultimo_mantenimiento: new Date().toISOString() }).eq('id', maquinaId);
+
+      return { ok: true, data: registro };
+    }
+
+    return { ok: false, error: 'Endpoint not implemented' };
+
+  } catch (err) {
+    console.error('Error in Supabase Checklist API:', err);
+    return { ok: false, error: err.message };
   }
 }
