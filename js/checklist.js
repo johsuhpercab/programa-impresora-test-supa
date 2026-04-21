@@ -19,21 +19,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
+    console.log("Buscando máquina en Supabase con criterio:", maquinaId);
+    
+    // Buscamos por ID OR por Nombre (ponemos comillas por si son texto)
     const { data: maquina, error: mError } = await client
       .from('equipos')
       .select('*, salas(nombre)')
-      .eq('id', maquinaId)
-      .single();
+      .or(`id.eq."${maquinaId}",nombre.eq."${maquinaId}"`)
+      .maybeSingle(); 
     
     if (mError) {
-      console.error("Error al buscar máquina en Supabase:", mError);
-      showError('Error de base de datos: ' + mError.message);
+      console.error("Error de Supabase:", mError);
+      showError('Error de conexión: ' + mError.message);
       return;
     }
 
     if (!maquina) {
-      console.warn("La máquina no existe en la tabla 'equipos':", maquinaId);
-      showError('La máquina con ID ' + maquinaId + ' no existe en el sistema.');
+      console.warn("No se encontró ninguna coincidencia para:", maquinaId);
+      showError('No existe ninguna impresora con el ID o Nombre: "' + maquinaId + '". Verifica que esté registrada en el Panel de Administrador.');
       return;
     }
 
