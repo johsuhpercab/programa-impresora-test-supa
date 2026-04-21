@@ -630,7 +630,7 @@ tr:hover td { background: var(--bg-card-hover); }
 }
 
 .gallery-card::after {
-  content: '👁️ Ver detalle';
+  content: '👁️ Ver detalles';
   position: absolute;
   top: 50%;
   left: 50%;
