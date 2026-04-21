@@ -267,7 +267,7 @@ function renderUltimosMantenimientos(registros) {
 
     return `
       <tr onclick="verDetalleSesion('${r.id}')" style="cursor:pointer">
-        <td data-label="Máquina"><span style="${rowStyle}">${icon} ${r.maquina}</span></td>
+        <td data-label="Máquina"><span style="${rowStyle}">${icon} ${r.maquina}</span>${r.tiene_fotos ? '<span title="Tiene fotos" style="margin-left:6px;font-size:12px">📷</span>' : ''}</td>
         <td data-label="Sala"><span class="text-muted">${r.sala}</span></td>
         <td data-label="Operario">${r.operario}</td>
         <td data-label="Fecha y hora">${formatFechaHora(r.completado_en)}</td>
@@ -588,7 +588,7 @@ function renderizarContenidoHistorial(data, tbody, empty) {
     return `
       <tr style="${isIncidencia ? 'background: rgba(239, 68, 68, 0.03)' : ''}">
         <td data-label="#" class="text-muted" style="font-size:10px">#${r.id.toString().substring(0, 8)}...</td>
-        <td data-label="Máquina"><span style="${rowStyle}">${icon} ${r.maquina}</span></td>
+        <td data-label="Máquina"><span style="${rowStyle}">${icon} ${r.maquina}</span>${r.tiene_fotos ? '<span title="Tiene fotos" style="margin-left:6px;font-size:12px">📷</span>' : ''}</td>
         <td data-label="Sala">${r.sala}</td>
         <td data-label="Operario">${r.operario}</td>
         <td data-label="Inicio" style="font-size:11px">${formatFechaHora(r.iniciado_en)}</td>
@@ -859,7 +859,8 @@ async function apiFetch(url, options = {}) {
             iniciado_en: r.timestamp,
             completado_en: r.timestamp,
             observaciones: r.notas,
-            tipo: r.tipo
+            tipo: r.tipo,
+            tiene_fotos: (r.photos && r.photos.length > 0)
           })),
           dashboard
         }
