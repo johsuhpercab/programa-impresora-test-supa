@@ -244,8 +244,11 @@ function reiniciar() {
   actualizarDotsPIN();
   operarioData = null;
   sesionId = null;
+  selectedPhoto = null;
+  modoActual = 'Mantenimiento';
   document.getElementById('pinError').innerHTML = '';
-  showScreen('pin');
+  cancelPhoto(); // Limpiar UI de foto
+  showScreen('portal');
 }
 
 // --- SUPABASE WRAPPER FOR CHECKLIST ---
