@@ -697,7 +697,17 @@ async function verHistorialMaquina(nombreMaquina) {
       <tr>
         <td data-label="Fecha" style="font-size:12px">${formatFechaHora(r.completado_en)}</td>
         <td data-label="Operario" style="font-size:13px">${r.operario}</td>
-        <td data-label="Tipo"><span class="estado-badge ${isInc ? 'vencido' : 'ok'}" style="font-size:10px;padding:2px 6px">${r.tipo}</span></td>
+        <td data-label="Tipo">
+           <div style="display:flex;align-items:center;gap:8px">
+             <span class="estado-badge ${isInc ? 'vencido' : 'ok'}" style="font-size:10px;padding:2px 6px">${r.tipo}</span>
+             ${r.tiene_fotos ? `
+               <div onclick="window.open('${r.fotos[0]}', '_blank')" style="cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center">
+                 <img src="${r.fotos[0]}" style="width:24px;height:24px;object-fit:cover;border-radius:4px;border:1px solid var(--border)">
+                 <span style="position:absolute;font-size:10px;background:rgba(0,0,0,0.6);color:white;padding:1px 3px;border-radius:4px;bottom:-2px;right:-2px">${r.fotos.length}</span>
+               </div>
+             ` : ''}
+           </div>
+        </td>
         <td data-label="Nota" title="${r.observaciones || ''}" style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
           ${r.observaciones || '<span class="text-muted">Sin notas</span>'}
         </td>
@@ -961,6 +971,7 @@ async function apiFetch(url, options = {}) {
             completado_en: r.timestamp,
             observaciones: r.notas,
             tipo: r.tipo,
+            fotos: r.photos || [],
             tiene_fotos: (r.photos && r.photos.length > 0)
           })),
           dashboard
