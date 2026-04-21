@@ -700,7 +700,7 @@ function renderOperarios() {
       </td>
       <td data-label="Estado"><span class="estado-badge ok">✅ Activo</span></td>
       <td data-label="Acciones">
-        <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="eliminarOperario(${o.id})">🗑️ Borrar</button>
+        <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="eliminarOperario('${o.id}')">🗑️ Borrar</button>
       </td>
     </tr>
   `).join('');
@@ -957,10 +957,15 @@ async function apiFetch(url, options = {}) {
     }
 
     if (url.includes('/api/operario/')) {
-      const id = url.split('/')[3];
+      const parts = url.split('/');
+      const id = parts[parts.length - 1];
+      console.log('Intentando borrar operario con ID:', id);
       if (method === 'DELETE') {
         const { error } = await client.from('operarios').delete().eq('id', id);
-        if (error) throw error;
+        if (error) {
+          console.error('Error de Supabase al borrar:', error);
+          throw error;
+        }
         return { ok: true };
       }
     }
