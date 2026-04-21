@@ -677,3 +677,41 @@ tr:hover td { background: var(--bg-card-hover); }
   flex-direction: column;
   gap: 2px;
 }
+
+/* 📑 VISOR DE DETALLES PREMIUM */
+.detail-container { display: flex; flex-direction: column; gap: 20px; }
+.detail-header-info {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--bg-secondary); padding: 16px; border-radius: 12px; border: 1px solid var(--border);
+}
+.detail-machine { display: flex; align-items: center; gap: 12px; }
+.machine-icon {
+  font-size: 24px; background: white; width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center; border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.machine-name { font-size: 1.1rem; font-weight: 700; color: var(--text-1); }
+.machine-sala { font-size: 0.85rem; color: var(--text-muted); }
+.detail-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.detail-stat { background: var(--bg-card); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); }
+.detail-stat .label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+.detail-stat .value { font-size: 0.95rem; font-weight: 600; color: var(--text-1); }
+.detail-section { display: flex; flex-direction: column; gap: 8px; }
+.section-label { font-size: 0.85rem; font-weight: 700; color: var(--text-2); }
+.detail-notes {
+  background: rgba(0,0,0,0.02); padding: 16px; border-radius: 12px;
+  border: 1px solid var(--border); font-size: 0.95rem; line-height: 1.5; color: var(--text-1);
+}
+.detail-photos { display: flex; flex-wrap: wrap; gap: 12px; }
+.detail-photo-wrapper {
+  position: relative; width: 140px; height: 140px; border-radius: 12px;
+  overflow: hidden; cursor: pointer; border: 1px solid var(--border);
+}
+.detail-photo-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+.detail-photo-wrapper:hover img { transform: scale(1.1); }
+.photo-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.4); color: white;
+  display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600;
+  opacity: 0; transition: opacity 0.3s;
+}
+.detail-photo-wrapper:hover .photo-overlay { opacity: 1; }
