@@ -93,14 +93,8 @@ function showError(msg) {
 function seleccionarModo(modo) {
   modoActual = modo === 'incidencia' ? 'Incidencia' : 'Mantenimiento';
   
-  if (modo === 'incidencia') {
-    // Si es incidencia desde el portal, saltamos identificación
-    operarioData = { id: 0, nombre: 'Usuario (Incidencia)' };
-    iniciarSesion();
-  } else {
-    // Si es mantenimiento, pedimos el PIN
-    showScreen('pin');
-  }
+  // En ambos casos, ahora vamos directo al formulario de reporte
+  iniciarSesion();
 }
 
 function setOpTipo(tipo) {
@@ -156,26 +150,30 @@ async function verificarPIN() {
     pinBuffer = '';
     actualizarDotsPIN();
     setTimeout(() => { document.getElementById('pinError').innerHTML = ''; }, 2500);
-  }
-}
-
 async function iniciarSesion() {
   const res = await apiFetch('/api/sesion/iniciar', {
     method: 'POST',
-    body: { maquina_id: maquinaId, operario_id: operarioData.id },
+    body: { maquina_id: maquinaId }, // Ya no necesitamos operario_id aquí
   });
-  if (!res.ok) { showError('Error al iniciar la sesión.'); return; }
-  sesionId = res.data.sesion_id;
 
-  // Preparar pantalla de reporte
-  document.getElementById('checkMaquinaNombre').textContent = maquinaData.nombre;
-  document.getElementById('checkSalaNombre').textContent = maquinaData.sala_nombre;
-  document.getElementById('operarioNombreLabel').textContent = operarioData.nombre;
-  document.getElementById('reporteTextarea').value = '';
-  document.getElementById('reporteError').style.display = 'none';
-  actualizarBoton('');
+  if (res.ok) {
+    sesionId = res.data.sesion_id;
+    
+    // Actualizar nombres en la UI de checklist
+    document.getElementById('checkMaquinaNombre').textContent = maquinaData.nombre;
+    document.getElementById('checkSalaNombre').textContent = maquinaData.sala_nombre;
+    
+    // Si veníamos de modo incidencia desde el portal, lo marcamos en el selector del formulario
+    setOpTipo(modoActual);
 
-  showScreen('checklist');
+    document.getElementById('reporteTextarea').value = '';
+    document.getElementById('reporteError').style.display = 'none';
+    actualizarBoton('');
+
+    showScreen('checklist');
+  } else {
+    showError('Error al iniciar reporte');
+  }
 }
 
 // ── Reporte ───────────────────────────────────────────────────────────────────
@@ -221,11 +219,15 @@ function cancelPhoto() {
 }
 
 async function enviarChecklist() {
+  const nombreUser = document.getElementById('userNameInput').value.trim();
   const reporte = document.getElementById('reporteTextarea').value.trim();
 
-  if (!reporte) {
+  if (!nombreUser) {
+    alert("Por favor, introduce tu nombre.");
+    return;
+  }
+  if (reporte.length < 1) {
     document.getElementById('reporteError').style.display = 'block';
-    document.getElementById('reporteTextarea').focus();
     return;
   }
 
@@ -237,13 +239,14 @@ async function enviarChecklist() {
     method: 'POST',
     body: { 
       observaciones: reporte,
+      nombre_usuario: nombreUser, // Enviamos el nombre escrito
       fotos: selectedPhoto ? [selectedPhoto] : []
     },
   });
 
   if (res.ok) {
     document.getElementById('exitoMaquina').textContent = maquinaData.nombre;
-    document.getElementById('exitoOperario').textContent = operarioData.nombre;
+    document.getElementById('exitoOperario').textContent = nombreUser;
     document.getElementById('exitoFecha').textContent = new Date().toLocaleString('es-ES');
     showScreen('exito');
   } else {
@@ -313,7 +316,7 @@ async function apiFetch(url, options = {}) {
         maquina_id: maquinaId,
         maquina_nombre: maquinaData?.nombre || 'Desconocida',
         sala_nombre: maquinaData?.sala_nombre || 'Sin sala',
-        operario_nombre: operarioData?.nombre || 'Anonimo',
+        operario_nombre: payload.nombre_usuario || 'Anonimo', // Usamos el nombre enviado
         tipo: modoActual,
         notas: payload.observaciones,
         photos: payload.fotos || [], // Cambiado a 'photos' para marchar con la tabla

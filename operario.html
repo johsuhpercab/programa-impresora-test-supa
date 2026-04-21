@@ -200,38 +200,7 @@
             <div class="badge-sala" id="pinMaquinaSala">–</div>
           </div>
           <button onclick="window.location.href='index.html'" style="background:rgba(255,255,255,0.1); border:none; color:white; padding:8px 12px; border-radius:10px; font-size:11px; font-weight:600; cursor:pointer">
-            🔄 Cambiar Impresora
-          </button>
-        </div>
-      </div>
-
-      <div class="pin-label">INTRODUCE TU PIN</div>
-
-      <div class="pin-display">
-        <div class="pin-dot" id="d0"></div>
-        <div class="pin-dot" id="d1"></div>
-        <div class="pin-dot" id="d2"></div>
-        <div class="pin-dot" id="d3"></div>
-      </div>
-
-      <div id="pinError"></div>
-
-      <div class="pin-pad">
-        <div class="pin-key" onclick="pinKey('1')">1</div>
-        <div class="pin-key" onclick="pinKey('2')">2</div>
-        <div class="pin-key" onclick="pinKey('3')">3</div>
-        <div class="pin-key" onclick="pinKey('4')">4</div>
-        <div class="pin-key" onclick="pinKey('5')">5</div>
-        <div class="pin-key" onclick="pinKey('6')">6</div>
-        <div class="pin-key" onclick="pinKey('7')">7</div>
-        <div class="pin-key" onclick="pinKey('8')">8</div>
-        <div class="pin-key" onclick="pinKey('9')">9</div>
-        <div class="pin-key empty"></div>
-        <div class="pin-key" onclick="pinKey('0')">0</div>
-        <div class="pin-key delete" onclick="pinDelete()">⌫</div>
-      </div>
-    </div>
-  </div>
+  <!-- ════ PANTALLA: PIN (ELIMINADA) ════ -->
 
   <!-- ════ PANTALLA: CHECKLIST ════ -->
   <div class="screen" id="screen-checklist">
@@ -244,13 +213,10 @@
     </header>
 
     <div class="screen-content">
-      <!-- Info operario -->
-      <div class="bienvenida-card fade-up">
-        <span class="op-icon">👷</span>
-        <div>
-          <div class="op-nombre" id="operarioNombreLabel">–</div>
-          <div class="op-label">Operario identificado</div>
-        </div>
+      <!-- Campo de Nombre -->
+      <div class="reporte-section fade-up" style="margin-bottom: 0; padding-bottom: 0;">
+        <div class="reporte-label">👤 TU NOMBRE</div>
+        <input type="text" id="userNameInput" class="reporte-textarea" style="height: 50px; font-size: 16px; margin-bottom: 10px;" placeholder="Ej: Juan Pérez">
       </div>
 
       <div class="tipo-selector-op fade-up" style="display:flex; gap:10px; margin-bottom:20px;">
