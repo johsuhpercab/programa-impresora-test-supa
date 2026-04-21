@@ -790,30 +790,45 @@ async function verDetalleSesion(id) {
 
   container.innerHTML = `
     <div class="detail-container">
-      <div class="detail-header-info" style="${isInc ? 'border-bottom: 2px solid var(--danger)' : ''}">
+      <div class="detail-header-info" style="${isInc ? 'border-bottom: 2px solid var(--danger)' : ''}; margin-bottom: 20px;">
         <div class="detail-machine"><span class="machine-icon">${isInc ? '🚨' : '🖨️'}</span><div><div class="machine-name">${sesion.maquina}</div><div class="machine-sala">📍 ${sesion.sala}</div></div></div>
         <div style="display:flex;gap:8px">
           <div class="estado-badge ${isInc?'vencido':'ok'}">${isInc?'Incidencia':'Mantenimiento'}</div>
           ${isInc ? `<div class="estado-badge ${resuelta?'ok':'vencido'}" style="cursor:pointer" onclick="toggleResolucionIncidencia('${sesion.id}', ${!resuelta}); cerrarModal('modalDetalle');">${resuelta?'✅ Resuelta':'🚨 Pendiente'}</div>` : ''}
         </div>
       </div>
-      <div class="detail-stats-grid">
-        <div class="detail-stat"><div class="label">👷 Operario</div><div class="value">${sesion.operario}</div></div>
-        <div class="detail-stat"><div class="label">📅 Fecha</div><div class="value">${formatFechaHora(sesion.completado_en)}</div></div>
-      </div>
-      <div class="detail-section">
-        <div class="section-label">${isInc ? '🚩 Informe de Fallo' : '📝 Observaciones'}</div>
-        <div class="detail-notes" style="${isInc ? 'background:rgba(239, 68, 68, 0.05); border-left:4px solid var(--danger)' : ''}">${sesion.observaciones || 'Sin notas'}</div>
-      </div>
-      ${sesion.fotos && sesion.fotos.length > 0 ? `<div class="detail-section"><div class="section-label">🖼️ Evidencias Fotográficas</div><div class="detail-photos">${sesion.fotos.map(f => `<img src="${f}" onclick="window.open('${f}')" style="width:100%;border-radius:12px;margin-bottom:10px;cursor:zoom-in" loading="lazy">`).join('')}</div></div>` : ''}
-      
-      <div style="margin-top:24px; display:flex; flex-direction:column; gap:12px">
-        <button class="btn btn-outline btn-full" onclick="cerrarModal('modalDetalle'); verHistorialMaquina('${sesion.maquina}')" style="background:var(--bg-secondary)">📋 Ver Historial completo de esta máquina</button>
-        
-        ${isInc && !resuelta ? `
-          <div style="padding:20px;background:rgba(16,185,129,0.1);border-radius:12px;border:1px solid var(--success);text-align:center">
-            <p style="margin-bottom:12px;font-size:14px;color:rgba(16,185,129,1);font-weight:600">✅ ¿Se ha resuelto este problema?</p>
-            <button class="btn btn-primary btn-full" onclick="toggleResolucionIncidencia('${sesion.id}', true); cerrarModal('modalDetalle');">Marcar como Solucionada</button>
+
+      <div style="display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap">
+        <!-- Columna Izquierda: Información -->
+        <div style="flex: 1; min-width: 280px;">
+          <div class="detail-stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 16px;">
+            <div class="detail-stat"><div class="label">👷 Operario</div><div class="value" style="font-size:14px">${sesion.operario}</div></div>
+            <div class="detail-stat"><div class="label">📅 Fecha</div><div class="value" style="font-size:14px">${formatFechaHora(sesion.completado_en)}</div></div>
+          </div>
+          
+          <div class="detail-section" style="margin-bottom: 20px;">
+            <div class="section-label">${isInc ? '🚩 Informe de Fallo' : '📝 Observaciones'}</div>
+            <div class="detail-notes" style="font-size:13px; ${isInc ? 'background:rgba(239, 68, 68, 0.05); border-left:4px solid var(--danger)' : ''}">${sesion.observaciones || 'Sin notas'}</div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:12px">
+            <button class="btn btn-outline btn-full" onclick="cerrarModal('modalDetalle'); verHistorialMaquina('${sesion.maquina}')" style="background:var(--bg-secondary); padding: 10px; font-size: 13px;">📋 Ver Historial de la máquina</button>
+            
+            ${isInc && !resuelta ? `
+              <div style="padding:16px;background:rgba(16,185,129,0.1);border-radius:12px;border:1px solid var(--success);text-align:center">
+                <button class="btn btn-primary btn-full" onclick="toggleResolucionIncidencia('${sesion.id}', true); cerrarModal('modalDetalle');">✅ Resolver Incidencia</button>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- Columna Derecha: Fotos -->
+        ${sesion.fotos && sesion.fotos.length > 0 ? `
+          <div style="width: 200px; flex-shrink: 0;">
+            <div class="section-label">🖼️ Evidencias</div>
+            <div style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
+              ${sesion.fotos.map(f => `<img src="${f}" onclick="window.open('${f}')" style="width:100%; height: 140px; object-fit: cover; border-radius:10px; cursor:zoom-in; border:1px solid var(--border)" loading="lazy">`).join('')}
+            </div>
           </div>
         ` : ''}
       </div>
