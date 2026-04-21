@@ -1290,3 +1290,46 @@ async function renderizarGaleria() {
     container.innerHTML = '❌ Error de conexión';
   }
 }
+
+// ── Visita Guiada (Tour) ─────────────────────────────────────────────────────
+function iniciarTour() {
+  if (typeof driver === 'undefined' || !driver.js) {
+     console.error('Driver.js no está cargado');
+     return;
+  }
+
+  const driverObj = driver.js.driver({
+    showProgress: true,
+    steps: [
+      { 
+        element: '#kpiGrid', 
+        popover: { title: '📊 Indicadores Clave', description: 'Aquí ves un resumen rápido de los mantenimientos de hoy, la semana y las máquinas que requieren atención urgente.' } 
+      },
+      { 
+        element: '#tour-nav', 
+        popover: { title: '📂 Navegación', description: 'Cambia entre el Panel General, la gestión de Máquinas, el Historial completo o la Galería de fotos.' } 
+      },
+      { 
+        element: '#nav-maquinas', 
+        popover: { title: '🖨️ Gestión de Máquinas', description: 'Desde aquí puedes añadir nuevas impresoras, editar su frecuencia de mantenimiento y ver su estado actual.' } 
+      },
+      { 
+        element: '#nav-qrcodes', 
+        popover: { title: '📱 Códigos QR', description: 'Genera e imprime códigos QR únicos para cada máquina. Los operarios solo tienen que escanearlos para reportar trabajo.' } 
+      },
+      { 
+        element: '#filtroOperario', 
+        popover: { title: '🔍 Buscador Inteligente', description: '¿Buscas a alguien específico? Escribe el nombre del operario aquí para filtrar el historial al instante.' } 
+      },
+      { 
+        element: '.sidebar-footer', 
+        popover: { title: '🏠 Salida Segura', description: 'Vuelve a la pantalla de inicio o cierra tu sesión administrativa desde aquí.' } 
+      }
+    ],
+    nextBtnText: 'Siguiente',
+    prevBtnText: 'Anterior',
+    doneBtnText: 'Finalizar'
+  });
+
+  driverObj.drive();
+}

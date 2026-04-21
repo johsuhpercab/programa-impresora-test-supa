@@ -769,3 +769,47 @@ tr:hover td { background: var(--bg-card-hover); }
   transform: translateX(-50%) translateY(-5px);
 }
 
+
+/* Estilos para Driver.js (Tour) */
+.driver-popover.driverjs-theme {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  border-radius: 12px;
+}
+
+.driver-popover.driverjs-theme .driver-popover-title {
+  color: var(--accent);
+  font-family: inherit;
+  font-weight: 700;
+}
+
+.driver-popover.driverjs-theme .driver-popover-description {
+  color: var(--text-secondary);
+  font-family: inherit;
+}
+
+.driver-popover.driverjs-theme .driver-popover-btn {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  text-shadow: none;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.driver-popover.driverjs-theme .driver-popover-btn:hover {
+  background-color: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.driver-popover.driverjs-theme .driver-popover-progress-text {
+  color: var(--text-muted);
+}
+
+.driver-popover.driverjs-theme .driver-popover-arrow-side-left::after { border-left-color: var(--bg-card); }
+.driver-popover.driverjs-theme .driver-popover-arrow-side-right::after { border-right-color: var(--bg-card); }
+.driver-popover.driverjs-theme .driver-popover-arrow-side-top::after { border-top-color: var(--bg-card); }
+.driver-popover.driverjs-theme .driver-popover-arrow-side-bottom::after { border-bottom-color: var(--bg-card); }

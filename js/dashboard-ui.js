@@ -6,9 +6,11 @@
 
 const DASHBOARD_HTML = `
   <div class="layout">
-    <!-- Supabase & QR SDK -->
+    <!-- Supabase, QR SDK & Driver.js (Tour) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.bundle.js"></script>
   <script src="js/supabase-config.js"></script>
     <!-- ── Sidebar ── -->
     <aside class="sidebar" id="sidebar">
@@ -23,7 +25,7 @@ const DASHBOARD_HTML = `
       </div>
 
       <nav class="sidebar-nav">
-        <div class="nav-section">
+        <div class="nav-section" id="tour-nav">
           <div class="nav-section-title">Principal</div>
           <div class="nav-item active" id="nav-dashboard" onclick="navigateTo('dashboard')">
             <span class="nav-icon">📊</span>
@@ -49,11 +51,15 @@ const DASHBOARD_HTML = `
             <span class="nav-icon">📱</span>
             <span>Códigos QR</span>
           </div>
+          <div class="nav-item" id="nav-usuarios" onclick="navigateTo('usuarios')">
+            <span class="nav-icon">👤</span>
+            <span>Usuarios</span>
+          </div>
         </div>
       </nav>
 
       <div class="sidebar-footer">
-        <div style="margin-bottom:8px">v3.0 · Supabase Edition</div>
+        <div style="margin-bottom:8px">v3.1 · Supabase Edition</div>
         <button class="btn btn-primary btn-sm btn-full" onclick="window.location.href='index.html'" style="margin-bottom:8px;font-size:11px;padding:6px">🏠 Volver al Inicio</button>
         <button class="btn btn-outline btn-sm btn-full" onclick="cerrarSesionAdmin()" style="font-size:11px;padding:6px">🚪 Cerrar Sesión</button>
       </div>
@@ -72,7 +78,9 @@ const DASHBOARD_HTML = `
           </div>
         </div>
         <div class="topbar-actions">
-          <!-- Ya no necesitamos simuladores ni botones manuales, el sistema es auto-suficiente -->
+           <button class="btn btn-outline btn-sm" onclick="iniciarTour()" style="border-radius:20px; padding: 6px 16px;">
+             ✨ Guía Rápida
+           </button>
         </div>
       </header>
 
