@@ -125,9 +125,14 @@
   <!-- ════ PANTALLA: PORTAL ════ -->
   <div class="screen" id="screen-portal">
     <div class="portal-container fade-up" style="padding-top: 60px;">
-      <div class="portal-header">
-        <h1 id="portalMaquinaNombre">Cargando...</h1>
-        <p id="portalMaquinaSala">Por favor, elige una opción para continuar</p>
+      <div class="portal-header" style="display:flex; justify-content:space-between; align-items:start; text-align:left; margin-bottom: 30px;">
+        <div>
+          <h1 id="portalMaquinaNombre" style="margin:0">Cargando...</h1>
+          <p id="portalMaquinaSala" style="margin:0">Elige una opción</p>
+        </div>
+        <button onclick="window.location.href='index.html'" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; padding:8px 12px; border-radius:10px; font-size:11px; cursor:pointer">
+          🔄 Cambiar
+        </button>
       </div>
 
       <div class="portal-grid" style="max-width: 400px; margin: 0 auto; width: 100%;">
@@ -159,9 +164,14 @@
     <div class="screen-content">
       <div class="maquina-badge fade-up" id="pinMaquinaBadge">
         <span class="badge-icon">🖨️</span>
-        <div>
-          <div class="badge-nombre" id="pinMaquinaNombre">–</div>
-          <div class="badge-sala" id="pinMaquinaSala">–</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; width:100%">
+          <div>
+            <div class="badge-nombre" id="pinMaquinaNombre">–</div>
+            <div class="badge-sala" id="pinMaquinaSala">–</div>
+          </div>
+          <button onclick="window.location.href='index.html'" style="background:rgba(255,255,255,0.1); border:none; color:white; padding:8px 12px; border-radius:10px; font-size:11px; font-weight:600; cursor:pointer">
+            🔄 Cambiar
+          </button>
         </div>
       </div>
 
