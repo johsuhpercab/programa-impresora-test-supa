@@ -53,8 +53,7 @@ const DASHBOARD_HTML = `
       </nav>
 
       <div class="sidebar-footer">
-        <div style="margin-bottom:8px">v1.1 · Supabase Edition</div>
-        <button class="btn btn-primary btn-sm btn-full" onclick="window.location.href='index.html'" style="margin-bottom:8px;font-size:11px;padding:6px">🏠 Volver al Inicio</button>
+        <div style="margin-bottom:8px">v2.4 · Supabase Edition</div>
         <button class="btn btn-outline btn-sm btn-full" onclick="cerrarSesionAdmin()" style="font-size:11px;padding:6px">🚪 Cerrar Sesión</button>
       </div>
     </aside>
