@@ -342,6 +342,7 @@ function renderMaquinas() {
         <div class="maquina-actions">
           ${rolActual === 'admin' ? `
             <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); verQR('${m.id}', '${escapar(m.nombre)}', '${escapar(m.sala_nombre)}')">📱 QR</button>
+            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); verHistorialMaquina('${m.id}')" style="background:rgba(79, 142, 247, 0.1); border-color:var(--accent)">📋 Historial</button>
             <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); editarMaquina('${m.id}')">✏️ Editar</button>
             <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);padding:4px 8px" onclick="event.stopPropagation(); eliminarMaquina('${m.id}')" title="Eliminar máquina">🗑️</button>
           ` : `
