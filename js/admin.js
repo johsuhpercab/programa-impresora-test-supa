@@ -750,17 +750,26 @@ function renderizarContenidoHistorial(data, tbody, empty) {
 }
 
 async function toggleResolucionIncidencia(id, nuevoEstado) {
-  // Animación local inmediata para feedback
+  let comentario = '';
+  if (nuevoEstado) {
+    comentario = prompt('Escribe un breve comentario sobre la solución (opcional):');
+    if (comentario === null) return; // Cancelado
+  }
+
   const res = await apiFetch(`/api/sesion/${id}/resolver`, { 
     method: 'PUT', 
-    body: { resuelta: nuevoEstado } 
+    body: { 
+      resuelta: nuevoEstado,
+      comentario_resolucion: comentario 
+    } 
   });
   
   if (res.ok) {
-    // Recargar datos para ver cambios
     await cargarDatosBase();
-    if (document.getElementById('section-historial').classList.contains('active')) {
-      await cargarHistorial();
+    if (document.getElementById('section-historial').classList.contains('active')) await cargarHistorial();
+    if (document.getElementById('section-incidencias').classList.contains('active')) {
+      const filtroActual = document.querySelector('.btn-outline.btn-sm.active[id^="btn-inc-"]')?.id.replace('btn-inc-', '') || 'todas';
+      renderIncidencias(filtroActual);
     }
   } else {
     alert('No se pudo actualizar el estado: ' + res.error);
@@ -810,6 +819,15 @@ async function verDetalleSesion(id) {
             <div class="section-label">${isInc ? '🚩 Informe de Fallo' : '📝 Observaciones'}</div>
             <div class="detail-notes" style="font-size:13px; ${isInc ? 'background:rgba(239, 68, 68, 0.05); border-left:4px solid var(--danger)' : ''}">${sesion.observaciones || 'Sin notas'}</div>
           </div>
+
+          ${sesion.comentario_resolucion ? `
+            <div class="detail-section" style="margin-bottom: 20px;">
+              <div class="section-label">✅ Solución / Resolución</div>
+              <div class="detail-notes" style="font-size:13px; background:rgba(16, 185, 129, 0.05); border-left:4px solid var(--success); color:var(--success); font-weight:600">
+                ${sesion.comentario_resolucion}
+              </div>
+            </div>
+          ` : ''}
 
           <div style="display:flex; flex-direction:column; gap:12px">
             <button class="btn btn-outline btn-full" onclick="cerrarModal('modalDetalle'); verHistorialMaquina('${sesion.maquina}')" style="background:var(--bg-secondary); padding: 10px; font-size: 13px;">📋 Ver Historial de la máquina</button>
@@ -1005,7 +1023,10 @@ async function apiFetch(url, options = {}) {
 
     if (url.includes('/api/sesion/') && url.includes('/resolver')) {
       const id = url.split('/')[3];
-      const { error } = await client.from('registros').update({ resuelta: payload.resuelta }).eq('id', id);
+      const { error } = await client.from('registros').update({ 
+        resuelta: payload.resuelta,
+        comentario_resolucion: payload.comentario_resolucion
+      }).eq('id', id);
       if (error) throw error;
       return { ok: true };
     }
@@ -1013,7 +1034,7 @@ async function apiFetch(url, options = {}) {
     if (url.includes('/api/sesion/') && url.includes('/detalle')) {
       const { data: reg, error } = await client.from('registros').select('*').eq('id', url.split('/')[3]).single();
       if (error) throw error;
-      return { ok: true, data: { sesion: { id: reg.id, maquina: reg.maquina_nombre, sala: reg.sala_nombre, operario: reg.operario_nombre, iniciado_en: reg.timestamp, completado_en: reg.timestamp, observaciones: reg.notas || '', tipo: reg.tipo, resuelta: reg.resuelta || false, fotos: reg.photos || [] }, items: [] } };
+      return { ok: true, data: { sesion: { id: reg.id, maquina: reg.maquina_nombre, sala: reg.sala_nombre, operario: reg.operario_nombre, iniciado_en: reg.timestamp, completado_en: reg.timestamp, observaciones: reg.notas || '', tipo: reg.tipo, resuelta: reg.resuelta || false, comentario_resolucion: reg.comentario_resolucion, fotos: reg.photos || [] }, items: [] } };
     }
 
     return { ok: false, error: 'Endpoint not implemented' };
