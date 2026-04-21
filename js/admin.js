@@ -1293,53 +1293,81 @@ async function renderizarGaleria() {
 
 // ── Visita Guiada (Tour) ─────────────────────────────────────────────────────
 function iniciarTour() {
-  // Intentar obtener la instancia del driver
   const driverInstance = window.driver?.js?.driver || window.driver;
-  
   if (!driverInstance) {
-     alert('Lo siento, la guía no se ha podido cargar. Por favor, refresca la página de nuevo (Ctrl + F5).');
+     alert('Lo siento, la guía no se ha podido cargar. Por favor, refresca la página.');
      return;
   }
 
   const driverObj = driverInstance({
     showProgress: true,
-    overlayColor: 'rgba(0,0,0,0.75)',
+    overlayColor: 'rgba(0,0,0,0.85)',
     steps: [
       { 
         popover: { 
-          title: '✨ Bienvenido al Panel', 
-          description: 'Hagamos un tour rápido para conocer las nuevas funcionalidades del sistema.' 
+          title: '✨ Bienvenido al Sistema', 
+          description: 'Hagamos un recorrido rápido para ver lo fácil que es gestionar tus impresoras ahora.' 
         }
       },
       { 
         element: '#kpiGrid', 
-        popover: { title: '📊 Indicadores Clave', description: 'Resumen en tiempo real: mantenimientos de hoy, la semana y máquinas que ya tienen el mantenimiento vencido.' } 
-      },
-      { 
-        element: '#tour-nav', 
-        popover: { title: '📂 Menú Principal', description: 'Desde aquí accedes a todas las secciones. Ahora incluimos una Galería para ver las fotos de los reportes.' } 
+        popover: { title: '📊 Resumen de Estado', description: 'Aquí tienes los contadores clave: mantenimientos hoy, vencidos y próximos. Todo se actualiza solo.' } 
       },
       { 
         element: '#nav-maquinas', 
-        popover: { title: '🖨️ Control de Máquinas', description: 'Añade o edita impresoras. Configura cada cuántos días necesitan mantenimiento y el sistema te avisará.' } 
+        popover: { 
+          title: '🖨️ Gestión de Equipos', 
+          description: 'En esta sección controlas tu inventario de máquinas.',
+          onNextClick: () => {
+             navigateTo('maquinas');
+             setTimeout(() => driverObj.moveNext(), 150);
+          }
+        } 
+      },
+      { 
+        element: '#gridMaquinas', 
+        popover: { title: '🛠️ Tus Máquinas', description: 'Aquí puedes revisar cada impresora, editar su frecuencia o ver su historial individual.' } 
       },
       { 
         element: '#nav-qrcodes', 
-        popover: { title: '📱 Sistema de Códigos QR', description: 'Aquí generas los QR que irán pegados en las máquinas. ¡Los operarios escanean y listo! Sin necesidad de mandos ni claves.' } 
+        popover: { 
+          title: '📱 Códigos QR', 
+          description: 'Genera e imprime los códigos para las máquinas desde aquí.',
+          onNextClick: () => {
+             navigateTo('qrcodes');
+             setTimeout(() => driverObj.moveNext(), 150);
+          }
+        } 
+      },
+      { 
+        element: '#gridQRs', 
+        popover: { title: '🔗 Identificación QR', description: 'Cada máquina tiene su QR único. Pégalos en el equipo para que los operarios reporten al instante.' } 
+      },
+      { 
+        element: '#nav-historial', 
+        popover: { 
+          title: '📋 Historial de Reportes', 
+          description: 'Veamos dónde se guardan todos los registros de trabajo.',
+          onNextClick: () => {
+             navigateTo('historial');
+             setTimeout(() => driverObj.moveNext(), 150);
+          }
+        } 
       },
       { 
         element: '#filtroOperario', 
-        popover: { title: '🔍 Buscador de Operarios', description: 'Simplemente escribe el nombre de la persona que hizo el mantenimiento para filtrar los resultados abajo.' } 
+        popover: { title: '🔍 Buscador de Operarios', description: 'Como ya no hay PINs, escribe aquí el nombre del operario para filtrar sus reportes rápidamente.' } 
       },
       { 
         element: '.sidebar-footer', 
-        popover: { title: '🚪 Salir', description: 'Puedes volver a la pantalla principal o cerrar tu sesión de administrador aquí.' } 
+        popover: { title: '🏠 ¡Todo listo!', description: 'Ya conoces lo esencial. ¡Buen trabajo gestionando tus equipos!' } 
       }
     ],
     nextBtnText: 'Siguiente',
     prevBtnText: 'Anterior',
-    doneBtnText: '¡Entendido!',
+    doneBtnText: 'Finalizar',
   });
 
+  navigateTo('dashboard');
   driverObj.drive();
 }
