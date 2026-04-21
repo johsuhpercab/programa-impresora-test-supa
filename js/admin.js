@@ -644,7 +644,7 @@ async function verDetalleSesion(id) {
       <div class="detail-section">
         <div class="section-label">📝 Observaciones</div>
         <div class="detail-notes">
-          ${sesion.observaciones && sesion.observaciones !== ';N:' ? sesion.observaciones : '<span class="text-muted">Sin observaciones.</span>'}
+          ${sesion.observaciones ? sesion.observaciones.replace(';N:', '').trim() || '<span class="text-muted">Sin notas adicionales.</span>' : '<span class="text-muted">Sin observaciones.</span>'}
         </div>
       </div>
 
