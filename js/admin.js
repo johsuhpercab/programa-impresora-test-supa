@@ -607,19 +607,60 @@ function renderizarContenidoHistorial(data, tbody, empty) {
 async function verDetalleSesion(id) {
   const res = await apiFetch(`/api/sesion/${id}/detalle`);
   if (!res.ok) return;
-  const { sesion, items } = res.data;
+  const { sesion } = res.data;
   const content = document.getElementById('detalleContenido');
 
+  const isIncidencia = sesion.tipo === 'Incidencia';
+  const tipoIcon = isIncidencia ? '🚨' : '🛠️';
+  const tipoLabel = isIncidencia ? 'Incidencia' : 'Mantenimiento';
+  const tipoClass = isIncidencia ? 'vencido' : 'ok';
+
   content.innerHTML = `
-    <div style="background:var(--bg-secondary);border-radius:8px;padding:14px;margin-bottom:16px;font-size:13px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div><span class="text-muted">Máquina:</span> <strong>${sesion.maquina}</strong></div>
-        <div><span class="text-muted">Sala:</span> ${sesion.sala}</div>
-        <div><span class="text-muted">Operario:</span> ${sesion.operario}</div>
-        <div><span class="text-muted">Inicio:</span> ${formatFechaHora(sesion.iniciado_en)}</div>
-        <div><span class="text-muted">Fin:</span> ${formatFechaHora(sesion.completado_en)}</div>
+    <div class="detail-container">
+      <div class="detail-header-info">
+        <div class="detail-machine">
+          <span class="machine-icon">🖨️</span>
+          <div>
+            <div class="machine-name">${sesion.maquina}</div>
+            <div class="machine-sala">📍 ${sesion.sala}</div>
+          </div>
+        </div>
+        <div class="estado-badge ${tipoClass}" style="padding: 6px 12px; margin: 0;">
+          <div style="font-size: 13px; font-weight: 600;">${tipoIcon} ${tipoLabel}</div>
+        </div>
       </div>
-      ${sesion.observaciones ? `<div style="margin-top:8px"><span class="text-muted">Observaciones:</span> ${sesion.observaciones}</div>` : ''}
+
+      <div class="detail-stats-grid">
+        <div class="detail-stat">
+          <div class="label">👷 Operario</div>
+          <div class="value">${sesion.operario}</div>
+        </div>
+        <div class="detail-stat">
+          <div class="label">📅 Fecha y Hora</div>
+          <div class="value">${formatFechaHora(sesion.completado_en)}</div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="section-label">📝 Observaciones</div>
+        <div class="detail-notes">
+          ${sesion.observaciones && sesion.observaciones !== ';N:' ? sesion.observaciones : '<span class="text-muted">Sin observaciones.</span>'}
+        </div>
+      </div>
+
+      ${sesion.fotos && sesion.fotos.length > 0 ? `
+        <div class="detail-section">
+          <div class="section-label">🖼️ Fotos de Evidencia</div>
+          <div class="detail-photos">
+            ${sesion.fotos.map(f => `
+              <div class="detail-photo-wrapper" onclick="window.open('${f}')">
+                <img src="${f}" alt="Evidencia" loading="lazy">
+                <div class="photo-overlay">🔍 Ver detalle</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
     </div>
   `;
   abrirModal('modalDetalle');
