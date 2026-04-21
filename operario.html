@@ -155,9 +155,14 @@
           <h1 id="portalMaquinaNombre" style="margin:0">Cargando...</h1>
           <p id="portalMaquinaSala" style="margin:0">Elige una opción</p>
         </div>
-        <button onclick="window.location.href='index.html'" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; padding:8px 12px; border-radius:10px; font-size:11px; cursor:pointer">
-          🔄 Cambiar
-        </button>
+        <div style="display:flex; gap:8px;">
+          <button onclick="window.location.href='index.html'" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; padding:8px 12px; border-radius:10px; font-size:11px; cursor:pointer">
+            🔄 Cambiar
+          </button>
+          <button onclick="window.location.href='dashboard.html'" style="background:rgba(79, 142, 247, 0.1); border:1px solid var(--accent-maint); color:var(--accent-maint); padding:8px 12px; border-radius:10px; font-size:11px; font-weight:700; cursor:pointer">
+            🛡️ Admin
+          </button>
+        </div>
       </div>
 
       <div class="portal-grid" style="max-width: 400px; margin: 0 auto; width: 100%;">
