@@ -250,6 +250,35 @@ function reiniciar() {
   showScreen('portal');
 }
 
+async function handlePhotoUploads(base64Photos) {
+  const client = window.supabaseClient;
+  const urls = [];
+  console.log(`Iniciando subida de ${base64Photos.length} fotos a Storage...`);
+  
+  for (let i = 0; i < base64Photos.length; i++) {
+    try {
+      const b64 = base64Photos[i];
+      const blob = await (await fetch(b64)).blob();
+      const fileName = `${Date.now()}_${i}.jpg`;
+      
+      const { data, error } = await client.storage
+        .from('photos')
+        .upload(fileName, blob, { contentType: 'image/jpeg' });
+      
+      if (error) {
+        console.error('Error al subir foto a Supabase:', error);
+        continue;
+      }
+      
+      const { data: { publicUrl } } = client.storage.from('photos').getPublicUrl(data.path);
+      urls.push(publicUrl);
+    } catch (e) {
+      console.error('Fallo técnico en la subida:', e);
+    }
+  }
+  return urls;
+}
+
 // --- SUPABASE WRAPPER FOR CHECKLIST ---
 async function apiFetch(url, options = {}) {
   const method = options.method || 'GET';
@@ -292,15 +321,21 @@ async function apiFetch(url, options = {}) {
     }
 
     if (url.includes('/api/sesion/') && url.includes('/completar')) {
-      // Use the names from the global state to ensure they aren't null
+      // 1. Upload photos to Supabase Storage if any
+      let photoUrls = [];
+      if (payload.fotos && payload.fotos.length > 0) {
+        photoUrls = await handlePhotoUploads(payload.fotos);
+      }
+
+      // 2. Use the names from the global state to ensure they aren't null
       const registroPayload = {
         maquina_id: maquinaId,
         maquina_nombre: maquinaData?.nombre || 'Desconocida',
         sala_nombre: maquinaData?.sala_nombre || 'Sin sala',
-        operario_nombre: payload.nombre_usuario || 'Anonimo', // Usamos el nombre enviado
+        operario_nombre: payload.nombre_usuario || 'Anonimo', 
         tipo: modoActual,
         notas: payload.observaciones,
-        photos: payload.fotos || [], // Cambiado a 'photos' para marchar con la tabla
+        photos: photoUrls, // Now storing URLs instead of Base64 strings
         timestamp: new Date().toISOString()
       };
 
@@ -312,7 +347,7 @@ async function apiFetch(url, options = {}) {
 
       if (rError) throw rError;
 
-      // Update last maintenance date on the machine
+      // 3. Update last maintenance date on the machine
       await client.from('equipos')
         .update({ ultimo_mantenimiento: new Date().toISOString() })
         .eq('id', maquinaId);
