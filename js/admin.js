@@ -1061,31 +1061,40 @@ function renderizarGaleria() {
   if (!container) return;
   container.innerHTML = '';
 
-  // Filtrar solo registros que tengan fotos
-  const registrosConFotos = datosHistorial.filter(r => r.fotos && r.fotos.length > 0);
+  let todasLasFotos = [];
+  datosHistorial.forEach(reg => {
+    if (reg.fotos && reg.fotos.length > 0) {
+      reg.fotos.forEach(url => {
+        todasLasFotos.push({
+          url,
+          maquina: reg.maquina,
+          fecha: reg.completado_en,
+          idSesion: reg.id
+        });
+      });
+    }
+  });
 
-  if (registrosConFotos.length === 0) {
+  if (todasLasFotos.length === 0) {
     container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;opacity:0.5"><h3>No hay fotos aún</h3><p>Las fotos de los reportes aparecerán aquí.</p></div>';
     return;
   }
 
-  // Ahora cada tarjeta representa un REGISTRO (un grupo de fotos)
-  registrosConFotos.forEach(reg => {
+  // Ordenar por fecha descendente
+  todasLasFotos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+  todasLasFotos.forEach(foto => {
     const card = document.createElement('div');
     card.className = 'photo-card fade-in';
-    card.onclick = () => verDetalleSesion(reg.id);
-
-    const numFotos = reg.fotos.length;
-    const badgeHtml = numFotos > 1 ? `<div class="photo-badge">+${numFotos} fotos</div>` : '';
+    card.onclick = () => verDetalleSesion(foto.idSesion);
 
     card.innerHTML = `
       <div class="photo-img-wrapper">
-        <img src="${reg.fotos[0]}" loading="lazy">
-        ${badgeHtml}
+        <img src="${foto.url}" loading="lazy">
       </div>
       <div class="photo-info">
-        <div class="photo-title">${reg.maquina}</div>
-        <div class="photo-date">${formatFechaHora(reg.completado_en)}</div>
+        <div class="photo-title">${foto.maquina}</div>
+        <div class="photo-date">${formatFechaHora(foto.fecha)}</div>
       </div>
     `;
     container.appendChild(card);
