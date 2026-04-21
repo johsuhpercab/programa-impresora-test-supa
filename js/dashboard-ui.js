@@ -41,15 +41,13 @@ const DASHBOARD_HTML = `
         </div>
         <div class="nav-section">
           <div class="nav-section-title">Administración</div>
-          <div class="nav-item" id="nav-usuarios" onclick="navigateTo('usuarios')">
-            <span class="nav-icon">👥</span>
-            <span>Personal / Usuarios</span>
-            <span class="role-badge admin" style="display:none" id="badge-usuarios">🔒 Admin</span>
+          <div class="nav-item" id="nav-operarios" onclick="navigateTo('operarios')">
+            <span class="nav-icon">👷</span>
+            <span>Operarios</span>
           </div>
           <div class="nav-item" id="nav-qrcodes" onclick="navigateTo('qrcodes')">
             <span class="nav-icon">📱</span>
             <span>Códigos QR</span>
-            <span class="role-badge admin" style="display:none" id="badge-qrcodes">🔒 Admin</span>
           </div>
         </div>
       </nav>
@@ -245,22 +243,14 @@ const DASHBOARD_HTML = `
           </div>
         </div>
 
-        <!-- ══════════ USUARIOS ══════════ -->
-        <div class="section fade-in" id="section-usuarios">
+        <!-- ══════════ OPERARIOS ══════════ -->
+        <div class="section fade-in" id="section-operarios">
           <div class="section-header">
             <div>
-              <div class="section-title">👥 Personal y Usuarios</div>
-              <div class="section-subtitle">Gestión centralizada de personal y permisos</div>
+              <div class="section-title">👷 Operarios</div>
+              <div class="section-subtitle">Gestión de personal de mantenimiento</div>
             </div>
-            <button class="btn btn-primary" onclick="abrirModalUsuario()">+ Nuevo usuario</button>
-          </div>
-
-          <div style="background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.3);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start">
-            <span style="font-size:20px">ℹ️</span>
-            <div style="font-size:13px;color:var(--text-secondary)">
-              Gestiona aquí a todo el personal. Los usuarios con rol <b>Administrador</b> o <b>Técnico</b> pueden entrar a este panel.
-              Todos los usuarios con un <b>PIN</b> asignado podrán realizar mantenimientos mediante el sistema QR móvil.
-            </div>
+            <button class="btn btn-primary" onclick="abrirModalOperario()">+ Nuevo operario</button>
           </div>
 
           <div class="table-wrap">
@@ -269,15 +259,12 @@ const DASHBOARD_HTML = `
                 <tr>
                   <th>ID</th>
                   <th>Nombre</th>
-                  <th>Email</th>
-                  <th>Rol</th>
-                  <th>PIN (QR)</th>
+                  <th>PIN</th>
                   <th>Estado</th>
-                  <th>Alta</th>
-                  <th></th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
-              <tbody id="tablaUsuarios"></tbody>
+              <tbody id="tablaOperarios"></tbody>
             </table>
             <div id="usuariosEmpty" class="empty-state" style="display:none">
               <div class="icon">👥</div>
@@ -387,39 +374,25 @@ const DASHBOARD_HTML = `
     </div>
   </div>
 
-  <!-- ── Modal: Nuevo Usuario / Personal ── -->
-  <div class="overlay" id="modalUsuario">
-    <div class="modal" style="max-width:440px">
+  <!-- ── Modal: Nuevo Operario ── -->
+  <div class="overlay" id="modalOperario">
+    <div class="modal" style="max-width:400px">
       <div class="modal-header">
-        <div class="modal-title">Gestión de Personal</div>
-        <button class="modal-close" onclick="cerrarModal('modalUsuario')">✕</button>
+        <div class="modal-title">Gestión de Personal (Operarios)</div>
+        <button class="modal-close" onclick="cerrarModal('modalOperario')">✕</button>
       </div>
-      <div id="msgUsuario"></div>
+      <div id="msgOperario"></div>
       <div class="form-group">
-        <label class="form-label">Nombre completo <span style="color:var(--danger)">*</span></label>
-        <input class="form-control" id="nuevoUsuarioNombre" type="text" placeholder="Ej: Ana Sánchez">
-      </div>
-      <div class="grid-2">
-        <div class="form-group">
-          <label class="form-label">Email (Acceso Panel)</label>
-          <input class="form-control" id="nuevoUsuarioEmail" type="email" placeholder="ana@ejemplo.com">
-        </div>
-        <div class="form-group">
-          <label class="form-label">PIN (Acceso QR)</label>
-          <input class="form-control" id="nuevoUsuarioPin" type="text" maxlength="6" placeholder="1234">
-        </div>
+        <label class="form-label">Nombre completo</label>
+        <input class="form-control" id="nuevoNombre" type="text" placeholder="Ej: Carlos García">
       </div>
       <div class="form-group">
-        <label class="form-label">Rol y Permisos</label>
-        <select class="form-control" id="nuevoUsuarioRol">
-          <option value="usuario">👤 Usuario (Solo lectura)</option>
-          <option value="tecnico">🔧 Técnico (Mantenimiento)</option>
-          <option value="admin">🛡️ Administrador (Acceso total)</option>
-        </select>
+        <label class="form-label">PIN (4-6 dígitos)</label>
+        <input class="form-control" id="nuevoPin" type="text" maxlength="6" placeholder="Ej: 1234">
       </div>
       <div class="modal-footer">
-        <button class="btn btn-outline" onclick="cerrarModal('modalUsuario')">Cancelar</button>
-        <button class="btn btn-primary" onclick="crearUsuario()">Guardar Usuario</button>
+        <button class="btn btn-outline" onclick="cerrarModal('modalOperario')">Cancelar</button>
+        <button class="btn btn-primary" onclick="crearOperario()">Crear operario</button>
       </div>
     </div>
   </div>

@@ -3,6 +3,7 @@
 const API = 'https://script.google.com/macros/s/AKfycbwW2_UWpOS45F-3BbyVbUvtxIJ3b_OP_Pnl_cSgSwO-BXz9nSzqoTb8oxnh185za0M/exec'; // <--- URL DE LA WEB APP OPTIMIZADA
 let datosSalas = [];
 let datosMaquinas = [];
+let datosOperarios = [];
 let datosUsuarios = [];
 let datosHistorial = []; // Reutilizar datos ya cargados
 let isCargando = false;
@@ -77,6 +78,7 @@ async function cargarDatosBase() {
     const d = res.data;
     datosSalas = d.salas || [];
     datosMaquinas = d.maquinas || [];
+    datosOperarios = d.operarios || [];
     datosUsuarios = d.usuarios || [];
     datosHistorial = d.historial || [];
     
@@ -137,7 +139,7 @@ const sectionTitles = {
   dashboard: ['Panel General', 'Resumen del sistema'],
   maquinas: ['Máquinas', 'Estado y gestión de todas las máquinas'],
   historial: ['Historial', 'Registro de mantenimientos realizados'],
-  usuarios: ['Personal y Usuarios', 'Gestión centralizada de personal y permisos'],
+  operarios: ['Operarios', 'Gestión del personal de mantenimiento'],
   qrcodes: ['Códigos QR', 'QR individuales para el operario móvil'],
   galeria: ['Galería de Fotos', 'Últimas evidencias fotográficas de los reportes'],
 };
@@ -679,7 +681,70 @@ function exportarCSV() {
   });
 }
 
-// ── Usuarios ──────────────────────────────────────────────────────────────────
+// ── Operarios ─────────────────────────────────────────────────────────────────
+function renderOperarios() {
+  const tbody = document.getElementById('tablaOperarios');
+  if (!tbody) return;
+
+  if (isCargando && !datosOperarios.length) {
+    tbody.innerHTML = skeletonTabla(5);
+    return;
+  }
+
+  tbody.innerHTML = datosOperarios.map(o => `
+    <tr>
+      <td data-label="ID" class="text-muted">#${o.id}</td>
+      <td data-label="Nombre"><span class="fw-600">${o.nombre}</span></td>
+      <td data-label="PIN">
+        <span style="background:var(--bg-secondary);padding:4px 10px;border-radius:6px;font-family:monospace;font-size:13px;letter-spacing:0.1em">****</span>
+      </td>
+      <td data-label="Estado"><span class="estado-badge ok">✅ Activo</span></td>
+      <td data-label="Acciones">
+        <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="eliminarOperario(${o.id})">🗑️ Borrar</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function abrirModalOperario() {
+  document.getElementById('nuevoNombre').value = '';
+  document.getElementById('nuevoPin').value = '';
+  document.getElementById('msgOperario').innerHTML = '';
+  abrirModal('modalOperario');
+}
+
+async function crearOperario() {
+  const nombre = document.getElementById('nuevoNombre').value.trim();
+  const pin = document.getElementById('nuevoPin').value.trim();
+  const msg = document.getElementById('msgOperario');
+
+  if (!nombre || !pin) {
+    msg.innerHTML = '<div class="alert alert-warning">⚠️ Completa todos los campos</div>';
+    return;
+  }
+
+  const res = await apiFetch('/api/operarios', { method: 'POST', body: { nombre, pin } });
+
+  if (res.ok) {
+    cerrarModal('modalOperario');
+    await cargarDatosBase();
+    renderOperarios();
+  } else {
+    msg.innerHTML = `<div class="alert alert-danger">❌ ${res.error}</div>`;
+  }
+}
+
+async function eliminarOperario(id) {
+  if (!confirm('¿Seguro que quieres borrar este operario?')) return;
+  const res = await apiFetch(`/api/operario/${id}`, { method: 'DELETE' });
+  if (res.ok) {
+    await cargarDatosBase();
+    renderOperarios();
+  } else {
+    alert('Error al borrar: ' + res.error);
+  }
+}
+
 const ROL_BADGES = {
   admin:   { label: '🛡️ Administrador', cls: 'azul' },
   tecnico: { label: '🔧 Técnico', cls: 'verde' },
@@ -787,9 +852,10 @@ async function apiFetch(url, options = {}) {
     }
 
     if (url.includes('/api/all-data')) {
-      const [salas, equipos, usuarios, registros] = await Promise.all([
+      const [salas, equipos, operarios, usuarios, registros] = await Promise.all([
         client.from('salas').select('*'),
         client.from('equipos').select('*, salas(nombre)'),
+        client.from('operarios').select('*').eq('activo', true),
         client.from('usuarios').select('*').eq('activo', true),
         client.from('registros').select('*').order('timestamp', { ascending: false }).limit(100)
       ]);
@@ -840,6 +906,7 @@ async function apiFetch(url, options = {}) {
         data: {
           salas: salas.data,
           maquinas: formattedMaquinas,
+          operarios: operarios.data,
           usuarios: usuarios.data,
           historial: (registros.data || []).map(r => ({
             id: r.id,
@@ -881,6 +948,21 @@ async function apiFetch(url, options = {}) {
       const { data, error } = await client.from('operarios').insert(payload).select().single();
       if (error) throw error;
       return { ok: true, data };
+    }
+
+    if (url.includes('/api/operarios') && method === 'POST') {
+      const { data, error } = await client.from('operarios').insert(payload).select().single();
+      if (error) throw error;
+      return { ok: true, data };
+    }
+
+    if (url.includes('/api/operario/')) {
+      const id = url.split('/')[3];
+      if (method === 'DELETE') {
+        const { error } = await client.from('operarios').delete().eq('id', id);
+        if (error) throw error;
+        return { ok: true };
+      }
     }
 
     if (url.includes('/api/usuarios') && method === 'POST') {
