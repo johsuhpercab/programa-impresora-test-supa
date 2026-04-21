@@ -932,8 +932,10 @@ async function apiFetch(url, options = {}) {
     if (url.includes('/api/maquina/') && url.includes('/qr')) {
       const id = url.split('/')[3];
       // Construir la URL que el operario escaneará
-      const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', 'operario.html');
-      const targetUrl = `${baseUrl}?maquinaId=${id}`;
+      // Forzamos que siempre apunte a operario.html independientemente de si estamos en dashboard o admin
+      const currentPath = window.location.pathname;
+      let newPath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1) + 'operario.html';
+      const targetUrl = `${window.location.origin}${newPath}?maquinaId=${id}`;
       
       return {
         ok: true,
