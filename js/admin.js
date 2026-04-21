@@ -321,27 +321,27 @@ function renderUltimosMantenimientos(registros) {
   }
   tbody.innerHTML = registros.map(r => {
     const isIncidencia = r.tipo === 'Incidencia';
-    const rowStyle = isIncidencia ? 'color: var(--danger); font-weight: 600;' : '';
-    const icon = isIncidencia ? '🚨' : '🛠️';
+    const resuelta = r.resuelta || false;
+    const rowStyle = (isIncidencia && !resuelta) ? 'color: var(--danger); font-weight: 600;' : '';
+    const icon = isIncidencia ? (resuelta ? '✅' : '🚨') : '🛠️';
 
     return `
       <tr onclick="verDetalleSesion('${r.id}')" style="cursor:pointer">
         <td data-label="Máquina"><span style="${rowStyle}">${icon} ${r.maquina}</span></td>
         <td data-label="Sala"><span class="text-muted">${r.sala}</span></td>
         <td data-label="Operario">${r.operario}</td>
-        <td data-label="Fecha y hora">
+        <td data-label="Fecha y hora">${formatFechaHora(r.completado_en)}</td>
+        <td data-label="Estado">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-            <span>${formatFechaHora(r.completado_en)}</span>
+            <span class="estado-badge ${isIncidencia ? (resuelta ? 'ok' : 'vencido') : 'ok'}" style="font-size:10px">
+              ${isIncidencia ? (resuelta ? 'Resuelta' : 'Pendiente') : 'Completado'}
+            </span>
             ${r.tiene_fotos ? `
               <div style="position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <img src="${r.fotos[0]}" style="width:28px;height:28px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">
-                <span style="position:absolute;font-size:9px;background:var(--accent);color:white;padding:1px 3px;border-radius:4px;bottom:-3px;right:-3px;box-shadow:0 2px 4px rgba(0,0,0,0.2)">${r.fotos.length}</span>
+                <img src="${r.fotos[0]}" style="width:24px;height:24px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">
               </div>
             ` : ''}
           </div>
-        </td>
-        <td data-label="Acciones">
-          <button class="btn btn-outline btn-sm">Detalle</button>
         </td>
       </tr>
     `;
@@ -807,12 +807,16 @@ async function verDetalleSesion(id) {
       </div>
       ${sesion.fotos && sesion.fotos.length > 0 ? `<div class="detail-section"><div class="section-label">🖼️ Evidencias Fotográficas</div><div class="detail-photos">${sesion.fotos.map(f => `<img src="${f}" onclick="window.open('${f}')" style="width:100%;border-radius:12px;margin-bottom:10px;cursor:zoom-in" loading="lazy">`).join('')}</div></div>` : ''}
       
-      ${isInc && !resuelta ? `
-        <div style="margin-top:24px;padding:20px;background:rgba(16,185,129,0.1);border-radius:12px;border:1px solid var(--success);text-align:center">
-          <p style="margin-bottom:12px;font-size:14px;color:rgba(16,185,129,1);font-weight:600">✅ ¿Se ha resuelto este problema?</p>
-          <button class="btn btn-primary" style="width:100%" onclick="toggleResolucionIncidencia('${sesion.id}', true); cerrarModal('modalDetalle');">Marcar como Solucionada</button>
-        </div>
-      ` : ''}
+      <div style="margin-top:24px; display:flex; flex-direction:column; gap:12px">
+        <button class="btn btn-outline btn-full" onclick="cerrarModal('modalDetalle'); verHistorialMaquina('${sesion.maquina}')" style="background:var(--bg-secondary)">📋 Ver Historial completo de esta máquina</button>
+        
+        ${isInc && !resuelta ? `
+          <div style="padding:20px;background:rgba(16,185,129,0.1);border-radius:12px;border:1px solid var(--success);text-align:center">
+            <p style="margin-bottom:12px;font-size:14px;color:rgba(16,185,129,1);font-weight:600">✅ ¿Se ha resuelto este problema?</p>
+            <button class="btn btn-primary btn-full" onclick="toggleResolucionIncidencia('${sesion.id}', true); cerrarModal('modalDetalle');">Marcar como Solucionada</button>
+          </div>
+        ` : ''}
+      </div>
     </div>
   `;
 }
