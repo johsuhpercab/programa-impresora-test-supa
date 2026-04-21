@@ -212,7 +212,7 @@ async function apiFetch(url, options = {}) {
 
     if (url.includes('/api/operarios/verificar-pin')) {
       const { data, error } = await client
-        .from('operarios')
+        .from('usuarios')
         .select('*')
         .eq('pin', payload.pin)
         .eq('activo', true)

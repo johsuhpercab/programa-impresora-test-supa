@@ -41,14 +41,9 @@ const DASHBOARD_HTML = `
         </div>
         <div class="nav-section">
           <div class="nav-section-title">Administración</div>
-          <div class="nav-item" id="nav-operarios" onclick="navigateTo('operarios')">
-            <span class="nav-icon">👷</span>
-            <span>Operarios</span>
-            <span class="role-badge admin" style="display:none" id="badge-operarios">🔒 Admin</span>
-          </div>
           <div class="nav-item" id="nav-usuarios" onclick="navigateTo('usuarios')">
             <span class="nav-icon">👥</span>
-            <span>Usuarios</span>
+            <span>Personal / Usuarios</span>
             <span class="role-badge admin" style="display:none" id="badge-usuarios">🔒 Admin</span>
           </div>
           <div class="nav-item" id="nav-qrcodes" onclick="navigateTo('qrcodes')">
@@ -250,38 +245,12 @@ const DASHBOARD_HTML = `
           </div>
         </div>
 
-        <!-- ══════════ OPERARIOS ══════════ -->
-        <div class="section fade-in" id="section-operarios">
-          <div class="section-header">
-            <div>
-              <div class="section-title">👷 Operarios</div>
-              <div class="section-subtitle">Gestión de personal de mantenimiento</div>
-            </div>
-            <button class="btn btn-primary" onclick="abrirModalOperario()">+ Nuevo operario</button>
-          </div>
-
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>PIN</th>
-                  <th>Estado</th>
-                  <th>Alta</th>
-                </tr>
-              </thead>
-              <tbody id="tablaOperarios"></tbody>
-            </table>
-          </div>
-        </div>
-
         <!-- ══════════ USUARIOS ══════════ -->
         <div class="section fade-in" id="section-usuarios">
           <div class="section-header">
             <div>
-              <div class="section-title">👥 Usuarios</div>
-              <div class="section-subtitle">Gestión de usuarios del sistema</div>
+              <div class="section-title">👥 Personal y Usuarios</div>
+              <div class="section-subtitle">Gestión centralizada de personal y permisos</div>
             </div>
             <button class="btn btn-primary" onclick="abrirModalUsuario()">+ Nuevo usuario</button>
           </div>
@@ -289,8 +258,8 @@ const DASHBOARD_HTML = `
           <div style="background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.3);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start">
             <span style="font-size:20px">ℹ️</span>
             <div style="font-size:13px;color:var(--text-secondary)">
-              Los <strong>usuarios</strong> son las personas con acceso al panel de administración.<br>
-              Los <strong>operarios</strong> son los técnicos que realizan el mantenimiento en las máquinas mediante QR y PIN.
+              Gestiona aquí a todo el personal. Los usuarios con rol <b>Administrador</b> o <b>Técnico</b> pueden entrar a este panel.
+              Todos los usuarios con un <b>PIN</b> asignado podrán realizar mantenimientos mediante el sistema QR móvil.
             </div>
           </div>
 
@@ -302,6 +271,7 @@ const DASHBOARD_HTML = `
                   <th>Nombre</th>
                   <th>Email</th>
                   <th>Rol</th>
+                  <th>PIN (QR)</th>
                   <th>Estado</th>
                   <th>Alta</th>
                   <th></th>
@@ -417,34 +387,11 @@ const DASHBOARD_HTML = `
     </div>
   </div>
 
-  <!-- ── Modal: Nuevo Operario ── -->
-  <div class="overlay" id="modalOperario">
-    <div class="modal" style="max-width:400px">
-      <div class="modal-header">
-        <div class="modal-title">Nuevo Operario</div>
-        <button class="modal-close" onclick="cerrarModal('modalOperario')">✕</button>
-      </div>
-      <div id="msgOperario"></div>
-      <div class="form-group">
-        <label class="form-label">Nombre completo</label>
-        <input class="form-control" id="nuevoNombre" type="text" placeholder="Ej: Carlos García">
-      </div>
-      <div class="form-group">
-        <label class="form-label">PIN (4 dígitos)</label>
-        <input class="form-control" id="nuevoPin" type="text" maxlength="6" placeholder="Ej: 1234" inputmode="numeric">
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="cerrarModal('modalOperario')">Cancelar</button>
-        <button class="btn btn-primary" onclick="crearOperario()">Crear operario</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Modal: Nuevo Usuario ── -->
+  <!-- ── Modal: Nuevo Usuario / Personal ── -->
   <div class="overlay" id="modalUsuario">
     <div class="modal" style="max-width:440px">
       <div class="modal-header">
-        <div class="modal-title">Nuevo Usuario</div>
+        <div class="modal-title">Gestión de Personal</div>
         <button class="modal-close" onclick="cerrarModal('modalUsuario')">✕</button>
       </div>
       <div id="msgUsuario"></div>
@@ -452,21 +399,27 @@ const DASHBOARD_HTML = `
         <label class="form-label">Nombre completo <span style="color:var(--danger)">*</span></label>
         <input class="form-control" id="nuevoUsuarioNombre" type="text" placeholder="Ej: Ana Sánchez">
       </div>
-      <div class="form-group">
-        <label class="form-label">Email</label>
-        <input class="form-control" id="nuevoUsuarioEmail" type="email" placeholder="Ej: ana@ejemplo.es">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Email (Acceso Panel)</label>
+          <input class="form-control" id="nuevoUsuarioEmail" type="email" placeholder="ana@ejemplo.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">PIN (Acceso QR)</label>
+          <input class="form-control" id="nuevoUsuarioPin" type="text" maxlength="6" placeholder="1234">
+        </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Rol</label>
+        <label class="form-label">Rol y Permisos</label>
         <select class="form-control" id="nuevoUsuarioRol">
-          <option value="usuario">Usuario</option>
-          <option value="admin">Administrador</option>
-          <option value="tecnico">Técnico</option>
+          <option value="usuario">👤 Usuario (Solo lectura)</option>
+          <option value="tecnico">🔧 Técnico (Mantenimiento)</option>
+          <option value="admin">🛡️ Administrador (Acceso total)</option>
         </select>
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="cerrarModal('modalUsuario')">Cancelar</button>
-        <button class="btn btn-primary" onclick="crearUsuario()">Crear usuario</button>
+        <button class="btn btn-primary" onclick="crearUsuario()">Guardar Usuario</button>
       </div>
     </div>
   </div>

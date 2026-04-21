@@ -3,7 +3,6 @@
 const API = 'https://script.google.com/macros/s/AKfycbwW2_UWpOS45F-3BbyVbUvtxIJ3b_OP_Pnl_cSgSwO-BXz9nSzqoTb8oxnh185za0M/exec'; // <--- URL DE LA WEB APP OPTIMIZADA
 let datosSalas = [];
 let datosMaquinas = [];
-let datosOperarios = [];
 let datosUsuarios = [];
 let datosHistorial = []; // Reutilizar datos ya cargados
 let isCargando = false;
@@ -78,7 +77,6 @@ async function cargarDatosBase() {
     const d = res.data;
     datosSalas = d.salas || [];
     datosMaquinas = d.maquinas || [];
-    datosOperarios = d.operarios || [];
     datosUsuarios = d.usuarios || [];
     datosHistorial = d.historial || [];
     
@@ -105,13 +103,13 @@ async function cargarDatosBase() {
     });
   });
 
-  // Poblar selects operarios (historial)
+  // Poblar selects personal (historial)
   const selOp = document.getElementById('filtroOperario');
   if (selOp) {
-    selOp.innerHTML = '<option value="">Todos los operarios</option>';
-    datosOperarios.forEach(o => {
+    selOp.innerHTML = '<option value="">Todo el personal</option>';
+    datosUsuarios.forEach(u => {
       const opt = document.createElement('option');
-      opt.value = o.id; opt.textContent = o.nombre;
+      opt.value = u.id; opt.textContent = u.nombre;
       selOp.appendChild(opt);
     });
   }
@@ -139,8 +137,7 @@ const sectionTitles = {
   dashboard: ['Panel General', 'Resumen del sistema'],
   maquinas: ['Máquinas', 'Estado y gestión de todas las máquinas'],
   historial: ['Historial', 'Registro de mantenimientos realizados'],
-  operarios: ['Operarios', 'Gestión del personal de mantenimiento'],
-  usuarios: ['Usuarios', 'Gestión de usuarios del sistema'],
+  usuarios: ['Personal y Usuarios', 'Gestión centralizada de personal y permisos'],
   qrcodes: ['Códigos QR', 'QR individuales para el operario móvil'],
   galeria: ['Galería de Fotos', 'Últimas evidencias fotográficas de los reportes'],
 };
@@ -682,61 +679,6 @@ function exportarCSV() {
   });
 }
 
-// ── Operarios ─────────────────────────────────────────────────────────────────
-function renderOperarios() {
-  const tbody = document.getElementById('tablaOperarios');
-  if (!tbody) return;
-
-  if (isCargando && !datosOperarios.length) {
-    tbody.innerHTML = skeletonTabla(5);
-    return;
-  }
-
-  tbody.innerHTML = datosOperarios.map(o => `
-    <tr>
-      <td data-label="ID" class="text-muted">#${o.id}</td>
-      <td data-label="Nombre"><span class="fw-600">${o.nombre}</span></td>
-      <td data-label="PIN">
-        <span style="background:var(--bg-secondary);padding:4px 10px;border-radius:6px;font-family:monospace;font-size:13px;letter-spacing:0.1em">****</span>
-      </td>
-      <td data-label="Estado"><span class="estado-badge ok">✅ Activo</span></td>
-      <td data-label="Alta" style="font-size:12px;color:var(--text-muted)">${formatFechaHora(o.creado_en)}</td>
-    </tr>
-  `).join('');
-}
-
-function abrirModalOperario() {
-  document.getElementById('nuevoNombre').value = '';
-  document.getElementById('nuevoPin').value = '';
-  document.getElementById('msgOperario').innerHTML = '';
-  abrirModal('modalOperario');
-}
-
-async function crearOperario() {
-  const nombre = document.getElementById('nuevoNombre').value.trim();
-  const pin = document.getElementById('nuevoPin').value.trim();
-  const msg = document.getElementById('msgOperario');
-
-  if (!nombre || !pin) {
-    msg.innerHTML = '<div class="alert alert-warning">⚠️ Completa todos los campos</div>';
-    return;
-  }
-  if (!/^\d{4,6}$/.test(pin)) {
-    msg.innerHTML = '<div class="alert alert-danger">❌ El PIN debe ser numérico de 4-6 dígitos</div>';
-    return;
-  }
-
-  const res = await apiFetch('/api/operarios', { method: 'POST', body: { nombre, pin } });
-
-  if (res.ok) {
-    cerrarModal('modalOperario');
-    await cargarDatosBase();
-    renderOperarios();
-  } else {
-    msg.innerHTML = `<div class="alert alert-danger">❌ ${res.error}</div>`;
-  }
-}
-
 // ── Usuarios ──────────────────────────────────────────────────────────────────
 const ROL_BADGES = {
   admin:   { label: '🛡️ Administrador', cls: 'azul' },
@@ -769,6 +711,9 @@ function renderUsuarios() {
       <td data-label="Nombre"><span class="fw-600">${u.nombre}</span></td>
       <td data-label="Email" style="font-size:13px;color:var(--text-secondary)">${u.email || '–'}</td>
       <td data-label="Rol"><span class="estado-badge ${rol.cls}">${rol.label}</span></td>
+      <td data-label="PIN (QR)">
+        ${u.pin ? `<span style="background:var(--bg-secondary);padding:4px 8px;border-radius:6px;font-family:monospace">${u.pin}</span>` : '<span class="text-muted">–</span>'}
+      </td>
       <td data-label="Estado"><span class="estado-badge ok">✅ Activo</span></td>
       <td data-label="Alta" style="font-size:12px;color:var(--text-muted)">${formatFechaHora(u.creado_en)}</td>
       <td data-label="Acciones"><button class="btn btn-outline btn-sm" onclick="eliminarUsuarioAdmin(${u.id})" title="Desactivar usuario">🗑️</button></td>
@@ -780,6 +725,7 @@ function renderUsuarios() {
 function abrirModalUsuario() {
   document.getElementById('nuevoUsuarioNombre').value = '';
   document.getElementById('nuevoUsuarioEmail').value = '';
+  document.getElementById('nuevoUsuarioPin').value = '';
   document.getElementById('nuevoUsuarioRol').value = 'usuario';
   document.getElementById('msgUsuario').innerHTML = '';
   abrirModal('modalUsuario');
@@ -788,6 +734,7 @@ function abrirModalUsuario() {
 async function crearUsuario() {
   const nombre = document.getElementById('nuevoUsuarioNombre').value.trim();
   const email = document.getElementById('nuevoUsuarioEmail').value.trim();
+  const pin = document.getElementById('nuevoUsuarioPin').value.trim();
   const rol = document.getElementById('nuevoUsuarioRol').value;
   const msg = document.getElementById('msgUsuario');
 
@@ -796,7 +743,7 @@ async function crearUsuario() {
     return;
   }
 
-  const res = await apiFetch('/api/usuarios', { method: 'POST', body: { nombre, email, rol } });
+  const res = await apiFetch('/api/usuarios', { method: 'POST', body: { nombre, email, pin, rol } });
 
   if (res.ok) {
     cerrarModal('modalUsuario');
@@ -840,10 +787,9 @@ async function apiFetch(url, options = {}) {
     }
 
     if (url.includes('/api/all-data')) {
-      const [salas, equipos, operarios, usuarios, registros] = await Promise.all([
+      const [salas, equipos, usuarios, registros] = await Promise.all([
         client.from('salas').select('*'),
         client.from('equipos').select('*, salas(nombre)'),
-        client.from('operarios').select('*').eq('activo', true),
         client.from('usuarios').select('*').eq('activo', true),
         client.from('registros').select('*').order('timestamp', { ascending: false }).limit(100)
       ]);
@@ -894,7 +840,6 @@ async function apiFetch(url, options = {}) {
         data: {
           salas: salas.data,
           maquinas: formattedMaquinas,
-          operarios: operarios.data,
           usuarios: usuarios.data,
           historial: (registros.data || []).map(r => ({
             id: r.id,
