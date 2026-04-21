@@ -3,7 +3,6 @@
 const API = 'https://script.google.com/macros/s/AKfycbwW2_UWpOS45F-3BbyVbUvtxIJ3b_OP_Pnl_cSgSwO-BXz9nSzqoTb8oxnh185za0M/exec'; // <--- URL DE LA WEB APP OPTIMIZADA
 let datosSalas = [];
 let datosMaquinas = [];
-let datosOperarios = [];
 let datosUsuarios = [];
 let datosHistorial = []; // Reutilizar datos ya cargados
 let isCargando = false;
@@ -78,7 +77,6 @@ async function cargarDatosBase() {
     const d = res.data;
     datosSalas = d.salas || [];
     datosMaquinas = d.maquinas || [];
-    datosOperarios = d.operarios || [];
     datosUsuarios = d.usuarios || [];
     datosHistorial = d.historial || [];
     
@@ -925,10 +923,9 @@ async function apiFetch(url, options = {}) {
     }
 
     if (url.includes('/api/all-data')) {
-      const [salas, equipos, operarios, usuarios, registros] = await Promise.all([
+      const [salas, equipos, usuarios, registros] = await Promise.all([
         client.from('salas').select('*'),
         client.from('equipos').select('*, salas(nombre)'),
-        client.from('operarios').select('*').eq('activo', true),
         client.from('usuarios').select('*').eq('activo', true),
         client.from('registros').select('*').order('timestamp', { ascending: false }).limit(100)
       ]);
@@ -979,7 +976,6 @@ async function apiFetch(url, options = {}) {
         data: {
           salas: salas.data,
           maquinas: formattedMaquinas,
-          operarios: operarios.data,
           usuarios: usuarios.data,
           historial: (registros.data || []).map(r => ({
             id: r.id,
