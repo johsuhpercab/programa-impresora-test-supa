@@ -41,10 +41,6 @@ const DASHBOARD_HTML = `
         </div>
         <div class="nav-section">
           <div class="nav-section-title">Administración</div>
-          <div class="nav-item" id="nav-operarios" onclick="navigateTo('operarios')">
-            <span class="nav-icon">👷</span>
-            <span>Operarios</span>
-          </div>
           <div class="nav-item" id="nav-qrcodes" onclick="navigateTo('qrcodes')">
             <span class="nav-icon">📱</span>
             <span>Códigos QR</span>
