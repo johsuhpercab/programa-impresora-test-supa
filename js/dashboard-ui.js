@@ -332,6 +332,7 @@ const DASHBOARD_HTML = `
         <button class="btn btn-outline" onclick="cerrarModal('modalMaquina')">Cancelar</button>
         <button class="btn btn-primary" onclick="guardarMaquina()">Guardar cambios</button>
       </div>
+    </div>
   </div>
 
   <!-- ── Modal: Crear Máquina ── -->
@@ -414,6 +415,46 @@ const DASHBOARD_HTML = `
       </div>
       <div class="modal-footer">
         <button class="btn btn-primary" onclick="cerrarModal('modalHistorialMaquina')">Cerrar</button>
+      </div>
+    </div>
+  </div>
+  <!-- ── Modal: Usuarios ── -->
+  <div class="overlay" id="modalUsuario">
+    <div class="modal" style="max-width:460px">
+      <div class="modal-header">
+        <div class="modal-title" id="usuarioModalTitle">Usuario</div>
+        <button class="modal-close" onclick="cerrarModal('modalUsuario')">✕</button>
+      </div>
+      <div id="msgUsuario"></div>
+      <input type="hidden" id="usuarioId">
+      <div class="form-group">
+        <label class="form-label">Nombre completo</label>
+        <input class="form-control" id="usuarioNombre" type="text" placeholder="Ej: Juan Pérez">
+      </div>
+      <div class="form-group">
+        <label class="form-label">PIN de acceso (solo admin)</label>
+        <input class="form-control" id="usuarioPin" type="password" maxlength="6" placeholder="******">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="cerrarModal('modalUsuario')">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarUsuario()">Guardar usuario</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal: Código QR Individual ── -->
+  <div class="overlay" id="modalQR">
+    <div class="modal" style="max-width:400px">
+      <div class="modal-header">
+        <div class="modal-title">Código QR della Máquina</div>
+        <button class="modal-close" onclick="cerrarModal('modalQR')">✕</button>
+      </div>
+      <div style="text-align:center;padding:20px">
+        <div id="qrImgContainer" class="qr-canvas" style="margin-bottom:16px; display:flex; justify-content:center;"></div>
+        <div id="qrNombre" style="font-weight:bold;font-size:18px;margin-bottom:4px">Nombre Máquina</div>
+        <div id="qrSala" style="color:var(--text-muted);font-size:14px;margin-bottom:12px">Sala</div>
+        <div id="qrUrl" style="font-size:10px;color:var(--text-muted);word-break:break-all;margin-bottom:20px;padding:8px;background:var(--bg-secondary);border-radius:6px">URL del QR</div>
+        <button class="btn btn-primary btn-full" onclick="imprimirQR()">🖨️ Imprimir código</button>
       </div>
     </div>
   </div>
