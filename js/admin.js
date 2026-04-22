@@ -160,10 +160,9 @@ function renderIncidencias(filtro = 'todas') {
   let lista = datosHistorial.filter(r => r.tipo === 'Incidencia');
   
   // Cálculo de KPIs locales para el panel
-  const totalPendientes = lista.filter(r => !r.resuelta).length;
+  const totalPendientes = lista.filter(r => !r.resuelta && !r.en_seguimiento).length;
   const totalResueltas = lista.filter(r => r.resuelta).length;
-  // Simulamos seguimiento si tiene observaciones largas o es una lógica pendiente
-  const totalSeguimiento = lista.filter(r => !r.resuelta && (r.observaciones || '').length > 50).length;
+  const totalSeguimiento = lista.filter(r => !r.resuelta && r.en_seguimiento).length;
 
   if (document.getElementById('kpi-inc-pendientes')) document.getElementById('kpi-inc-pendientes').textContent = totalPendientes;
   if (document.getElementById('kpi-inc-resueltas')) document.getElementById('kpi-inc-resueltas').textContent = totalResueltas;
@@ -181,9 +180,9 @@ function renderIncidencias(filtro = 'todas') {
   empty.style.display = 'none';
   grid.innerHTML = lista.map(r => {
     const resuelta = r.resuelta || false;
-    const esSeguimiento = !resuelta && (r.observaciones || '').length > 50; // Lógica temporal
+    const esSeguimiento = !resuelta && r.en_seguimiento; 
     const statusClass = resuelta ? 'resuelto' : (esSeguimiento ? 'seguimiento' : 'urgente');
-    const statusText = resuelta ? '✅ Finalizado' : (esSeguimiento ? '📝 En Seguimiento' : '🚨 Pendiente Urgente');
+    const statusText = resuelta ? '✅ Finalizado' : (esSeguimiento ? '📝 En Seguimiento' : '🚨 Pendiente');
 
     return `
       <div class="ticket-card ${statusClass} fade-in" onclick="verDetalleSesion('${r.id}')">
@@ -857,8 +856,9 @@ async function verDetalleSesion(id) {
             <button class="btn btn-outline btn-full" onclick="cerrarModal('modalDetalle'); verHistorialMaquina('${sesion.maquina}')" style="background:var(--bg-secondary); padding: 10px; font-size: 13px;">📋 Ver Historial de la máquina</button>
             
             ${isInc && !resuelta ? `
-              <div style="padding:16px;background:rgba(16,185,129,0.1);border-radius:12px;border:1px solid var(--success);text-align:center">
-                <button class="btn btn-primary btn-full" onclick="toggleResolucionIncidencia('${sesion.id}', true); cerrarModal('modalDetalle');">✅ Resolver Incidencia</button>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; border:1px solid var(--border)">
+                <button class="btn btn-outline" onclick="editarDescripcionIncidencia('${sesion.id}')">✏️ Editar Reporte</button>
+                <button class="btn btn-primary" onclick="toggleResolucionIncidencia('${sesion.id}', true)">✅ Resolver</button>
               </div>
             ` : ''}
           </div>
@@ -942,6 +942,25 @@ async function guardarNuevaNota() {
   }
   btn.disabled = false;
   btn.innerHTML = '<span>➕ Añadir Nota</span>';
+}
+
+async function editarDescripcionIncidencia(id) {
+  const nuevaDesc = prompt('Edita el reporte de la incidencia:');
+  if (nuevaDesc === null) return;
+  
+  const res = await apiFetch(`/api/incidencia/${id}/editar`, {
+    method: 'PUT',
+    body: { notas: nuevaDesc }
+  });
+
+  if (res.ok) {
+    alert('Reporte actualizado correctamente');
+    // Recargar datos y refrescar vista
+    await cargarDatosBase();
+    verDetalleSesion(id);
+  } else {
+    alert('Error al editar: ' + res.error);
+  }
 }
 
 async function verHistorialMaquina(nombreMaquina) {
@@ -1081,7 +1100,7 @@ async function apiFetch(url, options = {}) {
         ok: true,
         data: {
           salas: salas.data, maquinas: formattedMaquinas, usuarios: usuarios.data,
-          historial: regs.map(r => ({ id: r.id, maquina: r.maquina_nombre, sala: r.sala_nombre, operario: r.operario_nombre, iniciado_en: r.timestamp, completado_en: r.timestamp, observaciones: r.notas || '', tipo: r.tipo, resuelta: r.resuelta || false, fotos: r.photos || [], tiene_fotos: (r.photos && r.photos.length > 0) })),
+          historial: regs.map(r => ({ id: r.id, maquina: r.maquina_nombre, sala: r.sala_nombre, operario: r.operario_nombre, iniciado_en: r.timestamp, completado_en: r.timestamp, observaciones: r.notas || '', tipo: r.tipo, resuelta: r.resuelta || false, en_seguimiento: r.en_seguimiento || false, comentario_resolucion: r.comentario_resolucion, fotos: r.photos || [], tiene_fotos: (r.photos && r.photos.length > 0) })),
           dashboard: { hoy: regs.filter(r => r.timestamp.startsWith(hoy)).length, semana: regs.filter(r => r.timestamp >= haceUnaSemana).length, pendientes: formattedMaquinas.filter(m => m.estado_mantenimiento === 'vencido' || m.estado_mantenimiento === 'pendiente').length, proximos: formattedMaquinas.filter(m => m.estado_mantenimiento === 'proximo').length, porDia: Object.entries(porDiaMap).map(([dia, total]) => ({ dia, total })).sort((a,b) => a.dia.localeCompare(b.dia)), porMaquina: Object.entries(porMaquinaMap).map(([nombre, total_sesiones]) => ({ nombre, total_sesiones })).sort((a,b) => b.total_sesiones - a.total_sesiones) }
         }
       };
@@ -1156,9 +1175,19 @@ async function apiFetch(url, options = {}) {
           .select()
           .single();
         
+        // Actualizar automáticamente a "en seguimiento" si no estaba resuelta
+        await client.from('registros').update({ en_seguimiento: true }).eq('id', id);
+        
         if (error) throw error;
         return { ok: true, data };
       }
+    }
+
+    if (url.includes('/api/incidencia/') && url.includes('/editar')) {
+      const id = url.split('/')[3];
+      const { error } = await client.from('registros').update({ notas: payload.notas }).eq('id', id);
+      if (error) throw error;
+      return { ok: true };
     }
 
     return { ok: false, error: 'Endpoint not implemented' };
