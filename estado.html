@@ -192,6 +192,11 @@
   <script>
     async function loadStatus() {
       try {
+        if (!window.supabaseClient) {
+          console.warn('Esperando a que el cliente Supabase esté listo...');
+          setTimeout(loadStatus, 500);
+          return;
+        }
         const client = window.supabaseClient;
         
         // Obtenemos máquinas y salas
