@@ -430,12 +430,38 @@ const DASHBOARD_HTML = `
 
   <!-- ── Modal: Detalle sesión ── -->
   <div class="overlay" id="modalDetalle">
-    <div class="modal" style="max-width:560px">
+    <div class="modal" style="max-width:650px; width:90%">
       <div class="modal-header">
-        <div class="modal-title">Detalles del Mantenimiento</div>
+        <div class="modal-title" id="modalDetalleTitulo">Detalles del Reporte</div>
         <button class="modal-close" onclick="cerrarModal('modalDetalle')">✕</button>
       </div>
-      <div id="detalleContenido"></div>
+      
+      <div id="detalleContenido" style="margin-bottom:24px"></div>
+
+      <!-- Sección de Seguimiento (Solo para Incidencias) -->
+      <div id="seccionSeguimiento" style="display:none; border-top:1px solid var(--border); padding-top:20px">
+        <h3 style="font-size:16px; margin-bottom:16px; display:flex; align-items:center; gap:8px">
+          💬 Hilo de Seguimiento Técnico
+        </h3>
+        
+        <div id="seguimientoTimeline" class="timeline-container" style="max-height:250px; overflow-y:auto; margin-bottom:20px; padding-right:10px">
+          <!-- Las notas se inyectarán aquí -->
+        </div>
+
+        <div class="add-note-box" style="background:var(--bg-card); padding:15px; border-radius:12px; border:1px solid var(--accent)">
+          <label class="form-label" style="font-size:12px">Añadir nueva nota de progreso:</label>
+          <textarea id="nuevaNotaSeguimiento" class="form-control" rows="2" placeholder="Describe los avances, piezas pedidas, etc..." style="margin-bottom:10px; font-size:13px"></textarea>
+          <div style="display:flex; justify-content:flex-end">
+            <button class="btn btn-primary btn-sm" id="btnGuardarNota" onclick="guardarNuevaNota()">
+              <span>➕ Añadir Nota</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="margin-top:20px">
+        <button class="btn btn-outline" onclick="cerrarModal('modalDetalle')">Cerrar</button>
+      </div>
     </div>
   </div>
 

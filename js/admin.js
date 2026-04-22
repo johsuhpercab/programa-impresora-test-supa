@@ -872,6 +872,72 @@ async function verDetalleSesion(id) {
       </div>
     </div>
   `;
+
+  // --- Manejo de Seguimientos ---
+  const seccionSeg = document.getElementById('seccionSeguimiento');
+  const timeline = document.getElementById('seguimientoTimeline');
+  
+  if (isInc && seccionSeg && timeline) {
+    seccionSeg.style.display = 'block';
+    timeline.innerHTML = '<div style="text-align:center;padding:10px;opacity:0.5">Cargando hilo de seguimiento...</div>';
+    
+    // Guardar ID actual para la nueva nota
+    window.currentIncidenciaId = id;
+
+    // Cargar seguimientos desde la API
+    const segRes = await apiFetch(`/api/incidencia/${id}/seguimientos`);
+    if (segRes.ok && segRes.data) {
+      const notas = segRes.data;
+      if (notas.length === 0) {
+        timeline.innerHTML = '<div style="text-align:center;padding:10px;opacity:0.5;font-size:12px">No hay notas registradas aún. El técnico puede empezar a documentar aquí.</div>';
+      } else {
+        timeline.innerHTML = notas.map(n => `
+          <div class="timeline-item">
+            <div class="timeline-meta">
+              <b>${n.usuario_nombre || 'Técnico'}</b>
+              <span>${formatFechaHora(n.timestamp)}</span>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-text">${n.nota}</div>
+            </div>
+          </div>
+        `).join('');
+        // Hacer scroll al final
+        timeline.scrollTop = timeline.scrollHeight;
+      }
+    } else {
+      timeline.innerHTML = '<div style="color:var(--danger);font-size:12px">Error al cargar el historial de seguimiento.</div>';
+    }
+  } else if (seccionSeg) {
+    seccionSeg.style.display = 'none';
+  }
+}
+
+async function guardarNuevaNota() {
+  const input = document.getElementById('nuevaNotaSeguimiento');
+  const btn = document.getElementById('btnGuardarNota');
+  const nota = input.value.trim();
+  const id = window.currentIncidenciaId;
+
+  if (!nota || !id) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-sm"></span> Guardando...';
+
+  const res = await apiFetch(`/api/incidencia/${id}/seguimientos`, {
+    method: 'POST',
+    body: { nota }
+  });
+
+  if (res.ok) {
+    input.value = '';
+    // Recargar el detalle para ver la nueva nota
+    verDetalleSesion(id);
+  } else {
+    alert('Error al guardar la nota: ' + res.error);
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<span>➕ Añadir Nota</span>';
 }
 
 async function verHistorialMaquina(nombreMaquina) {
@@ -1052,9 +1118,43 @@ async function apiFetch(url, options = {}) {
     }
 
     if (url.includes('/api/sesion/') && url.includes('/detalle')) {
-      const { data: reg, error } = await client.from('registros').select('*').eq('id', url.split('/')[3]).single();
+      const id = url.split('/')[3];
+      const { data: reg, error } = await client.from('registros').select('*').eq('id', id).single();
       if (error) throw error;
       return { ok: true, data: { sesion: { id: reg.id, maquina: reg.maquina_nombre, sala: reg.sala_nombre, operario: reg.operario_nombre, iniciado_en: reg.timestamp, completado_en: reg.timestamp, observaciones: reg.notas || '', tipo: reg.tipo, resuelta: reg.resuelta || false, comentario_resolucion: reg.comentario_resolucion, fotos: reg.photos || [] }, items: [] } };
+    }
+
+    if (url.includes('/api/incidencia/') && url.includes('/seguimientos')) {
+      const id = url.split('/')[3];
+      if (method === 'GET') {
+        const { data, error } = await client
+          .from('seguimientos')
+          .select('*')
+          .eq('incidencia_id', id)
+          .order('timestamp', { ascending: true });
+        
+        if (error) {
+          console.warn('Tabla seguimientos no encontrada o error:', error);
+          return { ok: true, data: [] };
+        }
+        return { ok: true, data };
+      }
+      
+      if (method === 'POST') {
+        const { data, error } = await client
+          .from('seguimientos')
+          .insert({
+            incidencia_id: id,
+            nota: payload.nota,
+            usuario_nombre: 'Administrador',
+            timestamp: new Date().toISOString()
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        return { ok: true, data };
+      }
     }
 
     return { ok: false, error: 'Endpoint not implemented' };
