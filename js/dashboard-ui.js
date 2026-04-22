@@ -50,10 +50,6 @@ const DASHBOARD_HTML = `
             <span class="nav-icon">📱</span>
             <span>Códigos QR</span>
           </div>
-          <div class="nav-item" id="nav-usuarios" onclick="navigateTo('usuarios')">
-            <span class="nav-icon">👤</span>
-            <span>Usuarios</span>
-          </div>
         </div>
       </nav>
 

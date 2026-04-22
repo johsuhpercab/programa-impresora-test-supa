@@ -581,11 +581,18 @@ async function verQR(id, nombre, sala) {
   document.getElementById('qrSala').textContent = sala;
   const qrContainer = document.getElementById('qrImgContainer');
   qrContainer.innerHTML = '';
+  qrContainer.style.cursor = 'pointer';
+  
+  const targetUrl = `${serverHost}/operario.html?maquinaId=${id}`;
+  qrContainer.onclick = () => window.open(targetUrl, '_blank');
+  
   document.getElementById('qrUrl').textContent = 'Generando...';
   abrirModal('modalQR');
 
-  const targetUrl = `${serverHost}/operario.html?maquinaId=${id}`;
-  document.getElementById('qrUrl').textContent = targetUrl;
+  const qrUrlEl = document.getElementById('qrUrl');
+  qrUrlEl.textContent = targetUrl;
+  qrUrlEl.href = targetUrl;
+  qrUrlEl.style.textDecoration = 'underline'; // Asegurar que parezca clickeable
   
   new QRCode(qrContainer, {
     text: targetUrl,
@@ -630,7 +637,7 @@ function imprimirTodosLosQRs() {
           <div class="qr-name">${m.nombre}</div>
           <div class="qr-sala">${m.sala_nombre}</div>
           <div class="qr-canvas" id="canvas-${m.id}"></div>
-          <div class="qr-url">${baseOrigin}/operario.html?maquinaId=${m.id}</div>
+          <a class="qr-url" href="${baseOrigin}/operario.html?maquinaId=${m.id}" target="_blank">${baseOrigin}/operario.html?maquinaId=${m.id}</a>
         </div>
       `).join('')}
       <script>
@@ -670,7 +677,7 @@ function imprimirQR() {
     </style></head><body>
     <h2>${nombre}</h2><p>${sala}</p>
     <img src="${img}">
-    <div class="url">${url}</div>
+    <a class="url" href="${url}" target="_blank">${url}</a>
     <script>window.onload=()=>{setTimeout(()=>window.print(),500)}</script>
     </body></html>`);
   w.document.close();
