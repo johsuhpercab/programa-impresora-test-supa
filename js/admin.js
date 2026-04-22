@@ -6,6 +6,20 @@ let datosMaquinas = [];
 let datosUsuarios = [];
 let datosHistorial = []; // Reutilizar datos ya cargados
 let isCargando = false;
+let serverHost = window.location.origin; // Backup: usar el actual si falla el fetch
+
+async function detectarServidor() {
+  try {
+    const res = await fetch('/api/info');
+    const json = await res.json();
+    if (json.ok && json.data.url) {
+      serverHost = json.data.url;
+      console.log("🔗 QR Host detectado:", serverHost);
+    }
+  } catch (e) {
+    console.warn("⚠️ No se pudo obtener IP local del servidor, usando origin actual.");
+  }
+}
 
 let rolActual = 'admin';
 
@@ -18,6 +32,7 @@ function cambiarRolSimulado(nuevoRol) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const pin = localStorage.getItem('admin_pin');
+  detectarServidor(); // Cargar IP real para los QRs
   if (!pin) return; // Esperar al login manual
 
   try {
@@ -568,7 +583,7 @@ async function verQR(id, nombre, sala) {
   document.getElementById('qrUrl').textContent = 'Generando...';
   abrirModal('modalQR');
 
-  const targetUrl = `${window.location.origin}/operario.html?maquinaId=${id}`;
+  const targetUrl = `${serverHost}/operario.html?maquinaId=${id}`;
   document.getElementById('qrUrl').textContent = targetUrl;
   
   new QRCode(qrContainer, {
@@ -590,7 +605,7 @@ function imprimirTodosLosQRs() {
   if (!lista.length) return alert('No hay máquinas para imprimir');
 
   const printWindow = window.open('', '_blank');
-  let baseOrigin = window.origin;
+  let baseOrigin = serverHost;
   
   const html = `
     <!DOCTYPE html>
