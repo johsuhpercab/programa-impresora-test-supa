@@ -928,3 +928,69 @@ tr:hover td { background: var(--bg-card-hover); }
 .add-note-box textarea:focus {
   background: rgba(79, 142, 247, 0.05);
 }
+
+/* ── Panel de Tickets de Incidencias ─────────────────────────────────────── */
+.tickets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.ticket-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.ticket-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--border-accent);
+  box-shadow: var(--shadow-glow);
+}
+
+.ticket-card.urgente { border-left: 5px solid var(--danger); }
+.ticket-card.seguimiento { border-left: 5px solid var(--warning); }
+.ticket-card.resuelto { border-left: 5px solid var(--success); opacity: 0.8; }
+
+.ticket-header {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ticket-body {
+  padding: 16px;
+  flex: 1;
+}
+
+.ticket-footer {
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.1);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ticket-machine-name { font-weight: 800; font-size: 15px; color: var(--text-primary); }
+.ticket-sala { font-size: 12px; color: var(--text-muted); }
+.ticket-desc { font-size: 13px; color: var(--text-secondary); margin: 12px 0; line-height: 1.5; }
+.ticket-date { font-size: 11px; color: var(--text-muted); }
+
+.ticket-last-note {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--accent);
+  background: var(--accent-glow);
+  padding: 8px;
+  border-radius: 8px;
+  margin-top: 8px;
+}

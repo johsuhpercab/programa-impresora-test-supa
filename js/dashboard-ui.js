@@ -183,35 +183,30 @@ const DASHBOARD_HTML = `
 
           <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px;">
             <div class="kpi-card rojo" id="kpi-inc-pendientes-card">
+              <div class="kpi-icon">🚨</div>
               <div class="kpi-value" id="kpi-inc-pendientes">0</div>
-              <div class="kpi-label">Pendientes</div>
+              <div class="kpi-label">Urgentes (Sin atender)</div>
+            </div>
+            <div class="kpi-card amarillo" id="kpi-inc-seguimiento-card">
+              <div class="kpi-icon">📝</div>
+              <div class="kpi-value" id="kpi-inc-seguimiento">0</div>
+              <div class="kpi-label">En Seguimiento</div>
             </div>
             <div class="kpi-card verde" id="kpi-inc-resueltas-card">
+              <div class="kpi-icon">✅</div>
               <div class="kpi-value" id="kpi-inc-resueltas">0</div>
               <div class="kpi-label">Resueltas</div>
             </div>
           </div>
 
-          <div class="table-wrap">
-            <div style="overflow-x:auto">
-              <table>
-                <thead>
-                  <tr>
-                    <th>MAQUINA</th>
-                    <th>SALA</th>
-                    <th>OPERARIO</th>
-                    <th>FECHA</th>
-                    <th>ESTADO</th>
-                    <th>OBSERVACIONES</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody id="tablaIncidencias"></tbody>
-              </table>
+          <div class="incidencias-container">
+            <div id="gridTicketsIncidencias" class="tickets-grid">
+              <!-- Los tickets de incidencia se inyectarán aquí -->
             </div>
+            
             <div id="incidenciasEmpty" class="empty-state" style="display:none">
               <div class="icon">✨</div>
-              <p>No hay incidencias que coincidan con el filtro</p>
+              <p>No hay incidencias activas en este momento</p>
             </div>
           </div>
         </div>

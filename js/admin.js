@@ -147,9 +147,9 @@ async function cargarDatosBase() {
 
 // ── Incidencias ─────────────────────────────────────────────────────────────
 function renderIncidencias(filtro = 'todas') {
-  const tbody = document.getElementById('tablaIncidencias');
+  const grid = document.getElementById('gridTicketsIncidencias');
   const empty = document.getElementById('incidenciasEmpty');
-  if (!tbody) return;
+  if (!grid) return;
 
   // Actualizar estados de botones de filtro
   ['todas', 'pendientes', 'resueltas'].forEach(f => {
@@ -159,51 +159,57 @@ function renderIncidencias(filtro = 'todas') {
 
   let lista = datosHistorial.filter(r => r.tipo === 'Incidencia');
   
+  // Cálculo de KPIs locales para el panel
   const totalPendientes = lista.filter(r => !r.resuelta).length;
   const totalResueltas = lista.filter(r => r.resuelta).length;
+  // Simulamos seguimiento si tiene observaciones largas o es una lógica pendiente
+  const totalSeguimiento = lista.filter(r => !r.resuelta && (r.observaciones || '').length > 50).length;
 
-  // Actualizar KPIs de la sección
   if (document.getElementById('kpi-inc-pendientes')) document.getElementById('kpi-inc-pendientes').textContent = totalPendientes;
   if (document.getElementById('kpi-inc-resueltas')) document.getElementById('kpi-inc-resueltas').textContent = totalResueltas;
+  if (document.getElementById('kpi-inc-seguimiento')) document.getElementById('kpi-inc-seguimiento').textContent = totalSeguimiento;
 
   if (filtro === 'pendientes') lista = lista.filter(r => !r.resuelta);
   if (filtro === 'resueltas') lista = lista.filter(r => r.resuelta);
 
   if (!lista.length) {
-    tbody.innerHTML = '';
+    grid.innerHTML = '';
     empty.style.display = 'block';
     return;
   }
 
   empty.style.display = 'none';
-  tbody.innerHTML = lista.map(r => {
+  grid.innerHTML = lista.map(r => {
     const resuelta = r.resuelta || false;
-    const colorBg = resuelta ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.03)';
-    const statusLabel = resuelta 
-      ? `<span class="estado-badge ok" style="cursor:pointer" onclick="event.stopPropagation(); toggleResolucionIncidencia('${r.id}', false)">✅ Resuelta</span>`
-      : `<span class="estado-badge vencido" style="cursor:pointer" onclick="event.stopPropagation(); toggleResolucionIncidencia('${r.id}', true)">🚨 Pendiente</span>`;
+    const esSeguimiento = !resuelta && (r.observaciones || '').length > 50; // Lógica temporal
+    const statusClass = resuelta ? 'resuelto' : (esSeguimiento ? 'seguimiento' : 'urgente');
+    const statusText = resuelta ? '✅ Finalizado' : (esSeguimiento ? '📝 En Seguimiento' : '🚨 Pendiente Urgente');
 
     return `
-      <tr style="background: ${colorBg}; transition: background 0.3s ease">
-        <td data-label="Máquina">
-          <div style="font-weight:700; color: ${resuelta ? 'var(--success)' : 'var(--danger)'}">
-            ${resuelta ? '✅' : '🚨'} ${r.maquina}
-          </div>
-        </td>
-        <td data-label="Sala">${r.sala}</td>
-        <td data-label="Operario">${r.operario}</td>
-        <td data-label="Fecha" style="font-size:11px">${formatFechaHora(r.completado_en)}</td>
-        <td data-label="Estado">${statusLabel}</td>
-        <td data-label="Observaciones" style="font-size:11px; max-width:200px; overflow:hidden; text-overflow:ellipsis">
-          ${r.observaciones || '–'}
-        </td>
-        <td data-label="Acciones">
-          <div style="display:flex;gap:4px">
-            <button class="btn btn-outline btn-sm" onclick="verDetalleSesion('${r.id}')">Detalles</button>
-            ${!resuelta ? `<button class="btn btn-primary btn-sm" onclick="toggleResolucionIncidencia('${r.id}', true)">Cerrar</button>` : ''}
-          </div>
-        </td>
-      </tr>
+      <div class="ticket-card ${statusClass} fade-in" onclick="verDetalleSesion('${r.id}')">
+        <div class="ticket-header">
+          <div class="ticket-machine-name">${r.maquina}</div>
+          <span class="estado-badge ${statusClass}">${statusText}</span>
+        </div>
+        <div class="ticket-body">
+          <div class="ticket-sala">📍 ${r.sala}</div>
+          <div class="ticket-desc">${truncate(r.observaciones || 'Sin descripción detallada', 120)}</div>
+          <div class="ticket-date">🗓️ Reportado: ${formatFechaHora(r.completado_en)}</div>
+          <div class="ticket-date">👷 Operario: ${r.operario}</div>
+          
+          ${esSeguimiento ? `
+            <div class="ticket-last-note">
+              Última nota: Revisión técnica en curso...
+            </div>
+          ` : ''}
+        </div>
+        <div class="ticket-footer">
+          <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); verDetalleSesion('${r.id}')">Gestionar</button>
+          ${!resuelta ? `
+            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); toggleResolucionIncidencia('${r.id}', true)">Cerrar Ticket</button>
+          ` : ''}
+        </div>
+      </div>
     `;
   }).join('');
 }
