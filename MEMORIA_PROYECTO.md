@@ -4,7 +4,7 @@ Este archivo es de **LECTURA OBLIGATORIA** para la IA al inicio de cada sesión.
 
 ## 🚀 Flujo de Trabajo (Git)
 1. **COMMIT Y PUSH AUTOMÁTICOS**: Al finalizar cada bloque de trabajo (o cada respuesta que implique cambios de código), la IA **DEBE** ejecutar `git add .`, `git commit -m "..."` y `git push` sin que el usuario lo solicite. Es una regla de oro.
-2. **MENSAJES DE COMMIT**: Deben ser descriptivos y técnicos.
+2. **MENSAJES DE COMMIT**: Deben ser descriptivos, técnicos y **SIEMPRE EN ESPAÑOL**.
 
 ## 🎨 Preferencias de Interfaz (UI/UX)
 1. **SIN EXTRAS NO SOLICITADOS**: No añadir elementos visuales, fechas, timestamps o textos informativos que el usuario no haya pedido explícitamente (ej: "Sincronizado a las...").
