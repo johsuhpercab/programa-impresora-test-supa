@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estado de Equipos — Gestión Impresoras</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --card-bg: #1a1a2e;
+      --text: #ffffff;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --danger: #ff4757;
+      --warning: #f59e0b;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #4f8ef7;
+    }
+
+    * { margin: 0; padding: 0; box-box: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    header h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .machine-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+
+    .machine-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--accent);
+    }
+
+    .machine-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .machine-code {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      background: rgba(79, 142, 247, 0.1);
+      padding: 4px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .machine-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .machine-sala {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 24px;
+      font-weight: 700;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    .status-operative { color: var(--success); }
+    .status-repair { color: var(--danger); }
+
+    .loader {
+      display: flex;
+      justify-content: center;
+      padding: 100px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255,255,255,0.1);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      header h1 { font-size: 26px; }
+      .status-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Disponibilidad de Equipos</h1>
+      <p id="lastUpdate">Consultando estado en tiempo real...</p>
+    </header>
+
+    <div id="loader" class="loader">
+      <div class="spinner"></div>
+    </div>
+
+    <div class="status-grid" id="statusGrid">
+      <!-- Inyectado por JS -->
+    </div>
+  </div>
+
+  <script>
+    async function loadStatus() {
+      try {
+        const client = window.supabaseClient;
+        
+        // Obtenemos máquinas y salas
+        const { data: maquinas } = await client
+          .from('equipos')
+          .select('*, salas(nombre)');
+
+        // Obtenemos incidencias abiertas
+        const { data: openInc } = await client
+          .from('registros')
+          .select('maquina_id')
+          .eq('tipo', 'Incidencia')
+          .eq('resuelta', false);
+
+        const idsEnReparacion = new Set(openInc.map(i => i.maquina_id));
+        
+        renderGrid(maquinas, idsEnReparacion);
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('lastUpdate').textContent = `Sincronizado: ${new Date().toLocaleTimeString()}`;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderGrid(maquinas, idsEnReparacion) {
+      const grid = document.getElementById('statusGrid');
+      grid.innerHTML = maquinas.map(m => {
+        const enReparacion = idsEnReparacion.has(m.id);
+        const statusClass = enReparacion ? 'status-repair' : 'status-operative';
+        const statusText = enReparacion ? 'En Reparación' : 'Operativa / Disponible';
+        const dotColor = enReparacion ? 'var(--danger)' : 'var(--success)';
+
+        return `
+          <div class="machine-card">
+            <div class="machine-header">
+              <div>
+                <div class="machine-name">${m.nombre}</div>
+                <div class="machine-sala">📍 ${m.salas?.nombre || 'General'}</div>
+              </div>
+              <div class="machine-code">${m.codigo || 'S/ID'}</div>
+            </div>
+            
+            <div class="status-indicator ${statusClass}">
+              <div class="dot" style="background: ${dotColor}; color: ${dotColor}"></div>
+              ${statusText}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadStatus();
+      setInterval(loadStatus, 30000); // Auto-refresco cada 30 segundos
+    });
+  </script>
+</body>
+</html>

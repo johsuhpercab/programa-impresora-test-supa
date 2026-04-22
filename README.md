@@ -1,48 +1,66 @@
-# 🛠️ Sistema de Gestión de Impresoras 3D (Supabase Edition)
+# Sistema de Gestión de Impresoras (SGI) - Documentación Técnica
 
-Este es un sistema moderno de gestión para el mantenimiento preventivo e incidencias de impresoras 3D, diseñado para operar de forma rápida, visual y eficiente.
+## Modelo Entidad-Relación (ER)
+Este modelo define la estructura de datos optimizada para la trazabilidad y el seguimiento de incidencias.
 
-## 🚀 Características Principales
+```mermaid
+erDiagram
+    USUARIO ||--o{ REGISTRO : "realiza (via Email)"
+    USUARIO ||--o{ SEGUIMIENTO : "escribe"
+    SALA ||--o{ EQUIPO : "contiene"
+    EQUIPO ||--o{ REGISTRO : "tiene"
+    REGISTRO ||--o{ SEGUIMIENTO : "genera"
 
-- **Gestión Multi-Sala**: Organización de máquinas por espacios físicos.
-- **Reporte de Incidencias**: Interfaz simplificada para que cualquier usuario reporte fallos con fotos opcionales.
-- **Mantenimiento Preventivo**: Checklist especializado para operarios con seguimiento de fechas de vencimiento.
-- **Panel de Administración**: 
-  - Gráficos de actividad en tiempo real.
-  - Historial detallado con fotografías.
-  - Generador de códigos QR dinámicos para cada máquina.
-  - Gestión de operarios y usuarios vinculados a salas.
-- **Infraestructura Moderna**: Migrado de Google Sheets a **Supabase (PostgreSQL)** para mayor velocidad y robustez.
+    USUARIO {
+        uuid id PK
+        string email UK "Clave Única (Auto-alta)"
+        string nombre
+        string pin
+        string rol "admin / técnico / operario"
+        boolean activo
+    }
 
-## 📁 Estructura del Proyecto
+    SALA {
+        uuid id PK
+        string nombre
+    }
 
-- `index.html`: Portal público para reportar incidencias.
-- `dashboard.html`: Panel administrativo centralizado.
-- `operario.html`: Interfaz móvil para escaneo de QR y checklists.
-- `js/`: Lógica principal del sistema.
-  - `supabase-config.js`: Conexión al backend.
-  - `admin.js`: Inteligencia del panel de control.
-- `css/`: Estilos modernos con variables y modo oscuro.
+    EQUIPO {
+        uuid id PK
+        string codigo UK "ID Legible (IMP-01)"
+        string nombre
+        uuid sala_id FK
+        string tipo
+        string modelo
+        int frecuencia_dias
+        datetime ultimo_mantenimiento
+        string estado "activa / inactiva"
+    }
 
-## 🛠️ Configuración (Backend)
+    REGISTRO {
+        uuid id PK
+        uuid maquina_id FK
+        string operario_email FK "Trazabilidad"
+        string tipo "Mantenimiento / Incidencia"
+        text notas
+        boolean resuelta
+        boolean en_seguimiento
+        datetime timestamp
+    }
 
-El sistema utiliza **Supabase** para datos y fotos.
-
-### 1. Base de Datos
-Asegúrate de que las tablas `salas`, `equipos`, `operarios`, `usuarios` y `registros` estén creadas correctamente.
-
-### 2. Almacenamiento (Storage)
-Crea un "Bucket" público llamado `photos` y aplica las siguientes políticas RLS:
-```sql
--- Permitir lectura pública
-CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'photos');
--- Permitir subida anónima (o restringida)
-CREATE POLICY "Allow Uploads" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'photos');
+    SEGUIMIENTO {
+        uuid id PK
+        uuid incidencia_id FK "Relación con Registro"
+        string usuario_nombre
+        text nota
+        datetime timestamp
+    }
 ```
 
-## 🌐 Despliegue
-
-Este repositorio está configurado con **GitHub Actions** para desplegarse automáticamente en GitHub Pages cada vez que haces un `push` a la rama `main`.
+## Arquitectura de Interfaces
+1. **Panel de Administración (`/dashboard.html`)**: Gestión técnica avanzada, tickets de incidencia y configuración.
+2. **Interfaz de Operario (`/operario.html`)**: Acceso vía QR para reporte de mantenimiento e incidencias.
+3. **Consulta Pública (`/estado.html`)**: Semáforo visual de disponibilidad para usuarios finales.
 
 ---
-*Desarrollado para la gestión eficiente del taller Maker.*
+*Documentación actualizada automáticamente por el sistema de asistencia técnica.*
