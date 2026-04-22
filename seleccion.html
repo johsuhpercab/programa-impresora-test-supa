@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Seleccionar Equipo — SGI</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="css/mobile.css">
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --card-bg: #1a1a2e;
+      --text: #ffffff;
+      --text-muted: #94a3b8;
+      --accent: #4f8ef7;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      margin: 0; padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding-top: 20px;
+    }
+    .header {
+      margin-bottom: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 {
+      font-size: 24px;
+      font-weight: 800;
+      margin: 0;
+    }
+    .machine-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 16px;
+    }
+    .machine-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 24px;
+      text-align: center;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .machine-card:active {
+      transform: scale(0.95);
+      border-color: var(--accent);
+    }
+    .machine-icon { font-size: 36px; margin-bottom: 12px; display: block; }
+    .machine-name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+    .machine-code { font-size: 11px; color: var(--accent); font-weight: 800; }
+    .loader { text-align: center; padding: 60px; opacity: 0.6; }
+    .btn-back {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 13px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>Portal Operario</h1>
+      <a href="index.html" class="btn-back">← Volver</a>
+    </div>
+
+    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 30px;">
+      Selecciona la máquina que deseas reportar:
+    </p>
+
+    <div id="loading" class="loader">
+      <p>Cargando equipos...</p>
+    </div>
+
+    <div class="machine-grid" id="machineGrid"></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Reintento autónomo si el cliente no está listo
+      if (!window.supabaseClient) {
+        setTimeout(() => location.reload(), 500);
+        return;
+      }
+
+      const client = window.supabaseClient;
+
+      try {
+        const { data, error } = await client
+          .from('equipos')
+          .select('*, salas(nombre)')
+          .eq('estado', 'activa')
+          .order('nombre', { ascending: true });
+
+        if (error) throw error;
+
+        const grid = document.getElementById('machineGrid');
+        document.getElementById('loading').style.display = 'none';
+
+        data.forEach(m => {
+          const card = document.createElement('div');
+          card.className = 'machine-card';
+          card.onclick = () => window.location.href = `operario.html?maquinaId=${m.id}`;
+          
+          card.innerHTML = `
+            <span class="machine-icon">🖨️</span>
+            <div class="machine-name">${m.nombre}</div>
+            <div class="machine-code">${m.codigo || 'S/ID'}</div>
+          `;
+          grid.appendChild(card);
+        });
+
+      } catch (err) {
+        document.getElementById('loading').innerHTML = '<p style="color:red">Error de conexión</p>';
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
