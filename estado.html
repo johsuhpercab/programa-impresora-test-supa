@@ -148,7 +148,6 @@
   <div class="container">
     <header>
       <h1>Disponibilidad de Equipos</h1>
-      <p id="lastUpdate">Consultando estado en tiempo real...</p>
     </header>
 
     <div id="loader" class="loader">
@@ -181,7 +180,6 @@
         
         renderGrid(maquinas, idsEnReparacion);
         document.getElementById('loader').style.display = 'none';
-        document.getElementById('lastUpdate').textContent = `Sincronizado: ${new Date().toLocaleTimeString()}`;
       } catch (err) {
         console.error(err);
       }
