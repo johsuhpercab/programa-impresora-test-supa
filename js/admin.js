@@ -213,9 +213,8 @@ const sectionTitles = {
   dashboard: ['Panel General', 'Resumen del sistema'],
   maquinas: ['Máquinas', 'Estado y gestión de todas las máquinas'],
   incidencias: ['Centro de Incidencias', 'Gestión de fallos técnicos y reparaciones'],
-  historial: ['Historial', 'Registro de mantenimientos realizados'],
+  historial: ['Mantenimientos', 'Registro de mantenimientos realizados'],
   qrcodes: ['Códigos QR', 'QR individuales para el operario móvil'],
-  galeria: ['Galería de Fotos', 'Últimas evidencias fotográficas de los reportes'],
   usuarios: ['Administradores', 'Gestión de cuentas con acceso al panel']
 };
 
@@ -251,7 +250,6 @@ function navigateTo(section) {
   if (section === 'historial') { cargarHistorial(); poblarFiltroMaquinasHistorial(); }
   if (section === 'usuarios') renderUsuarios();
   if (section === 'qrcodes') renderQRs();
-  if (section === 'galeria') renderizarGaleria();
 }
 
 function renderActualSection() {
@@ -1179,43 +1177,6 @@ function abrirModal(id) { document.getElementById(id)?.classList.add('open'); }
 function cerrarModal(id) { document.getElementById(id)?.classList.remove('open'); }
 function formatFechaHora(str) { if (!str) return '–'; const d = new Date(str); return d.toLocaleDateString('es-ES') + ' ' + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }); }
 
-function renderizarGaleria() {
-  const container = document.getElementById('galeriaContent');
-  if (!container) return;
-  container.innerHTML = '';
-
-  // Filtrar solo registros que tengan fotos
-  const registrosConFotos = datosHistorial.filter(r => r.fotos && r.fotos.length > 0);
-
-  if (registrosConFotos.length === 0) {
-    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;opacity:0.5"><h3>No hay fotos aún</h3><p>Las fotos de los reportes aparecerán aquí.</p></div>';
-    return;
-  }
-
-  registrosConFotos.forEach(reg => {
-    const card = document.createElement('div');
-    card.className = 'gallery-card fade-in'; // Usamos la clase del CSS
-    card.onclick = () => verDetalleSesion(reg.id);
-
-    const numFotos = reg.fotos.length;
-    const badgeHtml = numFotos > 1 ? `<div class="photo-badge">+${numFotos} fotos</div>` : '';
-
-    card.innerHTML = `
-      <div class="photo-img-wrapper">
-        <img src="${reg.fotos[0]}" loading="lazy">
-        ${badgeHtml}
-      </div>
-      <div class="gallery-info">
-        <div class="gallery-title">${reg.maquina}</div>
-        <div class="gallery-meta">
-          <span>📅 ${formatFechaHora(reg.completado_en)}</span>
-          <span>👷 ${reg.operario}</span>
-        </div>
-      </div>
-    `;
-    container.appendChild(card);
-  });
-}
 function formatFechaDia(str) { if (!str) return '–'; const [y, m, d] = str.split('-'); return `${d}/${m}`; }
 function truncate(str, len) { return str.length > len ? str.slice(0, len) + '…' : str; }
 function escapar(str) { return String(str).replace(/'/g, "\\'"); }

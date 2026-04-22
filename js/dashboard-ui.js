@@ -30,18 +30,18 @@ const DASHBOARD_HTML = `
             <span>Máquinas</span>
             <span class="nav-badge" id="badge-alertas" style="display:none">!</span>
           </div>
-          <div class="nav-item" id="nav-incidencias" onclick="navigateTo('incidencias')">
-            <span class="nav-icon">🚨</span>
-            <span>Incidencias</span>
-            <span class="nav-badge vencido" id="badge-incidencias" style="display:none">0</span>
-          </div>
           <div class="nav-item" id="nav-historial" onclick="navigateTo('historial')">
             <span class="nav-icon">📋</span>
-            <span>Historial</span>
+            <span>Mantenimientos</span>
           </div>
-          <div class="nav-item" id="nav-galeria" onclick="navigateTo('galeria')">
-            <span class="nav-icon">🖼️</span>
-            <span>Galería</span>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Gestión de Fallos</div>
+          <div class="nav-item" id="nav-incidencias" onclick="navigateTo('incidencias')">
+            <span class="nav-icon">🚨</span>
+            <span>Panel de Incidencias</span>
+            <span class="nav-badge vencido" id="badge-incidencias" style="display:none">0</span>
           </div>
         </div>
         <div class="nav-section">
@@ -272,18 +272,6 @@ const DASHBOARD_HTML = `
           </div>
         </div>
 
-        <!-- ══════════ GALERÍA ══════════ -->
-        <div class="section fade-in" id="section-galeria">
-          <div class="section-header">
-            <div>
-              <div class="section-title">🖼️ Galería de Fotos</div>
-              <div class="section-subtitle">Últimas evidencias fotográficas de los reportes</div>
-            </div>
-          </div>
-          <div id="galeriaContent" class="photo-gallery-grid">
-            <!-- Se inyecta por JS -->
-          </div>
-        </div>
 
 
         <!-- ══════════ QR CODES ══════════ -->
