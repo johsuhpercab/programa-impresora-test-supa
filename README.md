@@ -57,6 +57,14 @@ erDiagram
     }
 ```
 
+## Modelo Relacional (Esquema de Tablas)
+
+- **USUARIOS** (`id` PK, `email` UK, `nombre`, `pin`, `rol`, `activo`)
+- **SALAS** (`id` PK, `nombre`)
+- **EQUIPOS** (`id` PK, `codigo` UK, `nombre`, `sala_id` FK -> SALAS.id, `tipo`, `modelo`, `frecuencia_dias`, `ultimo_mantenimiento`, `estado`)
+- **REGISTROS** (`id` PK, `maquina_id` FK -> EQUIPOS.id, `operario_email` FK -> USUARIOS.email, `tipo`, `notas`, `resuelta`, `en_seguimiento`, `timestamp`)
+- **SEGUIMIENTOS** (`id` PK, `incidencia_id` FK -> REGISTROS.id, `usuario_nombre`, `nota`, `timestamp`)
+
 ## Arquitectura de Interfaces
 1. **Panel de Administración (`/dashboard.html`)**: Gestión técnica avanzada, tickets de incidencia y configuración.
 2. **Interfaz de Operario (`/operario.html`)**: Acceso vía QR para reporte de mantenimiento e incidencias.

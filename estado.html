@@ -23,96 +23,126 @@
     body {
       background: var(--bg);
       color: var(--text);
-      padding: 40px 20px;
+      padding: 60px 40px;
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1600px;
       margin: 0 auto;
     }
 
     header {
-      text-align: center;
-      margin-bottom: 60px;
+      text-align: left;
+      margin-bottom: 80px;
+      border-left: 6px solid var(--accent);
+      padding-left: 30px;
     }
 
     header h1 {
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      margin-bottom: 8px;
+      font-size: 56px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
     }
 
     header p {
       color: var(--text-muted);
-      font-size: 16px;
+      font-size: 20px;
+      margin-top: 10px;
     }
 
     .status-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 30px;
     }
 
     .machine-card {
       background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 24px;
+      border: 2px solid var(--border);
+      border-radius: 30px;
+      padding: 40px;
       position: relative;
-      overflow: hidden;
-      transition: transform 0.3s ease, border-color 0.3s ease;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 220px;
     }
 
-    .machine-card:hover {
-      transform: translateY(-5px);
-      border-color: var(--accent);
+    .machine-card.is-repair {
+      border-color: rgba(255, 71, 87, 0.3);
+      box-shadow: 0 0 40px rgba(255, 71, 87, 0.05);
+    }
+
+    .machine-card.is-operative {
+      border-color: rgba(16, 185, 129, 0.3);
+      box-shadow: 0 0 40px rgba(16, 185, 129, 0.05);
     }
 
     .machine-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 20px;
     }
 
     .machine-code {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--accent);
-      background: rgba(79, 142, 247, 0.1);
-      padding: 4px 8px;
-      border-radius: 6px;
-      text-transform: uppercase;
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
     }
 
     .machine-name {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 4px;
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
     }
 
     .machine-sala {
-      font-size: 14px;
+      font-size: 18px;
       color: var(--text-muted);
     }
 
     .status-indicator {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-top: 24px;
-      font-weight: 700;
-      font-size: 14px;
+      gap: 15px;
+      font-weight: 900;
+      font-size: 18px;
       text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 30px;
     }
 
     .dot {
-      width: 10px;
-      height: 10px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
-      box-shadow: 0 0 10px currentColor;
+      position: relative;
+    }
+
+    .dot::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 50%;
+      background: currentColor;
+      filter: blur(8px);
+      opacity: 0.8;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.8); opacity: 0.2; }
+      100% { transform: scale(1); opacity: 0.8; }
     }
 
     .status-operative { color: var(--success); }
@@ -190,11 +220,12 @@
       grid.innerHTML = maquinas.map(m => {
         const enReparacion = idsEnReparacion.has(m.id);
         const statusClass = enReparacion ? 'status-repair' : 'status-operative';
-        const statusText = enReparacion ? 'En Reparación' : 'Operativa / Disponible';
+        const cardClass = enReparacion ? 'is-repair' : 'is-operative';
+        const statusText = enReparacion ? 'Fuera de Servicio' : 'Disponible';
         const dotColor = enReparacion ? 'var(--danger)' : 'var(--success)';
 
         return `
-          <div class="machine-card">
+          <div class="machine-card ${cardClass}">
             <div class="machine-header">
               <div>
                 <div class="machine-name">${m.nombre}</div>
