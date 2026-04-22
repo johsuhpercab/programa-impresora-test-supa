@@ -3,148 +3,172 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Gestión Impresoras</title>
+  <title>SGI — Inicio</title>
   <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f0f1a">
-  <link rel="stylesheet" href="css/mobile.css">
   <style>
     :root {
-      --bg-picker: #0f0f1a;
+      --bg: #0f0f1a;
       --card-bg: #1a1a2e;
-      --text-white: #ffffff;
+      --text: #ffffff;
+      --text-muted: #94a3b8;
       --accent: #4f8ef7;
+      --accent-glow: rgba(79, 142, 247, 0.3);
+      --border: rgba(255, 255, 255, 0.08);
     }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+
     body {
-      background: var(--bg-picker);
-      color: var(--text-white);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    .picker-container {
-      padding: 40px 20px;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    .picker-header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-    .picker-header h1 {
-      font-size: 28px;
-      margin-bottom: 8px;
-      font-weight: 800;
-    }
-    .picker-header p {
-      opacity: 0.6;
-      font-size: 15px;
-    }
-    .machine-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 16px;
-    }
-    .machine-card {
-      background: var(--card-bg);
-      border-radius: 16px;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       padding: 20px;
+    }
+
+    .hero {
       text-align: center;
-      border: 1px solid rgba(255,255,255,0.05);
-      cursor: pointer;
-      transition: transform 0.2s;
+      margin-bottom: 50px;
     }
-    .machine-card:active {
-      transform: scale(0.95);
-      background: rgba(255,255,255,0.05);
+
+    .hero h1 {
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #fff 0%, var(--text-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
-    .machine-icon {
-      font-size: 32px;
-      margin-bottom: 12px;
+
+    .hero p {
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    .home-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .nav-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 32px;
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nav-card:hover {
+      transform: translateY(-8px);
+      border-color: var(--accent);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px var(--accent-glow);
+    }
+
+    .nav-card .icon {
+      font-size: 48px;
+      margin-bottom: 20px;
       display: block;
     }
-    .machine-name {
-      font-weight: 700;
-      font-size: 15px;
-      margin-bottom: 4px;
+
+    .nav-card h2 {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 8px;
     }
-    .machine-sala {
-      font-size: 11px;
+
+    .nav-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .nav-card::after {
+      content: "→";
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      font-size: 20px;
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.3s ease;
+      color: var(--accent);
+    }
+
+    .nav-card:hover::after {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .footer {
+      margin-top: 60px;
+      font-size: 12px;
+      color: var(--text-muted);
       opacity: 0.5;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
-    .loader {
-      text-align: center;
-      padding: 40px;
-      opacity: 0.6;
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 28px; }
+      .home-grid { grid-template-columns: 1fr; }
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase-config.js"></script>
 </head>
 <body>
 
-  <div class="picker-container">
-    <div class="picker-header" style="display:flex; justify-content:space-between; align-items:center; text-align:left; gap:20px; margin-bottom: 50px;">
-      <div style="flex: 1;">
-        <h1>Seleccionar Máquina</h1>
-        <p style="margin:0">Elige la impresora que quieres reportar</p>
-      </div>
-      <button onclick="window.location.href='dashboard.html'" style="background:rgba(79, 142, 247, 0.1); border:1px solid var(--accent); color:var(--accent); padding:10px 16px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:8px; white-space: nowrap; flex-shrink: 0;">
-        🛡️ Administración
-      </button>
-    </div>
+  <div class="hero">
+    <h1>Gestión de Impresoras</h1>
+    <p>Selecciona tu portal de acceso</p>
+  </div>
 
-    <div id="loading" class="loader">
-      <p>Cargando impresoras...</p>
-    </div>
+  <div class="home-grid">
+    <a href="operario.html" class="nav-card">
+      <span class="icon">📱</span>
+      <h2>Portal Operario</h2>
+      <p>Reportar mantenimientos o incidencias mediante código QR.</p>
+    </a>
 
-    <div class="machine-grid" id="machineGrid"></div>
+    <a href="estado.html" class="nav-card">
+      <span class="icon">🏢</span>
+      <h2>Estado Público</h2>
+      <p>Consulta la disponibilidad de equipos en tiempo real.</p>
+    </a>
 
-    <div style="margin-top: 60px; text-align: center;">
-      <button onclick="window.location.href='dashboard.html'" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; opacity:0.7">
-        🔒 Acceso Administrador
-      </button>
-    </div>
+    <a href="dashboard.html" class="nav-card">
+      <span class="icon">🔐</span>
+      <h2>Administración</h2>
+      <p>Gestión técnica, historial y control total del sistema.</p>
+    </a>
+  </div>
+
+  <div class="footer">
+    &copy; 2026 Sistema de Gestión de Impresoras · PWA Ready
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const client = window.supabaseClient;
-      if (!client) return;
-
-      try {
-        const { data, error } = await client
-          .from('equipos')
-          .select('*, salas(nombre)')
-          .order('nombre', { ascending: true });
-
-        if (error) throw error;
-
-        const grid = document.getElementById('machineGrid');
-        const loading = document.getElementById('loading');
-        loading.style.display = 'none';
-
-        data.forEach(m => {
-          const card = document.createElement('div');
-          card.className = 'machine-card';
-          card.onclick = () => window.location.href = `operario.html?maquinaId=${m.id}`;
-          
-          const sala = m.salas ? m.salas.nombre : 'Sin sala';
-          
-          card.innerHTML = `
-            <span class="machine-icon">🖨️</span>
-            <div class="machine-name">${m.nombre}</div>
-            <div class="machine-sala">${sala}</div>
-          `;
-          grid.appendChild(card);
-        });
-
-      } catch (err) {
-        document.getElementById('loading').innerHTML = '<p style="color:red">Error al cargar datos</p>';
-        console.error(err);
-      }
-    });
+    // Registro del Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('✅ Service Worker registrado', reg))
+          .catch(err => console.error('❌ Error al registrar SW', err));
+      });
+    }
   </script>
 </body>
 </html>
