@@ -6,7 +6,8 @@ let datosMaquinas = [];
 let datosUsuarios = [];
 let datosHistorial = []; // Reutilizar datos ya cargados
 let isCargando = false;
-let serverHost = window.location.origin; // Backup: usar el actual si falla el fetch
+// Detectar base path (útil para GitHub Pages en subcarpetas)
+let serverHost = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
 
 async function detectarServidor() {
   try {
