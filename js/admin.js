@@ -1103,14 +1103,55 @@ document.querySelectorAll('.overlay').forEach(ov => ov.addEventListener('click',
 function iniciarTour() {
   const driverInstance = window.driver?.js?.driver || window.driver;
   if (!driverInstance) return;
+
   const driverObj = driverInstance({
     showProgress: true,
+    animate: true,
     steps: [
-      { popover: { title: '✨ Bienvenido', description: 'Recorrido por el panel administrativo.' } },
-      { element: '#kpiGrid', popover: { title: '📊 Resumen', description: 'KPIs en tiempo real.' } },
-      { element: '#nav-maquinas', popover: { title: '🖨️ Máquinas', description: 'Gestión de inventario.' } },
-      { element: '#gridQRs', popover: { title: '📱 Códigos QR', description: 'Para los operarios.' } },
-      { element: '#nav-historial', popover: { title: '📋 Historial', description: 'Todos los registros.' } }
+      { 
+        popover: { 
+          title: '✨ Bienvenido', 
+          description: 'Recorrido rápido por el panel de administración del sistema.' 
+        },
+        onHighlightStarted: () => navigateTo('dashboard')
+      },
+      { 
+        element: '#kpiGrid', 
+        popover: { 
+          title: '📊 Resumen General', 
+          description: 'Aquí verás el estado actual del sistema en tiempo real.' 
+        },
+        onHighlightStarted: () => navigateTo('dashboard')
+      },
+      { 
+        element: '#nav-maquinas', 
+        popover: { 
+          title: '🖨️ Máquinas', 
+          description: 'Gestiona todo tu inventario de impresoras y su estado.' 
+        } 
+      },
+      { 
+        element: '#gridQRs', 
+        popover: { 
+          title: '📱 Códigos QR', 
+          description: 'Desde aquí generas los códigos para que los operarios escaneen con su móvil.' 
+        },
+        onHighlightStarted: () => {
+          navigateTo('qrcodes');
+          // Esperamos a que la sección sea visible y se renderice el contenido para re-enfocar
+          setTimeout(() => {
+            if (driverObj.refresh) driverObj.refresh();
+          }, 400);
+        }
+      },
+      { 
+        element: '#nav-historial', 
+        popover: { 
+          title: '📋 Historial', 
+          description: 'Accede a todos los registros de mantenimiento e incidencias pasadas.' 
+        },
+        onHighlightStarted: () => navigateTo('historial')
+      }
     ]
   });
   driverObj.drive();

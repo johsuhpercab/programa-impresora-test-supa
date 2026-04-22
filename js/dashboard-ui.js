@@ -496,20 +496,5 @@ const DASHBOARD_HTML = `
     </div>
   </div>
 
-  <!-- ── Modal: Código QR Individual ── -->
-  <div class="overlay" id="modalQR">
-    <div class="modal" style="max-width:400px">
-      <div class="modal-header">
-        <div class="modal-title">Código QR della Máquina</div>
-        <button class="modal-close" onclick="cerrarModal('modalQR')">✕</button>
-      </div>
-      <div style="text-align:center;padding:20px">
-        <div id="qrImgContainer" class="qr-canvas" style="margin-bottom:16px; display:flex; justify-content:center;"></div>
-        <div id="qrNombre" style="font-weight:bold;font-size:18px;margin-bottom:4px">Nombre Máquina</div>
-        <div id="qrSala" style="color:var(--text-muted);font-size:14px;margin-bottom:12px">Sala</div>
-        <div id="qrUrl" style="font-size:10px;color:var(--text-muted);word-break:break-all;margin-bottom:20px;padding:8px;background:var(--bg-secondary);border-radius:6px">URL del QR</div>
-        <button class="btn btn-primary btn-full" onclick="imprimirQR()">🖨️ Imprimir código</button>
-      </div>
-    </div>
   </div>
 `;
