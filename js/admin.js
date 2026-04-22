@@ -404,7 +404,7 @@ function renderMaquinas() {
         <div class="maquina-header">
           <div>
             <div class="maquina-nombre">${m.nombre}</div>
-            <div class="maquina-tipo">${m.tipo}</div>
+            <div class="maquina-tipo">${m.codigo || 'S/ID'} · ${m.tipo}</div>
           </div>
           <span class="estado-badge ${m.estado_mantenimiento}">${estadoLabel}</span>
         </div>
@@ -473,17 +473,19 @@ async function editarMaquina(id) {
   const maq = datosMaquinas.find(m => m.id === id);
   if (!maq) return;
   document.getElementById('editMaquinaId').value = id;
+  document.getElementById('editCodigo').value = maq.codigo || '';
   document.getElementById('editNombre').value = maq.nombre;
   document.getElementById('editTipo').value = maq.tipo;
   document.getElementById('editModelo').value = maq.modelo || '';
   document.getElementById('editFrecuencia').value = maq.frecuencia_dias;
-  document.getElementById('editEstado').value = maq.estado;
+  document.getElementById('editEstado').value = maq.estado || 'activa';
   abrirModal('modalMaquina');
 }
 
 async function guardarMaquina() {
   const id = document.getElementById('editMaquinaId').value;
   const datos = {
+    codigo: document.getElementById('editCodigo').value.trim(),
     nombre: document.getElementById('editNombre').value.trim(),
     tipo: document.getElementById('editTipo').value,
     modelo: document.getElementById('editModelo').value.trim(),
@@ -525,7 +527,10 @@ async function crearMaquina() {
 
   const res = await apiFetch('/api/maquinas', { 
     method: 'POST', 
-    body: { nombre, sala_id, tipo, frecuencia_dias, modelo } 
+    body: { 
+      codigo: document.getElementById('nuevoMaquinaCodigo').value.trim(),
+      nombre, sala_id, tipo, frecuencia_dias, modelo 
+    } 
   });
 
   if (res.ok) {
@@ -693,7 +698,8 @@ async function poblarFiltroMaquinasHistorial() {
   sel.innerHTML = '<option value="">Todas las máquinas</option>';
   datosMaquinas.forEach(m => {
     const opt = document.createElement('option');
-    opt.value = m.id; opt.textContent = `${m.nombre} (${m.sala_nombre})`;
+    const label = m.codigo ? `[${m.codigo}] ${m.nombre}` : m.nombre;
+    opt.value = m.id; opt.textContent = `${label} (${m.sala_nombre})`;
     sel.appendChild(opt);
   });
 }
@@ -749,17 +755,23 @@ function renderizarContenidoHistorial(data, tbody, empty) {
 
     return `
       <tr style="${isInc && !resuelta ? 'background: rgba(239, 68, 68, 0.03)' : ''}">
-        <td data-label="#" class="text-muted" style="font-size:10px">#${r.id.toString().substring(0, 8)}...</td>
+        <td data-label="Tipo">
+          <span class="estado-badge ${isInc ? 'vencido' : 'ok'}" style="font-size:10px">
+            ${isInc ? '⚡ INCIDENCIA' : '🔧 MANT.'}
+          </span>
+        </td>
         <td data-label="Máquina">
           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
-            <span style="${isInc && !resuelta ? 'color:var(--danger);font-weight:600':''}">${isInc ? (resuelta ? '✅':'🚨') : '🛠️'} ${r.maquina}</span>
+            <span style="font-weight:600; color:var(--text-primary)">${r.maquina}</span>
             ${resBadge}
           </div>
         </td>
         <td data-label="Sala">${r.sala}</td>
-        <td data-label="Operario">${r.operario}</td>
-        <td data-label="Inicio" style="font-size:11px">${formatFechaHora(r.iniciado_en)}</td>
-        <td data-label="Fin" style="font-size:11px">${formatFechaHora(r.completado_en)}</td>
+        <td data-label="Operario">
+          <div style="font-weight:700">${r.operario}</div>
+          <div style="font-size:10px; color:var(--text-muted)">${r.operario_email || '–'}</div>
+        </td>
+        <td data-label="Fecha" style="font-size:11px">${formatFechaHora(r.completado_en)}</td>
         <td data-label="Observ." style="font-size:11px;color:var(--text-muted)">
           <div style="display:flex;align-items:center;gap:12px;justify-content:space-between">
             <span style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.observaciones || '–'}</span>

@@ -19,8 +19,7 @@ const DASHBOARD_HTML = `
       </div>
 
       <nav class="sidebar-nav">
-        <div class="nav-section" id="tour-nav">
-          <div class="nav-section-title">Principal</div>
+        <div class="nav-section">
           <div class="nav-item active" id="nav-dashboard" onclick="navigateTo('dashboard')">
             <span class="nav-icon">📊</span>
             <span>Panel General</span>
@@ -37,7 +36,6 @@ const DASHBOARD_HTML = `
         </div>
 
         <div class="nav-section">
-          <div class="nav-section-title">Gestión de Fallos</div>
           <div class="nav-item" id="nav-incidencias" onclick="navigateTo('incidencias')">
             <span class="nav-icon">🚨</span>
             <span>Panel de Incidencias</span>
@@ -45,7 +43,6 @@ const DASHBOARD_HTML = `
           </div>
         </div>
         <div class="nav-section">
-          <div class="nav-section-title">Administración</div>
           <div class="nav-item" id="nav-qrcodes" onclick="navigateTo('qrcodes')">
             <span class="nav-icon">📱</span>
             <span>Códigos QR</span>
@@ -330,9 +327,15 @@ const DASHBOARD_HTML = `
         <button class="modal-close" onclick="cerrarModal('modalMaquina')">✕</button>
       </div>
       <input type="hidden" id="editMaquinaId">
-      <div class="form-group">
-        <label class="form-label">Nombre</label>
-        <input class="form-control" id="editNombre" type="text">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Código</label>
+          <input class="form-control" id="editCodigo" type="text" placeholder="Ej: IMP-01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input class="form-control" id="editNombre" type="text">
+        </div>
       </div>
       <div class="grid-2">
         <div class="form-group">
@@ -376,9 +379,15 @@ const DASHBOARD_HTML = `
         <button class="modal-close" onclick="cerrarModal('modalNuevaMaquina')">✕</button>
       </div>
       <div id="msgNuevaMaquina"></div>
-      <div class="form-group">
-        <label class="form-label">Nombre <span style="color:var(--danger)">*</span></label>
-        <input class="form-control" id="nuevoMaquinaNombre" type="text" placeholder="Ej: Impresora A-11">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Código <span style="color:var(--danger)">*</span></label>
+          <input class="form-control" id="nuevoMaquinaCodigo" type="text" placeholder="Ej: IMP-01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre <span style="color:var(--danger)">*</span></label>
+          <input class="form-control" id="nuevoMaquinaNombre" type="text" placeholder="Ej: Impresora A-11">
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Sala <span style="color:var(--danger)">*</span></label>

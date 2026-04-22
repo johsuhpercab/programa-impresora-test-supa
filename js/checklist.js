@@ -62,10 +62,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Asignar datos de la máquina al estado global
     maquinaData = {
       ...maquina,
-      id: maquina.id, // Asegurar ID
+      id: maquina.id, 
       sala_nombre: maquina.salas ? maquina.salas.nombre : 'Sin sala'
     };
     maquinaId = maquinaData.id;
+
+    // --- VERIFICACIÓN DE SEMÁFORO (INCIDENCIAS ABIERTAS) ---
+    const { data: openInc, error: incError } = await client
+      .from('registros')
+      .select('id')
+      .eq('maquina_id', maquinaId)
+      .eq('tipo', 'Incidencia')
+      .eq('resuelta', false)
+      .limit(1);
+
+    const banner = document.getElementById('statusBanner');
+    const icon = document.getElementById('statusIcon');
+    const text = document.getElementById('statusText');
+    const maintCard = document.querySelector('.portal-card.maintenance');
+
+    if (openInc && openInc.length > 0) {
+      banner.className = 'status-banner status-repair';
+      icon.textContent = '🔴';
+      text.textContent = 'Máquina en Reparación / Parada';
+      // Bloqueamos visualmente el mantenimiento preventivo
+      if (maintCard) {
+        maintCard.style.opacity = '0.4';
+        maintCard.style.pointerEvents = 'none';
+        maintCard.innerHTML += '<div style="font-size:10px; color:var(--accent-inc); margin-top:5px; font-weight:700;">⚠️ BLOQUEADO POR INCIDENCIA</div>';
+      }
+    } else {
+      banner.className = 'status-banner status-operative';
+      icon.textContent = '🟢';
+      text.textContent = 'Máquina Operativa';
+    }
 
     const pNm = document.getElementById('portalMaquinaNombre');
     const pSl = document.getElementById('portalMaquinaSala');
@@ -214,12 +244,19 @@ function cancelPhoto() {
 
 async function enviarChecklist() {
   const nombreUser = document.getElementById('userNameInput').value.trim();
+  const emailUser = document.getElementById('userEmailInput').value.trim().toLowerCase();
   const reporte = document.getElementById('reporteTextarea').value.trim();
 
-  if (!nombreUser) {
-    alert("Por favor, introduce tu nombre.");
+  if (!nombreUser || !emailUser) {
+    alert("Por favor, introduce tu nombre y email para identificarte (Clave Única).");
     return;
   }
+  
+  if (!emailUser.includes('@')) {
+    alert("Introduce un email válido.");
+    return;
+  }
+
   if (reporte.length < 1) {
     document.getElementById('reporteError').style.display = 'block';
     return;
@@ -227,14 +264,35 @@ async function enviarChecklist() {
 
   const btn = document.getElementById('btnEnviar');
   btn.disabled = true;
-  btn.textContent = '⏳ Enviando...';
+  btn.textContent = '⏳ Verificando Identidad...';
+
+  // --- AUTO-ALTA DE USUARIO ---
+  const client = window.supabaseClient;
+  const { data: userExists } = await client
+    .from('usuarios')
+    .select('id')
+    .eq('email', emailUser)
+    .single();
+
+  if (!userExists) {
+    console.log("Nuevo usuario detectado. Realizando Auto-alta...");
+    await client.from('usuarios').insert({
+      nombre: nombreUser,
+      email: emailUser,
+      rol: 'usuario',
+      activo: true
+    });
+  }
+
+  btn.textContent = '⏳ Enviando reporte...';
 
   const res = await apiFetch(`/api/sesion/${sesionId}/completar`, {
     method: 'POST',
     body: { 
       observaciones: reporte,
-      nombre_usuario: nombreUser, // Enviamos el nombre escrito
-      fotos: selectedPhotos // Mandamos el array completo
+      nombre_usuario: nombreUser, 
+      email_usuario: emailUser, // Trazabilidad por email
+      fotos: selectedPhotos 
     },
   });
 
@@ -361,9 +419,10 @@ async function apiFetch(url, options = {}) {
         maquina_nombre: maquinaData?.nombre || 'Desconocida',
         sala_nombre: maquinaData?.sala_nombre || 'Sin sala',
         operario_nombre: payload.nombre_usuario || 'Anonimo', 
+        operario_email: payload.email_usuario || 'desconocido@email.com', // Trazabilidad
         tipo: modoActual,
         notas: payload.observaciones,
-        photos: photoUrls, // Now storing URLs instead of Base64 strings
+        photos: photoUrls, 
         timestamp: new Date().toISOString()
       };
 

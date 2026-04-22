@@ -118,6 +118,23 @@
       background: rgba(255, 71, 87, 0.1);
       border-color: var(--accent-inc);
     }
+
+    /* Estilos del Semáforo */
+    .status-banner {
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-operative { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .status-repair { background: rgba(255, 71, 87, 0.15); color: #ff4757; border: 1px solid rgba(255, 71, 87, 0.3); }
   </style>
   <link rel="stylesheet" href="css/mobile.css">
   <!-- Supabase SDK -->
@@ -165,6 +182,11 @@
           </button>
         </div>
       </div>
+      
+      <!-- SEMÁFORO DE ESTADO -->
+      <div id="statusBanner" class="status-banner status-operative">
+        <span id="statusIcon">🟢</span> <span id="statusText">Máquina Operativa</span>
+      </div>
 
       <div class="portal-grid" style="max-width: 400px; margin: 0 auto; width: 100%;">
         <div class="portal-card incident" onclick="seleccionarModo('incidencia')" style="background: rgba(255, 71, 87, 0.1); border: 1px solid var(--accent-inc);">
@@ -201,10 +223,13 @@
     </header>
 
     <div class="screen-content">
-      <!-- Campo de Nombre -->
-      <div class="reporte-section fade-up" style="margin-bottom: 0; padding-bottom: 0;">
-        <div class="reporte-label">👤 TU NOMBRE</div>
-        <input type="text" id="userNameInput" class="reporte-textarea" style="height: 50px; font-size: 16px; margin-bottom: 10px;" placeholder="Ej: Juan Pérez">
+      <!-- Campos de Identidad (Auto-alta) -->
+      <div class="reporte-section fade-up" style="margin-bottom: 20px; padding-bottom: 0;">
+        <div class="reporte-label">🔑 IDENTIFICACIÓN (AUTO-ALTA)</div>
+        <div style="display:grid; grid-template-columns: 1fr; gap:10px;">
+          <input type="text" id="userNameInput" class="reporte-textarea" style="height: 50px; font-size: 15px;" placeholder="Tu Nombre Completo">
+          <input type="email" id="userEmailInput" class="reporte-textarea" style="height: 50px; font-size: 15px;" placeholder="Email (Clave Única)">
+        </div>
       </div>
 
       <div class="tipo-selector-op fade-up" style="display:flex; gap:10px; margin-bottom:20px;">
