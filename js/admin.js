@@ -1066,16 +1066,16 @@ async function apiFetch(url, options = {}) {
   const localPin = localStorage.getItem('admin_pin');
 
   if (!cachedAdminPin && url !== '/api/login-admin') {
-     const { data: config } = await client.from('config').select('valor').eq('clave', 'admin_pin').single();
-     if (config) cachedAdminPin = config.valor;
+     const { data: adminUser } = await client.from('usuarios').select('pin').eq('rol', 'admin').limit(1).maybeSingle();
+     if (adminUser) cachedAdminPin = adminUser.pin;
   }
 
   if (url !== '/api/login-admin' && cachedAdminPin && cachedAdminPin !== localPin) return { ok: false, error: 'No autorizado' };
 
   try {
     if (url === '/api/login-admin') {
-      const { data: config } = await client.from('config').select('valor').eq('clave', 'admin_pin').single();
-      if (config && config.valor === localPin) { cachedAdminPin = config.valor; return { ok: true }; }
+      const { data: adminUser } = await client.from('usuarios').select('pin').eq('rol', 'admin').limit(1).maybeSingle();
+      if (adminUser && adminUser.pin === localPin) { cachedAdminPin = adminUser.pin; return { ok: true }; }
       return { ok: false, error: 'PIN incorrecto' };
     }
 

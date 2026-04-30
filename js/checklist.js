@@ -24,28 +24,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const client = window.supabaseClient;
     console.log("Buscando máquina en Supabase con criterio:", maquinaId);
     
-    // ESTRATEGIA SEGURA: 
-    // 1. Intentamos buscar por ID directo
+    // Búsqueda ESTRICTA solo por ID (UUID)
     let { data: maquina, error: mError } = await client
       .from('equipos')
       .select('*, salas(nombre)')
       .eq('id', maquinaId)
       .maybeSingle();
-
-    // 2. Si no hay resultado (o era un nombre y dio error de tipos), buscamos por NOMBRE
-    if (!maquina) {
-      console.log("No encontrado por ID, probando por nombre...");
-      const { data: maquinaByNombre, error: nError } = await client
-        .from('equipos')
-        .select('*, salas(nombre)')
-        .eq('nombre', maquinaId)
-        .maybeSingle();
-      
-      maquina = maquinaByNombre;
-      if (nError) {
-        console.error("Error buscando por nombre:", nError);
-      }
-    }
     
     if (mError && !maquina) {
       console.error("Error inicial de Supabase:", mError);
@@ -274,14 +258,18 @@ async function enviarChecklist() {
     .eq('email', emailUser)
     .single();
 
+  let userId;
   if (!userExists) {
     console.log("Nuevo usuario detectado. Realizando Auto-alta...");
-    await client.from('usuarios').insert({
+    const { data: newUser } = await client.from('usuarios').insert({
       nombre: nombreUser,
       email: emailUser,
       rol: 'usuario',
       activo: true
-    });
+    }).select('id').single();
+    userId = newUser.id;
+  } else {
+    userId = userExists.id;
   }
 
   btn.textContent = '⏳ Enviando reporte...';
@@ -290,6 +278,7 @@ async function enviarChecklist() {
     method: 'POST',
     body: { 
       observaciones: reporte,
+      usuario_id: userId,
       nombre_usuario: nombreUser, 
       email_usuario: emailUser, // Trazabilidad por email
       fotos: selectedPhotos 
@@ -377,7 +366,7 @@ async function apiFetch(url, options = {}) {
       const { data, error } = await client
         .from('equipos')
         .select('*, salas(nombre)')
-        .or(`id.eq."${id}",nombre.eq."${id}"`)
+        .eq('id', id)
         .single();
       
       if (error) throw error;
@@ -416,6 +405,7 @@ async function apiFetch(url, options = {}) {
       // 2. Use the names from the global state to ensure they aren't null
       const registroPayload = {
         maquina_id: maquinaId,
+        usuario_id: payload.usuario_id,
         maquina_nombre: maquinaData?.nombre || 'Desconocida',
         sala_nombre: maquinaData?.sala_nombre || 'Sin sala',
         operario_nombre: payload.nombre_usuario || 'Anonimo', 
