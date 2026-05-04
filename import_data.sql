@@ -1,8 +1,8 @@
 -- Creamos primero las dos salas (Sala A y Sala B) forzando sus UUIDs 
 -- para poder vincularlas fácilmente a las impresoras más abajo.
 INSERT INTO salas (id, nombre) VALUES 
-('11111111-1111-1111-1111-111111111111', 'Sala A'),
-('22222222-2222-2222-2222-222222222222', 'Sala B')
+('11111111-1111-1111-1111-111111111111', 'Maker'),
+('22222222-2222-2222-2222-222222222222', 'Impresora')
 ON CONFLICT (id) DO NOTHING;
 
 -- Inyectamos todas las impresoras del Excel, vinculándolas a sus respectivas salas
