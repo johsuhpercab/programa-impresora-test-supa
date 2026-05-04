@@ -1,13 +1,14 @@
--- IMPORTANTE: He comentado los DROP TABLE por seguridad para que no borres tus datos actuales.
--- Si estás 100% seguro de que quieres empezar de cero, quita los "-- " del principio.
--- DROP TABLE IF EXISTS "SEGUIMIENTOS";
--- DROP TABLE IF EXISTS "REGISTROS";
--- DROP TABLE IF EXISTS "EQUIPOS";
--- DROP TABLE IF EXISTS "SALAS";
--- DROP TABLE IF EXISTS "USUARIOS";
+-- Limpieza total: Borrar todas las tablas antiguas y empezar de cero
+DROP TABLE IF EXISTS seguimientos CASCADE;
+DROP TABLE IF EXISTS registros CASCADE;
+DROP TABLE IF EXISTS equipos CASCADE;
+DROP TABLE IF EXISTS salas CASCADE;
+DROP TABLE IF EXISTS usuarios CASCADE;
+DROP TABLE IF EXISTS operarios CASCADE;
+DROP TABLE IF EXISTS config CASCADE;
 
--- Table: USUARIOS
-CREATE TABLE "USUARIOS" (
+-- Table: usuarios
+CREATE TABLE usuarios (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT UNIQUE NOT NULL,
     nombre TEXT,
@@ -16,18 +17,18 @@ CREATE TABLE "USUARIOS" (
     activo BOOLEAN DEFAULT true
 );
 
--- Table: SALAS
-CREATE TABLE "SALAS" (
+-- Table: salas
+CREATE TABLE salas (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nombre TEXT NOT NULL
 );
 
--- Table: EQUIPOS
-CREATE TABLE "EQUIPOS" (
+-- Table: equipos
+CREATE TABLE equipos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     codigo TEXT UNIQUE NOT NULL,
     nombre TEXT,
-    sala_id UUID REFERENCES "SALAS"(id) ON DELETE SET NULL,
+    sala_id UUID REFERENCES salas(id) ON DELETE SET NULL,
     tipo TEXT,
     modelo TEXT,
     frecuencia_dias INT DEFAULT 30,
@@ -35,11 +36,11 @@ CREATE TABLE "EQUIPOS" (
     estado TEXT DEFAULT 'activa'
 );
 
--- Table: REGISTROS
-CREATE TABLE "REGISTROS" (
+-- Table: registros
+CREATE TABLE registros (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    maquina_id UUID REFERENCES "EQUIPOS"(id) ON DELETE CASCADE,
-    operario_email TEXT REFERENCES "USUARIOS"(email) ON DELETE SET NULL,
+    maquina_id UUID REFERENCES equipos(id) ON DELETE CASCADE,
+    operario_email TEXT REFERENCES usuarios(email) ON DELETE SET NULL,
     tipo TEXT NOT NULL, -- 'Mantenimiento' o 'Incidencia'
     notas TEXT,
     resuelta BOOLEAN DEFAULT false,
@@ -47,30 +48,19 @@ CREATE TABLE "REGISTROS" (
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Table: SEGUIMIENTOS
-CREATE TABLE "SEGUIMIENTOS" (
+-- Table: seguimientos
+CREATE TABLE seguimientos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    incidencia_id UUID REFERENCES "REGISTROS"(id) ON DELETE CASCADE,
+    incidencia_id UUID REFERENCES registros(id) ON DELETE CASCADE,
     usuario_nombre TEXT,
     nota TEXT,
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Habilitar RLS (Row Level Security) - Por defecto en false para simplificar pruebas iniciales
--- ALTER TABLE "USUARIOS" ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE "SALAS" ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE "EQUIPOS" ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE "REGISTROS" ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE "SEGUIMIENTOS" ENABLE ROW LEVEL SECURITY;
-
--- Políticas de acceso para anon / authenticated (ajustar según necesidades)
--- CREATE POLICY "Permitir lectura general a anon" ON "EQUIPOS" FOR SELECT USING (true);
-
 -- ==========================================
--- DATOS INICIALES POR DEFECTO (MUY IMPORTANTE)
+-- DATOS INICIALES POR DEFECTO
 -- ==========================================
 -- Insertar un usuario administrador por defecto para poder entrar al panel
--- Si ya tienes un usuario administrador, esto fallará por el UNIQUE email (lo cual está bien, no romperá nada).
-INSERT INTO "USUARIOS" (email, nombre, pin, rol, activo)
+INSERT INTO usuarios (email, nombre, pin, rol, activo)
 VALUES ('admin@empresa.com', 'Administrador Principal', '123456', 'admin', true)
 ON CONFLICT (email) DO NOTHING;
