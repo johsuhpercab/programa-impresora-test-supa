@@ -511,21 +511,22 @@ const DASHBOARD_HTML = `
     </div>
   </div>
 
-  <!-- ── Modal: Crear Sala ── -->
-  <div class="overlay" id="modalNuevaSala">
+  <!-- ── Modal: Gestionar Sala ── -->
+  <div class="overlay" id="modalSala">
     <div class="modal" style="max-width:400px">
       <div class="modal-header">
-        <div class="modal-title">Nueva Sala</div>
-        <button class="modal-close" onclick="cerrarModal('modalNuevaSala')">✕</button>
+        <div class="modal-title" id="tituloModalSala">Nueva Sala</div>
+        <button class="modal-close" onclick="cerrarModal('modalSala')">✕</button>
       </div>
-      <div id="msgNuevaSala"></div>
+      <div id="msgSala"></div>
+      <input type="hidden" id="salaIdActual">
       <div class="form-group">
         <label class="form-label">Nombre de la Sala <span style="color:var(--danger)">*</span></label>
-        <input class="form-control" id="nuevaSalaNombre" type="text" placeholder="Ej: Laboratorio 3D">
+        <input class="form-control" id="salaNombreInput" type="text" placeholder="Ej: Laboratorio 3D">
       </div>
       <div class="modal-footer">
-        <button class="btn btn-outline" onclick="cerrarModal('modalNuevaSala')">Cancelar</button>
-        <button class="btn btn-primary" onclick="crearSala()">Crear Sala</button>
+        <button class="btn btn-outline" onclick="cerrarModal('modalSala')">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarSala()">Guardar Sala</button>
       </div>
     </div>
   </div>

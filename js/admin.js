@@ -428,8 +428,9 @@ function renderMaquinas() {
     `;
   }
 
-  function seccionEspacio(titulo, icono, color, maquinas) {
+  function seccionEspacio(titulo, icono, color, maquinas, salaId = null) {
     if (!maquinas.length) return '';
+    const btnEditar = salaId ? `<button onclick="abrirModalEditarSala('${salaId}', '${titulo}')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-muted);margin-left:auto;" title="Renombrar sala">✏️ Renombrar</button>` : '';
     return `
       <div class="espacio-section" style="margin-bottom:32px">
         <div class="espacio-header" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:12px 16px;background:${color};border-radius:12px;border-left:4px solid var(--primary)">
@@ -438,6 +439,7 @@ function renderMaquinas() {
             <div style="font-size:16px;font-weight:700;color:var(--text-primary)">${titulo}</div>
             <div style="font-size:12px;color:var(--text-muted)">${maquinas.length} máquina${maquinas.length !== 1 ? 's' : ''}</div>
           </div>
+          ${btnEditar}
         </div>
         <div class="grid-maquinas-inner">
           ${maquinas.map(tarjetaMaquina).join('')}
@@ -456,7 +458,7 @@ function renderMaquinas() {
     if (maquinasSala.length > 0) {
       const color = bgColors[index % bgColors.length];
       const icono = iconos[index % iconos.length];
-      htmlResult += seccionEspacio(sala.nombre, icono, color, maquinasSala);
+      htmlResult += seccionEspacio(sala.nombre, icono, color, maquinasSala, sala.id);
     }
   });
 
@@ -504,30 +506,43 @@ async function guardarMaquina() {
 }
 
 function abrirModalNuevaSala() {
-  document.getElementById('nuevaSalaNombre').value = '';
-  document.getElementById('msgNuevaSala').innerHTML = '';
-  abrirModal('modalNuevaSala');
+  document.getElementById('salaIdActual').value = '';
+  document.getElementById('salaNombreInput').value = '';
+  document.getElementById('msgSala').innerHTML = '';
+  document.getElementById('tituloModalSala').innerText = 'Nueva Sala';
+  abrirModal('modalSala');
 }
 
-async function crearSala() {
-  const nombre = document.getElementById('nuevaSalaNombre').value.trim();
-  const msg = document.getElementById('msgNuevaSala');
+function abrirModalEditarSala(id, nombre) {
+  document.getElementById('salaIdActual').value = id;
+  document.getElementById('salaNombreInput').value = nombre;
+  document.getElementById('msgSala').innerHTML = '';
+  document.getElementById('tituloModalSala').innerText = 'Renombrar Sala';
+  abrirModal('modalSala');
+}
+
+async function guardarSala() {
+  const id = document.getElementById('salaIdActual').value;
+  const nombre = document.getElementById('salaNombreInput').value.trim();
+  const msg = document.getElementById('msgSala');
 
   if (!nombre) {
     msg.innerHTML = '<div class="alert alert-warning">⚠️ El nombre de la sala es obligatorio</div>';
     return;
   }
 
-  const res = await apiFetch('/api/salas', {
-    method: 'POST',
+  const url = id ? `/api/salas/${id}` : '/api/salas';
+  const method = id ? 'PUT' : 'POST';
+
+  const res = await apiFetch(url, {
+    method: method,
     body: { nombre }
   });
 
   if (res.ok) {
-    cerrarModal('modalNuevaSala');
+    cerrarModal('modalSala');
     await cargarDatosBase();
     renderMaquinas();
-    // Actualizar select de nuevoMaquinaSala
     poblarFiltrosAdmin();
   } else {
     msg.innerHTML = `<div class="alert alert-danger">❌ ${res.error}</div>`;
@@ -1151,6 +1166,12 @@ async function apiFetch(url, options = {}) {
 
     if (url.includes('/api/salas') && method === 'POST') {
       const { data, error } = await client.from('salas').insert(payload).select().single();
+      if (error) throw error; return { ok: true, data };
+    }
+
+    if (url.includes('/api/salas/') && method === 'PUT') {
+      const id = url.split('/').pop();
+      const { data, error } = await client.from('salas').update(payload).eq('id', id).select().single();
       if (error) throw error; return { ok: true, data };
     }
 
