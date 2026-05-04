@@ -330,20 +330,16 @@ tr:hover td { background: var(--bg-card-hover); }
 .admin-login-overlay {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(15, 15, 26, 0.8), rgba(9, 9, 15, 1));
+  background: radial-gradient(circle at center, rgba(15, 15, 26, 0.95), rgba(9, 9, 15, 1));
   backdrop-filter: blur(20px);
   z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .admin-login-overlay.show {
-  opacity: 1;
-  visibility: visible;
+  display: flex;
 }
 
 .login-card {
@@ -355,11 +351,6 @@ tr:hover td { background: var(--bg-card-hover); }
   max-width: 400px;
   text-align: center;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(79, 142, 247, 0.1);
-  transform: translateY(20px);
-  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.admin-login-overlay.show .login-card {
-  transform: translateY(0);
 }
 
 .login-icon {
