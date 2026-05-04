@@ -7,28 +7,24 @@
   <title>Admin – Gestión Impresoras</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <meta name="description" content="Sistema de gestión de mantenimiento preventivo para impresoras y máquinas 3D">
-  <link rel="stylesheet" href="css/main.css?v=3.3">
-  <!-- Supabase, QR SDK & Driver.js (Tour) -->
+  <link rel="stylesheet" href="css/main.css?v=3.4">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
-  <script src="js/supabase-config.js?v=3.3"></script>
-  <script src="js/dashboard-ui.js?v=3.3"></script>
-  <script src="js/admin.js?v=3.3"></script>
+  <script src="js/supabase-config.js?v=3.4"></script>
+  <script src="js/dashboard-ui.js?v=3.4"></script>
+  <script src="js/admin.js?v=3.4"></script>
   <style>
-    /* Guard de autenticación */
+    /* El dashboard está oculto por defecto; admin.js lo muestra cuando hay sesión válida */
     #dashboardContent { display: none; }
-    .admin-login-overlay { display: none; }
-    .auth-locked .admin-login-overlay { display: flex !important; }
-    .auth-locked #dashboardContent { display: none !important; }
   </style>
 </head>
 
-<body class="auth-locked">
+<body>
 
   <!-- ── Admin Login Overlay ── -->
-  <div class="admin-login-overlay" id="adminLoginOverlay">
+  <div class="admin-login-overlay" id="adminLoginOverlay" style="display:flex">
     <div class="login-card" id="loginCard">
       <span class="login-icon">🔒</span>
       <h2>Panel de Administración</h2>
@@ -45,10 +41,7 @@
     </div>
   </div>
 
-  <!-- Loader (Desactivado) -->
-  <div id="loaderOverlay" style="display:none"></div>
-
-  <!-- El contenido se inyecta dinámicamente aquí por seguridad -->
+  <!-- El dashboard se inyecta aquí por JS cuando hay sesión válida -->
   <div id="dashboardContent"></div>
 
 </body>

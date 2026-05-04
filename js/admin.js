@@ -33,56 +33,52 @@ function cambiarRolSimulado(nuevoRol) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   detectarServidor();
+  try {
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
+    if (session) await verificarYCargarAdmin(session);
+  } catch(e) {
+    console.error('Error al comprobar sesión:', e);
+  }
+});
 
-  // Comprobar si hay sesión activa de Supabase Auth
-  const { data: { session } } = await window.supabaseClient.auth.getSession();
-  if (!session) return; // Sin sesión: el overlay de login se muestra solo
-
-  // Verificar que el usuario tiene rol admin en nuestra tabla
-  const { data: userData } = await window.supabaseClient
+async function verificarYCargarAdmin(session) {
+  const { data: userData, error: dbErr } = await window.supabaseClient
     .from('usuarios').select('rol, nombre').eq('auth_id', session.user.id).maybeSingle();
 
-  if (!userData || userData.rol !== 'admin') {
+  if (dbErr || !userData || userData.rol !== 'admin') {
     await window.supabaseClient.auth.signOut();
-    document.getElementById('loginError').innerHTML = '❌ Tu cuenta no tiene permisos de administrador';
-    document.documentElement.classList.add('auth-locked');
+    const errEl = document.getElementById('loginError');
+    if (errEl) errEl.innerHTML = '❌ Tu cuenta no tiene permisos de administrador';
     return;
   }
 
   rolActual = userData.rol;
-  // Mostrar el nombre del usuario si existe el elemento
+
+  // Ocultar login, mostrar dashboard
+  const overlay = document.getElementById('adminLoginOverlay');
+  if (overlay) overlay.style.display = 'none';
+  const container = document.getElementById('dashboardContent');
+  container.innerHTML = DASHBOARD_HTML;
+  container.style.display = 'block';
+
+  // Nombre del usuario en topbar
   const displayEl = document.getElementById('userDisplayName');
   if (displayEl) displayEl.textContent = userData.nombre || session.user.email;
 
-  // Mostrar el dashboard y ocultar el overlay de login
-  document.body.classList.remove('auth-locked');
-  document.body.classList.add('auth-ready');
-  document.getElementById('dashboardContent').style.display = 'block';
-
   try {
     isCargando = true;
-    const container = document.getElementById('dashboardContent');
-    if (container) container.innerHTML = DASHBOARD_HTML;
-
     const grid = document.getElementById('gridMaquinas');
     if (grid) grid.innerHTML = skeletonMaquinas();
     const tbody = document.getElementById('dashboardUltimos');
     if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)"><span class="spinner" style="display:inline-block;margin-right:8px"></span>Conectando con Supabase...</td></tr>';
-    
-    // Cargar TODO en una sola llamada
     await cargarDatosBase();
-    
-    // Auto-sincronización cada 2 minutos
-    setInterval(() => {
-      console.log('Sincronización automática con Supabase...');
-      recargarTodo();
-    }, 120000);
+    setInterval(() => recargarTodo(), 120000);
   } catch (err) {
     console.error('Error durante la carga inicial:', err);
   } finally {
     isCargando = false;
   }
-});
+}
 
 function skeletonMaquinas() {
   const card = `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;animation:pulse 1.5s ease-in-out infinite">
@@ -1312,25 +1308,15 @@ async function intentarLogin() {
   error.innerHTML = '<span style="color:var(--text-muted)">Verificando...</span>';
 
   const { data, error: authError } = await window.supabaseClient.auth.signInWithPassword({ email, password });
-  if (authError || !data.session) {
+  if (authError || !data?.session) {
     error.innerHTML = '❌ Email o contraseña incorrectos';
     card.classList.add('shake');
     setTimeout(() => card.classList.remove('shake'), 400);
     return;
   }
 
-  // Verificar rol admin
-  const { data: userData } = await window.supabaseClient
-    .from('usuarios').select('rol').eq('auth_id', data.session.user.id).maybeSingle();
-  if (!userData || userData.rol !== 'admin') {
-    await window.supabaseClient.auth.signOut();
-    error.innerHTML = '❌ Tu cuenta no tiene permisos de administrador';
-    card.classList.add('shake');
-    setTimeout(() => card.classList.remove('shake'), 400);
-    return;
-  }
-
-  location.reload();
+  // Cargar dashboard directamente sin reload
+  await verificarYCargarAdmin(data.session);
 }
 
 function cerrarSesionAdmin() {
