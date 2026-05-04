@@ -158,6 +158,7 @@ const DASHBOARD_HTML = `
                 style="width:160px;padding:8px 12px;font-size:13px">
                 <option value="">Todas las salas</option>
               </select>
+              <button class="btn btn-outline btn-sm" onclick="abrirModalNuevaSala()" title="Añadir nueva sala" style="font-size:16px; padding: 4px 10px;">+</button>
               <button class="btn btn-primary" onclick="abrirModalNuevaMaquina()" id="btnNuevaMaquina">+ Nueva máquina</button>
             </div>
           </div>
@@ -506,6 +507,25 @@ const DASHBOARD_HTML = `
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="cerrarModal('modalUsuario')">Cancelar</button>
         <button class="btn btn-primary" onclick="guardarUsuario()">Guardar usuario</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal: Crear Sala ── -->
+  <div class="overlay" id="modalNuevaSala">
+    <div class="modal" style="max-width:400px">
+      <div class="modal-header">
+        <div class="modal-title">Nueva Sala</div>
+        <button class="modal-close" onclick="cerrarModal('modalNuevaSala')">✕</button>
+      </div>
+      <div id="msgNuevaSala"></div>
+      <div class="form-group">
+        <label class="form-label">Nombre de la Sala <span style="color:var(--danger)">*</span></label>
+        <input class="form-control" id="nuevaSalaNombre" type="text" placeholder="Ej: Laboratorio 3D">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="cerrarModal('modalNuevaSala')">Cancelar</button>
+        <button class="btn btn-primary" onclick="crearSala()">Crear Sala</button>
       </div>
     </div>
   </div>

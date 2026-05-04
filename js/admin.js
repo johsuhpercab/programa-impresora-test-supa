@@ -503,6 +503,37 @@ async function guardarMaquina() {
   }
 }
 
+function abrirModalNuevaSala() {
+  document.getElementById('nuevaSalaNombre').value = '';
+  document.getElementById('msgNuevaSala').innerHTML = '';
+  abrirModal('modalNuevaSala');
+}
+
+async function crearSala() {
+  const nombre = document.getElementById('nuevaSalaNombre').value.trim();
+  const msg = document.getElementById('msgNuevaSala');
+
+  if (!nombre) {
+    msg.innerHTML = '<div class="alert alert-warning">⚠️ El nombre de la sala es obligatorio</div>';
+    return;
+  }
+
+  const res = await apiFetch('/api/salas', {
+    method: 'POST',
+    body: { nombre }
+  });
+
+  if (res.ok) {
+    cerrarModal('modalNuevaSala');
+    await cargarDatosBase();
+    renderMaquinas();
+    // Actualizar select de nuevoMaquinaSala
+    poblarFiltrosAdmin();
+  } else {
+    msg.innerHTML = `<div class="alert alert-danger">❌ ${res.error}</div>`;
+  }
+}
+
 function abrirModalNuevaMaquina() {
   document.getElementById('nuevoMaquinaNombre').value = '';
   document.getElementById('nuevoMaquinaModelo').value = '';
@@ -1116,6 +1147,11 @@ async function apiFetch(url, options = {}) {
           dashboard: { hoy: regs.filter(r => r.timestamp.startsWith(hoy)).length, semana: regs.filter(r => r.timestamp >= haceUnaSemana).length, pendientes: formattedMaquinas.filter(m => m.estado_mantenimiento === 'vencido' || m.estado_mantenimiento === 'pendiente').length, proximos: formattedMaquinas.filter(m => m.estado_mantenimiento === 'proximo').length, porDia: Object.entries(porDiaMap).map(([dia, total]) => ({ dia, total })).sort((a,b) => a.dia.localeCompare(b.dia)), porMaquina: Object.entries(porMaquinaMap).map(([nombre, total_sesiones]) => ({ nombre, total_sesiones })).sort((a,b) => b.total_sesiones - a.total_sesiones) }
         }
       };
+    }
+
+    if (url.includes('/api/salas') && method === 'POST') {
+      const { data, error } = await client.from('salas').insert(payload).select().single();
+      if (error) throw error; return { ok: true, data };
     }
 
     if (url.includes('/api/maquinas') && method === 'POST') {
