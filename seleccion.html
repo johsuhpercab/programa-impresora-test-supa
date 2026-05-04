@@ -77,7 +77,11 @@
   <div class="container">
     <div class="header">
       <h1>Portal Operario</h1>
-      <a href="index.html" class="btn-back">← Volver</a>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:13px;color:var(--text-muted)" id="userName"></span>
+        <button onclick="cerrarSesion()" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text-muted);padding:6px 12px;border-radius:10px;cursor:pointer;font-size:12px">Cerrar sesión</button>
+        <a href="index.html" class="btn-back">← Volver</a>
+      </div>
     </div>
 
     <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 30px;">
@@ -93,6 +97,19 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
+      // Guard: verificar que hay sesión activa
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      if (!session) {
+        location.href = 'auth.html?next=seleccion.html';
+        return;
+      }
+
+      // Mostrar nombre del usuario en el header
+      const { data: userData } = await window.supabaseClient
+        .from('usuarios').select('nombre').eq('auth_id', session.user.id).maybeSingle();
+      const nombreEl = document.getElementById('userName');
+      if (nombreEl) nombreEl.textContent = userData?.nombre || session.user.email;
+
       // Reintento autónomo si el cliente no está listo
       if (!window.supabaseClient) {
         setTimeout(() => location.reload(), 500);
@@ -131,6 +148,11 @@
         console.error(err);
       }
     });
+  </script>
+  <script>
+    function cerrarSesion() {
+      window.supabaseClient.auth.signOut().then(() => location.href = 'auth.html');
+    }
   </script>
 </body>
 </html>

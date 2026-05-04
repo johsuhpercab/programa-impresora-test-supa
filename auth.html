@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Acceso — SGI</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --card-bg: #1a1a2e;
+      --card-bg2: #16213e;
+      --text: #ffffff;
+      --text-muted: #94a3b8;
+      --accent: #4f8ef7;
+      --accent-glow: rgba(79, 142, 247, 0.25);
+      --border: rgba(255,255,255,0.08);
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',system-ui,sans-serif; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background-image: radial-gradient(ellipse at 20% 50%, rgba(79,142,247,0.06) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.06) 0%, transparent 60%);
+    }
+
+    .auth-container {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .auth-logo {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .auth-logo .icon { font-size: 48px; display: block; margin-bottom: 12px; }
+    .auth-logo h1 {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #fff 0%, var(--text-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .auth-logo p { font-size: 14px; color: var(--text-muted); margin-top: 6px; }
+
+    /* Tabs */
+    .auth-tabs {
+      display: flex;
+      background: var(--card-bg2);
+      border-radius: 16px;
+      padding: 4px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: all 0.2s;
+      color: var(--text-muted);
+      border: none;
+      background: none;
+    }
+    .auth-tab.active {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    /* Card */
+    .auth-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 28px;
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .form-control {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-size: 15px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .form-control::placeholder { color: var(--text-muted); }
+
+    .btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      margin-top: 4px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--accent-glow); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .msg-box {
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .msg-box.show { display: block; }
+    .msg-box.error { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+    .msg-box.success { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; }
+    .msg-box.info { background: rgba(79,142,247,0.12); border: 1px solid rgba(79,142,247,0.3); color: #93c5fd; }
+
+    .divider {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 20px 0;
+      position: relative;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 40%;
+      height: 1px;
+      background: var(--border);
+    }
+    .divider::before { left: 0; }
+    .divider::after { right: 0; }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--accent); }
+
+    /* Panel verificación email */
+    .verify-panel {
+      text-align: center;
+      padding: 16px 0;
+    }
+    .verify-panel .big-icon { font-size: 56px; margin-bottom: 16px; display: block; }
+    .verify-panel h2 { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
+    .verify-panel p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+    .verify-panel .email-highlight {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    @keyframes fadeIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+    .auth-container { animation: fadeIn 0.4s ease; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-logo">
+      <span class="icon">🖨️</span>
+      <h1>Gestión de Impresoras</h1>
+      <p>Portal de acceso para operarios y técnicos</p>
+    </div>
+
+    <!-- Tabs: Iniciar sesión / Registrarse -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="mostrarPanel('login')">Iniciar sesión</button>
+      <button class="auth-tab" id="tabRegistro" onclick="mostrarPanel('registro')">Registrarse</button>
+    </div>
+
+    <div class="auth-card">
+
+      <!-- ── Panel: LOGIN ── -->
+      <div class="panel active" id="panelLogin">
+        <div class="msg-box" id="msgLogin"></div>
+        <div class="form-group">
+          <label class="form-label">Correo electrónico</label>
+          <input type="email" id="loginEmail" class="form-control" placeholder="tu@correo.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input type="password" id="loginPass" class="form-control" placeholder="••••••••" autocomplete="current-password"
+            onkeydown="if(event.key==='Enter') iniciarSesion()">
+        </div>
+        <button class="btn btn-primary" id="btnLogin" onclick="iniciarSesion()">Entrar</button>
+      </div>
+
+      <!-- ── Panel: REGISTRO ── -->
+      <div class="panel" id="panelRegistro">
+        <div class="msg-box" id="msgRegistro"></div>
+        <div class="form-group">
+          <label class="form-label">Nombre completo</label>
+          <input type="text" id="regNombre" class="form-control" placeholder="Juan García" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Correo electrónico</label>
+          <input type="email" id="regEmail" class="form-control" placeholder="tu@correo.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input type="password" id="regPass" class="form-control" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirmar contraseña</label>
+          <input type="password" id="regPass2" class="form-control" placeholder="Repite la contraseña"
+            onkeydown="if(event.key==='Enter') registrarse()">
+        </div>
+        <button class="btn btn-primary" id="btnRegistro" onclick="registrarse()">Crear cuenta</button>
+      </div>
+
+      <!-- ── Panel: EMAIL ENVIADO ── -->
+      <div class="panel" id="panelVerificacion">
+        <div class="verify-panel">
+          <span class="big-icon">📬</span>
+          <h2>¡Revisa tu correo!</h2>
+          <p>Hemos enviado un enlace de confirmación a<br>
+            <span class="email-highlight" id="emailEnviado"></span>
+          </p>
+          <p style="margin-top:14px">Haz clic en el enlace del correo para activar tu cuenta y poder iniciar sesión.</p>
+          <div class="divider" style="margin-top:24px">o</div>
+          <button class="btn btn-primary" style="margin-top:0" onclick="mostrarPanel('login')">Volver al inicio de sesión</button>
+        </div>
+      </div>
+
+    </div>
+
+    <a href="index.html" class="back-link">← Volver al inicio</a>
+  </div>
+
+  <script>
+    const client = window.supabaseClient;
+
+    // Si ya hay sesión activa, redirigir directamente
+    window.addEventListener('load', async () => {
+      const { data: { session } } = await client.auth.getSession();
+      if (session) {
+        // Redirigir al destino que venía o a la selección de máquinas
+        const dest = new URLSearchParams(location.search).get('next') || 'seleccion.html';
+        location.href = dest;
+      }
+    });
+
+    function mostrarPanel(panel) {
+      ['login','registro','verificacion'].forEach(p => {
+        document.getElementById('panel' + p.charAt(0).toUpperCase() + p.slice(1)).classList.remove('active');
+        const tab = document.getElementById('tab' + p.charAt(0).toUpperCase() + p.slice(1));
+        if (tab) tab.classList.remove('active');
+      });
+      document.getElementById('panel' + panel.charAt(0).toUpperCase() + panel.slice(1)).classList.add('active');
+      const tab = document.getElementById('tab' + panel.charAt(0).toUpperCase() + panel.slice(1));
+      if (tab) tab.classList.add('active');
+    }
+
+    function mostrarMsg(id, tipo, texto) {
+      const el = document.getElementById(id);
+      el.className = `msg-box ${tipo} show`;
+      el.textContent = texto;
+    }
+    function limpiarMsg(id) {
+      const el = document.getElementById(id);
+      el.className = 'msg-box';
+      el.textContent = '';
+    }
+
+    async function iniciarSesion() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass = document.getElementById('loginPass').value;
+      const btn = document.getElementById('btnLogin');
+      limpiarMsg('msgLogin');
+
+      if (!email || !pass) { mostrarMsg('msgLogin', 'error', '⚠️ Rellena todos los campos'); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Verificando...';
+
+      const { data, error } = await client.auth.signInWithPassword({ email, password: pass });
+
+      btn.disabled = false;
+      btn.textContent = 'Entrar';
+
+      if (error) {
+        if (error.message.includes('Email not confirmed')) {
+          mostrarMsg('msgLogin', 'info', '📬 Tu cuenta aún no está confirmada. Revisa tu correo y haz clic en el enlace de activación.');
+        } else {
+          mostrarMsg('msgLogin', 'error', '❌ Email o contraseña incorrectos');
+        }
+        return;
+      }
+
+      // Redirigir al destino
+      const dest = new URLSearchParams(location.search).get('next') || 'seleccion.html';
+      location.href = dest;
+    }
+
+    async function registrarse() {
+      const nombre = document.getElementById('regNombre').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const pass = document.getElementById('regPass').value;
+      const pass2 = document.getElementById('regPass2').value;
+      const btn = document.getElementById('btnRegistro');
+      limpiarMsg('msgRegistro');
+
+      if (!nombre || !email || !pass || !pass2) {
+        mostrarMsg('msgRegistro', 'error', '⚠️ Rellena todos los campos');
+        return;
+      }
+      if (pass !== pass2) {
+        mostrarMsg('msgRegistro', 'error', '❌ Las contraseñas no coinciden');
+        return;
+      }
+      if (pass.length < 6) {
+        mostrarMsg('msgRegistro', 'error', '❌ La contraseña debe tener al menos 6 caracteres');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Creando cuenta...';
+
+      const { data, error } = await client.auth.signUp({
+        email,
+        password: pass,
+        options: {
+          data: { nombre } // Se usará en el trigger para poblar la tabla usuarios
+        }
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Crear cuenta';
+
+      if (error) {
+        if (error.message.includes('already registered')) {
+          mostrarMsg('msgRegistro', 'info', 'ℹ️ Ya existe una cuenta con ese correo. Inicia sesión.');
+        } else {
+          mostrarMsg('msgRegistro', 'error', '❌ ' + error.message);
+        }
+        return;
+      }
+
+      // Mostrar panel de verificación
+      document.getElementById('emailEnviado').textContent = email;
+      mostrarPanel('verificacion');
+    }
+  </script>
+</body>
+</html>
