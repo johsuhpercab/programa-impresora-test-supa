@@ -401,16 +401,13 @@ function renderMaquinas() {
   }
 
   function tarjetaMaquina(m) {
-    const estadoLabel = {
-      ok: '✅ Al día',
-      proximo: '⚠️ Próximo',
-      vencido: '🚨 Vencido',
-      pendiente: '🔴 Pendiente',
-    }[m.estado_mantenimiento] || m.estado_mantenimiento;
-
     const ultimo = m.ultimo_mantenimiento
       ? `Último: ${formatFechaHora(m.ultimo_mantenimiento)}`
       : 'Sin mantenimiento registrado';
+
+    const dimStr = (m.ancho_mm && m.alto_mm && m.profundidad_mm)
+      ? `📐 ${m.ancho_mm} × ${m.alto_mm} × ${m.profundidad_mm} mm`
+      : null;
 
     return `
       <div class="maquina-card fade-in" onclick="verHistorialMaquina('${m.nombre}')" style="cursor:pointer" title="Ver historial completo">
@@ -419,13 +416,13 @@ function renderMaquinas() {
             <div class="maquina-nombre">${m.nombre}</div>
             <div class="maquina-tipo">${m.codigo || 'S/ID'} · ${m.tipo}</div>
           </div>
-          <span class="estado-badge ${m.estado_mantenimiento}">${estadoLabel}</span>
         </div>
         <div class="maquina-info">
           <span>🏭 ${m.sala_nombre}</span>
           <span>⚙️ ${m.modelo || 'Sin modelo'}</span>
           <span>📅 Frecuencia: cada ${m.frecuencia_dias} días</span>
           <span>🕐 ${ultimo}</span>
+          ${dimStr ? `<span>${dimStr}</span>` : ''}
         </div>
         <div class="maquina-actions">
           ${rolActual === 'admin' ? `
