@@ -1,9 +1,10 @@
--- Drop tables if they already exist (to ensure a clean slate, careful with production data)
-DROP TABLE IF EXISTS "SEGUIMIENTOS";
-DROP TABLE IF EXISTS "REGISTROS";
-DROP TABLE IF EXISTS "EQUIPOS";
-DROP TABLE IF EXISTS "SALAS";
-DROP TABLE IF EXISTS "USUARIOS";
+-- IMPORTANTE: He comentado los DROP TABLE por seguridad para que no borres tus datos actuales.
+-- Si estás 100% seguro de que quieres empezar de cero, quita los "-- " del principio.
+-- DROP TABLE IF EXISTS "SEGUIMIENTOS";
+-- DROP TABLE IF EXISTS "REGISTROS";
+-- DROP TABLE IF EXISTS "EQUIPOS";
+-- DROP TABLE IF EXISTS "SALAS";
+-- DROP TABLE IF EXISTS "USUARIOS";
 
 -- Table: USUARIOS
 CREATE TABLE "USUARIOS" (
@@ -64,3 +65,12 @@ CREATE TABLE "SEGUIMIENTOS" (
 
 -- Políticas de acceso para anon / authenticated (ajustar según necesidades)
 -- CREATE POLICY "Permitir lectura general a anon" ON "EQUIPOS" FOR SELECT USING (true);
+
+-- ==========================================
+-- DATOS INICIALES POR DEFECTO (MUY IMPORTANTE)
+-- ==========================================
+-- Insertar un usuario administrador por defecto para poder entrar al panel
+-- Si ya tienes un usuario administrador, esto fallará por el UNIQUE email (lo cual está bien, no romperá nada).
+INSERT INTO "USUARIOS" (email, nombre, pin, rol, activo)
+VALUES ('admin@empresa.com', 'Administrador Principal', '123456', 'admin', true)
+ON CONFLICT (email) DO NOTHING;
