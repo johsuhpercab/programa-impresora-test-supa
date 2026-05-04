@@ -50,8 +50,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   rolActual = userData.rol;
-  document.getElementById('userDisplayName').textContent = userData.nombre || session.user.email;
-  document.documentElement.classList.remove('auth-locked');
+  // Mostrar el nombre del usuario si existe el elemento
+  const displayEl = document.getElementById('userDisplayName');
+  if (displayEl) displayEl.textContent = userData.nombre || session.user.email;
+
+  // Mostrar el dashboard y ocultar el overlay de login
+  document.body.classList.remove('auth-locked');
+  document.body.classList.add('auth-ready');
+  document.getElementById('dashboardContent').style.display = 'block';
 
   try {
     isCargando = true;

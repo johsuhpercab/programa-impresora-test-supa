@@ -17,11 +17,11 @@
   <script src="js/dashboard-ui.js?v=3.3"></script>
   <script src="js/admin.js?v=3.3"></script>
   <style>
-    /* Guard: ocultar dashboard hasta confirmar sesión */
+    /* Guard de autenticación */
     #dashboardContent { display: none; }
-    .auth-ready #dashboardContent { display: block; }
     .admin-login-overlay { display: none; }
     .auth-locked .admin-login-overlay { display: flex !important; }
+    .auth-locked #dashboardContent { display: none !important; }
   </style>
 </head>
 
