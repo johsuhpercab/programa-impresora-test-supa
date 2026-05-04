@@ -414,6 +414,15 @@ const DASHBOARD_HTML = `
         <label class="form-label">Modelo</label>
         <input class="form-control" id="nuevoMaquinaModelo" type="text" placeholder="Ej: Prusa MK4">
       </div>
+      <div class="form-group">
+        <label class="form-label">Dimensiones <span style="color:var(--text-muted);font-size:12px">(opcionales, en mm)</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <input class="form-control" id="nuevoMaquinaAncho" type="number" min="0" placeholder="Ancho">
+          <input class="form-control" id="nuevoMaquinaAlto" type="number" min="0" placeholder="Alto">
+          <input class="form-control" id="nuevoMaquinaProfundidad" type="number" min="0" placeholder="Prof.">
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Ancho × Alto × Profundidad</div>
+      </div>
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="cerrarModal('modalNuevaMaquina')">Cancelar</button>
         <button class="btn btn-primary" onclick="crearMaquina()">Crear máquina</button>

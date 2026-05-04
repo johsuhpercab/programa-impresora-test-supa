@@ -32,18 +32,31 @@ function cambiarRolSimulado(nuevoRol) {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const pin = localStorage.getItem('admin_pin');
-  detectarServidor(); // Cargar IP real para los QRs
-  if (!pin) return; // Esperar al login manual
+  detectarServidor();
+
+  // Comprobar si hay sesión activa de Supabase Auth
+  const { data: { session } } = await window.supabaseClient.auth.getSession();
+  if (!session) return; // Sin sesión: el overlay de login se muestra solo
+
+  // Verificar que el usuario tiene rol admin en nuestra tabla
+  const { data: userData } = await window.supabaseClient
+    .from('usuarios').select('rol, nombre').eq('auth_id', session.user.id).maybeSingle();
+
+  if (!userData || userData.rol !== 'admin') {
+    await window.supabaseClient.auth.signOut();
+    document.getElementById('loginError').innerHTML = '❌ Tu cuenta no tiene permisos de administrador';
+    document.documentElement.classList.add('auth-locked');
+    return;
+  }
+
+  rolActual = userData.rol;
+  document.getElementById('userDisplayName').textContent = userData.nombre || session.user.email;
+  document.documentElement.classList.remove('auth-locked');
 
   try {
     isCargando = true;
-    
-    // Inyectar interfaz de forma segura
     const container = document.getElementById('dashboardContent');
-    if (container) {
-      container.innerHTML = DASHBOARD_HTML;
-    }
+    if (container) container.innerHTML = DASHBOARD_HTML;
 
     const grid = document.getElementById('gridMaquinas');
     if (grid) grid.innerHTML = skeletonMaquinas();
@@ -575,7 +588,10 @@ async function crearMaquina() {
     method: 'POST', 
     body: { 
       codigo: document.getElementById('nuevoMaquinaCodigo').value.trim(),
-      nombre, sala_id, tipo, frecuencia_dias, modelo 
+      nombre, sala_id, tipo, frecuencia_dias, modelo,
+      ancho_mm: document.getElementById('nuevoMaquinaAncho').value || null,
+      alto_mm: document.getElementById('nuevoMaquinaAlto').value || null,
+      profundidad_mm: document.getElementById('nuevoMaquinaProfundidad').value || null
     } 
   });
 
@@ -1055,27 +1071,45 @@ function exportarCSV() {
 }
 
 // ── Usuarios Admin ────────────────────────────────────────────────────────────
-const ROL_BADGES = {
-  admin:   { label: '🛡️ Administrador', cls: 'azul' },
-  tecnico: { label: '🔧 Técnico', cls: 'verde' },
-  usuario: { label: '👤 Usuario', cls: '' },
-};
-
 function renderUsuarios() {
   const tbody = document.getElementById('tablaUsuarios');
   if (!tbody) return;
+
+  if (!datosUsuarios.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">No hay usuarios registrados aún.</td></tr>';
+    return;
+  }
+
   tbody.innerHTML = datosUsuarios.map(u => {
-    const rol = ROL_BADGES[u.rol] || { label: u.rol || 'usuario', cls: '' };
+    const esAdmin = u.rol === 'admin';
+    const rolBadge = esAdmin
+      ? `<span class="estado-badge azul">🛡️ Administrador</span>`
+      : `<span class="estado-badge">👤 Operario</span>`;
+    const btnRol = esAdmin
+      ? `<button class="btn btn-outline btn-sm" style="border-color:var(--warning);color:var(--warning)" onclick="cambiarRolUsuario('${u.id}', 'operario')">⬇️ Quitar Admin</button>`
+      : `<button class="btn btn-outline btn-sm" style="border-color:var(--primary);color:var(--primary)" onclick="cambiarRolUsuario('${u.id}', 'admin')">⬆️ Dar Admin</button>`;
     return `
     <tr>
-      <td data-label="Nombre"><b>${u.nombre}</b></td>
-      <td data-label="Rol"><span class="estado-badge ${rol.cls}">${rol.label}</span></td>
-      <td data-label="PIN"><span style="font-family:monospace">${u.pin || '–'}</span></td>
+      <td data-label="Nombre"><b>${u.nombre || '–'}</b></td>
+      <td data-label="Email" style="font-size:13px;color:var(--text-muted)">${u.email}</td>
+      <td data-label="Rol">${rolBadge}</td>
       <td data-label="Estado"><span class="estado-badge ok">✅ Activo</span></td>
-      <td data-label="Acciones"><button class="btn btn-outline btn-sm" onclick="eliminarUsuarioAdmin('${u.id}')">🗑️ Borrar</button></td>
-    </tr>
-  `;
+      <td data-label="Acciones" style="display:flex;gap:6px;flex-wrap:wrap">
+        ${btnRol}
+        <button class="btn btn-outline btn-sm" style="border-color:var(--danger);color:var(--danger)" onclick="eliminarUsuarioAdmin('${u.id}')">🗑️</button>
+      </td>
+    </tr>`;
   }).join('');
+}
+
+async function cambiarRolUsuario(id, nuevoRol) {
+  const confirmMsg = nuevoRol === 'admin'
+    ? '¿Dar privilegios de Administrador a este usuario?'
+    : '¿Quitar privilegios de Administrador a este usuario?';
+  if (!confirm(confirmMsg)) return;
+  const { error } = await window.supabaseClient.from('usuarios').update({ rol: nuevoRol }).eq('id', id);
+  if (!error) { await cargarDatosBase(); renderUsuarios(); }
+  else alert('Error al cambiar rol: ' + error.message);
 }
 
 function abrirModalUsuario() {
@@ -1111,18 +1145,14 @@ async function apiFetch(url, options = {}) {
   const client = window.supabaseClient;
   const localPin = localStorage.getItem('admin_pin');
 
-  if (!cachedAdminPin && url !== '/api/login-admin') {
-     const { data: adminUser } = await client.from('usuarios').select('pin').eq('rol', 'admin').limit(1).maybeSingle();
-     if (adminUser) cachedAdminPin = adminUser.pin;
-  }
-
-  if (url !== '/api/login-admin' && cachedAdminPin && cachedAdminPin !== localPin) return { ok: false, error: 'No autorizado' };
+  // Verificar sesión activa con Supabase Auth
+  const { data: { session } } = await client.auth.getSession();
+  if (url !== '/api/login-admin' && !session) return { ok: false, error: 'No autenticado' };
 
   try {
     if (url === '/api/login-admin') {
-      const { data: adminUser } = await client.from('usuarios').select('pin').eq('rol', 'admin').limit(1).maybeSingle();
-      if (adminUser && adminUser.pin === localPin) { cachedAdminPin = adminUser.pin; return { ok: true }; }
-      return { ok: false, error: 'PIN incorrecto' };
+      // Ya no se usa — mantenido por si hay referencias legacy
+      return { ok: false, error: 'Usa Supabase Auth' };
     }
 
     if (url.includes('/api/all-data')) {
@@ -1233,12 +1263,17 @@ async function apiFetch(url, options = {}) {
       }
       
       if (method === 'POST') {
+        // Obtener el nombre del admin autenticado para anotarlo en el seguimiento
+        const { data: { session } } = await client.auth.getSession();
+        const { data: adminData } = await client.from('usuarios').select('nombre, email').eq('auth_id', session?.user?.id).maybeSingle();
+        const autorNombre = adminData?.nombre || adminData?.email || 'Administrador';
+
         const { data, error } = await client
           .from('seguimientos')
           .insert({
             incidencia_id: id,
             nota: payload.nota,
-            usuario_nombre: 'Administrador',
+            usuario_nombre: autorNombre,
             timestamp: new Date().toISOString()
           })
           .select()
@@ -1264,19 +1299,40 @@ async function apiFetch(url, options = {}) {
 }
 
 async function intentarLogin() {
-  const input = document.getElementById('adminPinInput');
+  const emailInput = document.getElementById('adminEmailInput');
+  const passInput = document.getElementById('adminPassInput');
   const error = document.getElementById('loginError');
   const card = document.getElementById('loginCard');
-  const pin = input?.value.trim();
-  if (!pin) return;
-  error.innerHTML = 'Verificando...';
-  localStorage.setItem('admin_pin', pin);
-  const res = await apiFetch('/api/login-admin', { method: 'POST' });
-  if (res.ok) { location.reload(); }
-  else { localStorage.removeItem('admin_pin'); error.innerHTML = '❌ PIN incorrecto'; card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 400); }
+  const email = emailInput?.value.trim();
+  const password = passInput?.value;
+  if (!email || !password) return;
+  error.innerHTML = '<span style="color:var(--text-muted)">Verificando...</span>';
+
+  const { data, error: authError } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+  if (authError || !data.session) {
+    error.innerHTML = '❌ Email o contraseña incorrectos';
+    card.classList.add('shake');
+    setTimeout(() => card.classList.remove('shake'), 400);
+    return;
+  }
+
+  // Verificar rol admin
+  const { data: userData } = await window.supabaseClient
+    .from('usuarios').select('rol').eq('auth_id', data.session.user.id).maybeSingle();
+  if (!userData || userData.rol !== 'admin') {
+    await window.supabaseClient.auth.signOut();
+    error.innerHTML = '❌ Tu cuenta no tiene permisos de administrador';
+    card.classList.add('shake');
+    setTimeout(() => card.classList.remove('shake'), 400);
+    return;
+  }
+
+  location.reload();
 }
 
-function cerrarSesionAdmin() { localStorage.removeItem('admin_pin'); location.reload(); }
+function cerrarSesionAdmin() {
+  window.supabaseClient.auth.signOut().then(() => location.reload());
+}
 function abrirModal(id) { document.getElementById(id)?.classList.add('open'); }
 function cerrarModal(id) { document.getElementById(id)?.classList.remove('open'); }
 function formatFechaHora(str) { if (!str) return '–'; const d = new Date(str); return d.toLocaleDateString('es-ES') + ' ' + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }); }
